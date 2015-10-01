@@ -71,9 +71,11 @@ void ossimRialtoReader::getBlock(const ossimGrect& bounds, ossimPointBlock& bloc
    double maxx = bounds.lr().lon;
    double miny = bounds.lr().lat;
    double maxy = bounds.ul().lat;
-   BOX3D bbox_rect (minx, miny, maxx, maxy);
+   BOX2D bbox_rect (minx, miny, maxx, maxy);
    std::string bbox_name ("bounds");
-   m_pdalOptions.remove(bbox_name);
+   Option pdalOption;
+   pdalOption.setName(bbox_name);
+   m_pdalOptions.remove(pdalOption);
    m_pdalOptions.add(bbox_name, bbox_rect);
    m_pdalPipe->setOptions(m_pdalOptions);
    m_pointTable = PointTablePtr(new PointTable);
