@@ -1,0 +1,327 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 42;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		1FC39D7508DD1F25003E4D9E /* ossimGdalProjectionFactory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FC39D7308DD1F25003E4D9E /* ossimGdalProjectionFactory.cpp */; };
+		1FC39D7608DD1F25003E4D9E /* ossimGdalProjectionFactory.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FC39D7408DD1F25003E4D9E /* ossimGdalProjectionFactory.h */; };
+		1FF6100F082ED83D004EB1E4 /* ossimGdalTileSource.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FF60FFB082ED83C004EB1E4 /* ossimGdalTileSource.h */; };
+		1FF61010082ED83D004EB1E4 /* ossimGdalType.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FF60FFC082ED83C004EB1E4 /* ossimGdalType.cpp */; };
+		1FF61011082ED83D004EB1E4 /* ossimGdalType.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FF60FFD082ED83D004EB1E4 /* ossimGdalType.h */; };
+		1FF61012082ED83D004EB1E4 /* ossimGdalOgrVectorAnnotation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FF60FFE082ED83D004EB1E4 /* ossimGdalOgrVectorAnnotation.cpp */; };
+		1FF61013082ED83D004EB1E4 /* ossimGdalImageWriterFactory.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FF60FFF082ED83D004EB1E4 /* ossimGdalImageWriterFactory.h */; };
+		1FF61014082ED83D004EB1E4 /* ossimGdalFactory.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FF61000082ED83D004EB1E4 /* ossimGdalFactory.h */; };
+		1FF61015082ED83D004EB1E4 /* ossimGdalTileSource.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FF61001082ED83D004EB1E4 /* ossimGdalTileSource.cpp */; };
+		1FF61016082ED83D004EB1E4 /* ossimOgcWktTranslator.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FF61002082ED83D004EB1E4 /* ossimOgcWktTranslator.h */; };
+		1FF61017082ED83D004EB1E4 /* ossimGdalWriter.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FF61003082ED83D004EB1E4 /* ossimGdalWriter.h */; };
+		1FF61018082ED83D004EB1E4 /* ossimGdalTiledDataset.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FF61004082ED83D004EB1E4 /* ossimGdalTiledDataset.cpp */; };
+		1FF61019082ED83D004EB1E4 /* ossimOgcWktTranslator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FF61005082ED83D004EB1E4 /* ossimOgcWktTranslator.cpp */; };
+		1FF6101A082ED83D004EB1E4 /* ossimGdalFactory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FF61006082ED83D004EB1E4 /* ossimGdalFactory.cpp */; };
+		1FF6101B082ED83D004EB1E4 /* ossimOgrGdalTileSource.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FF61007082ED83D004EB1E4 /* ossimOgrGdalTileSource.h */; };
+		1FF6101C082ED83D004EB1E4 /* ossimGdalPluginInit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FF61008082ED83D004EB1E4 /* ossimGdalPluginInit.cpp */; };
+		1FF6101D082ED83D004EB1E4 /* ossimGdalTiledDataset.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FF61009082ED83D004EB1E4 /* ossimGdalTiledDataset.h */; };
+		1FF6101E082ED83D004EB1E4 /* ossimGdalImageWriterFactory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FF6100A082ED83D004EB1E4 /* ossimGdalImageWriterFactory.cpp */; };
+		1FF6101F082ED83D004EB1E4 /* ossimOgrGdalTileSource.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FF6100B082ED83D004EB1E4 /* ossimOgrGdalTileSource.cpp */; };
+		1FF61021082ED83D004EB1E4 /* ossimGdalWriter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FF6100D082ED83D004EB1E4 /* ossimGdalWriter.cpp */; };
+		1FF61022082ED83D004EB1E4 /* ossimGdalOgrVectorAnnotation.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FF6100E082ED83D004EB1E4 /* ossimGdalOgrVectorAnnotation.h */; };
+		1FF6102A082ED87D004EB1E4 /* gdal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1FF61029082ED87D004EB1E4 /* gdal.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		1F17DABB08CCDE780099C7F4 /* ossim.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ossim.framework; path = /Library/Frameworks/ossim.framework; sourceTree = "<absolute>"; };
+		1FC39D7308DD1F25003E4D9E /* ossimGdalProjectionFactory.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = ossimGdalProjectionFactory.cpp; path = ../../ossimGdalProjectionFactory.cpp; sourceTree = SOURCE_ROOT; };
+		1FC39D7408DD1F25003E4D9E /* ossimGdalProjectionFactory.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = ossimGdalProjectionFactory.h; path = ../../ossimGdalProjectionFactory.h; sourceTree = SOURCE_ROOT; };
+		1FF60FFB082ED83C004EB1E4 /* ossimGdalTileSource.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = ossimGdalTileSource.h; path = ../../ossimGdalTileSource.h; sourceTree = SOURCE_ROOT; };
+		1FF60FFC082ED83C004EB1E4 /* ossimGdalType.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = ossimGdalType.cpp; path = ../../ossimGdalType.cpp; sourceTree = SOURCE_ROOT; };
+		1FF60FFD082ED83D004EB1E4 /* ossimGdalType.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = ossimGdalType.h; path = ../../ossimGdalType.h; sourceTree = SOURCE_ROOT; };
+		1FF60FFE082ED83D004EB1E4 /* ossimGdalOgrVectorAnnotation.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = ossimGdalOgrVectorAnnotation.cpp; path = ../../ossimGdalOgrVectorAnnotation.cpp; sourceTree = SOURCE_ROOT; };
+		1FF60FFF082ED83D004EB1E4 /* ossimGdalImageWriterFactory.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = ossimGdalImageWriterFactory.h; path = ../../ossimGdalImageWriterFactory.h; sourceTree = SOURCE_ROOT; };
+		1FF61000082ED83D004EB1E4 /* ossimGdalFactory.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = ossimGdalFactory.h; path = ../../ossimGdalFactory.h; sourceTree = SOURCE_ROOT; };
+		1FF61001082ED83D004EB1E4 /* ossimGdalTileSource.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = ossimGdalTileSource.cpp; path = ../../ossimGdalTileSource.cpp; sourceTree = SOURCE_ROOT; };
+		1FF61002082ED83D004EB1E4 /* ossimOgcWktTranslator.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = ossimOgcWktTranslator.h; path = ../../ossimOgcWktTranslator.h; sourceTree = SOURCE_ROOT; };
+		1FF61003082ED83D004EB1E4 /* ossimGdalWriter.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = ossimGdalWriter.h; path = ../../ossimGdalWriter.h; sourceTree = SOURCE_ROOT; };
+		1FF61004082ED83D004EB1E4 /* ossimGdalTiledDataset.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = ossimGdalTiledDataset.cpp; path = ../../ossimGdalTiledDataset.cpp; sourceTree = SOURCE_ROOT; };
+		1FF61005082ED83D004EB1E4 /* ossimOgcWktTranslator.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = ossimOgcWktTranslator.cpp; path = ../../ossimOgcWktTranslator.cpp; sourceTree = SOURCE_ROOT; };
+		1FF61006082ED83D004EB1E4 /* ossimGdalFactory.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = ossimGdalFactory.cpp; path = ../../ossimGdalFactory.cpp; sourceTree = SOURCE_ROOT; };
+		1FF61007082ED83D004EB1E4 /* ossimOgrGdalTileSource.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = ossimOgrGdalTileSource.h; path = ../../ossimOgrGdalTileSource.h; sourceTree = SOURCE_ROOT; };
+		1FF61008082ED83D004EB1E4 /* ossimGdalPluginInit.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = ossimGdalPluginInit.cpp; path = ../../ossimGdalPluginInit.cpp; sourceTree = SOURCE_ROOT; };
+		1FF61009082ED83D004EB1E4 /* ossimGdalTiledDataset.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = ossimGdalTiledDataset.h; path = ../../ossimGdalTiledDataset.h; sourceTree = SOURCE_ROOT; };
+		1FF6100A082ED83D004EB1E4 /* ossimGdalImageWriterFactory.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = ossimGdalImageWriterFactory.cpp; path = ../../ossimGdalImageWriterFactory.cpp; sourceTree = SOURCE_ROOT; };
+		1FF6100B082ED83D004EB1E4 /* ossimOgrGdalTileSource.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = ossimOgrGdalTileSource.cpp; path = ../../ossimOgrGdalTileSource.cpp; sourceTree = SOURCE_ROOT; };
+		1FF6100D082ED83D004EB1E4 /* ossimGdalWriter.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = ossimGdalWriter.cpp; path = ../../ossimGdalWriter.cpp; sourceTree = SOURCE_ROOT; };
+		1FF6100E082ED83D004EB1E4 /* ossimGdalOgrVectorAnnotation.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = ossimGdalOgrVectorAnnotation.h; path = ../../ossimGdalOgrVectorAnnotation.h; sourceTree = SOURCE_ROOT; };
+		1FF61029082ED87D004EB1E4 /* gdal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = gdal.framework; path = /Library/Frameworks/gdal.framework; sourceTree = "<absolute>"; };
+		D2AAC0630554660B00DB518D /* libgdalplugin.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libgdalplugin.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		D289988505E68E00004EDB86 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1FF6102A082ED87D004EB1E4 /* gdal.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		08FB7794FE84155DC02AAC07 /* libgdalplugin */ = {
+			isa = PBXGroup;
+			children = (
+				08FB7795FE84155DC02AAC07 /* Source */,
+				1FF61026082ED84E004EB1E4 /* Libraries */,
+				1AB674ADFE9D54B511CA2CBB /* Products */,
+			);
+			name = libgdalplugin;
+			sourceTree = "<group>";
+		};
+		08FB7795FE84155DC02AAC07 /* Source */ = {
+			isa = PBXGroup;
+			children = (
+				1FC39D7308DD1F25003E4D9E /* ossimGdalProjectionFactory.cpp */,
+				1FC39D7408DD1F25003E4D9E /* ossimGdalProjectionFactory.h */,
+				1FF61006082ED83D004EB1E4 /* ossimGdalFactory.cpp */,
+				1FF61000082ED83D004EB1E4 /* ossimGdalFactory.h */,
+				1FF60FFF082ED83D004EB1E4 /* ossimGdalImageWriterFactory.h */,
+				1FF6100A082ED83D004EB1E4 /* ossimGdalImageWriterFactory.cpp */,
+				1FF60FFE082ED83D004EB1E4 /* ossimGdalOgrVectorAnnotation.cpp */,
+				1FF6100E082ED83D004EB1E4 /* ossimGdalOgrVectorAnnotation.h */,
+				1FF61008082ED83D004EB1E4 /* ossimGdalPluginInit.cpp */,
+				1FF61004082ED83D004EB1E4 /* ossimGdalTiledDataset.cpp */,
+				1FF61009082ED83D004EB1E4 /* ossimGdalTiledDataset.h */,
+				1FF60FFB082ED83C004EB1E4 /* ossimGdalTileSource.h */,
+				1FF61007082ED83D004EB1E4 /* ossimOgrGdalTileSource.h */,
+				1FF60FFC082ED83C004EB1E4 /* ossimGdalType.cpp */,
+				1FF60FFD082ED83D004EB1E4 /* ossimGdalType.h */,
+				1FF6100D082ED83D004EB1E4 /* ossimGdalWriter.cpp */,
+				1FF61003082ED83D004EB1E4 /* ossimGdalWriter.h */,
+				1FF61002082ED83D004EB1E4 /* ossimOgcWktTranslator.h */,
+				1FF61005082ED83D004EB1E4 /* ossimOgcWktTranslator.cpp */,
+				1FF61001082ED83D004EB1E4 /* ossimGdalTileSource.cpp */,
+				1FF6100B082ED83D004EB1E4 /* ossimOgrGdalTileSource.cpp */,
+			);
+			name = Source;
+			sourceTree = "<group>";
+		};
+		1AB674ADFE9D54B511CA2CBB /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				D2AAC0630554660B00DB518D /* libgdalplugin.dylib */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		1FF61026082ED84E004EB1E4 /* Libraries */ = {
+			isa = PBXGroup;
+			children = (
+				1F17DABB08CCDE780099C7F4 /* ossim.framework */,
+				1FF61029082ED87D004EB1E4 /* gdal.framework */,
+			);
+			name = Libraries;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		D2AAC0600554660B00DB518D /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1FF6100F082ED83D004EB1E4 /* ossimGdalTileSource.h in Headers */,
+				1FF61011082ED83D004EB1E4 /* ossimGdalType.h in Headers */,
+				1FF61013082ED83D004EB1E4 /* ossimGdalImageWriterFactory.h in Headers */,
+				1FF61014082ED83D004EB1E4 /* ossimGdalFactory.h in Headers */,
+				1FF61016082ED83D004EB1E4 /* ossimOgcWktTranslator.h in Headers */,
+				1FF61017082ED83D004EB1E4 /* ossimGdalWriter.h in Headers */,
+				1FF6101B082ED83D004EB1E4 /* ossimOgrGdalTileSource.h in Headers */,
+				1FF6101D082ED83D004EB1E4 /* ossimGdalTiledDataset.h in Headers */,
+				1FF61022082ED83D004EB1E4 /* ossimGdalOgrVectorAnnotation.h in Headers */,
+				1FC39D7608DD1F25003E4D9E /* ossimGdalProjectionFactory.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		D2AAC0620554660B00DB518D /* libgdalplugin */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1F29D57F08CCDD7100DA2723 /* Build configuration list for PBXNativeTarget "libgdalplugin" */;
+			buildPhases = (
+				D2AAC0600554660B00DB518D /* Headers */,
+				D2AAC0610554660B00DB518D /* Sources */,
+				D289988505E68E00004EDB86 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = libgdalplugin;
+			productName = libgdalplugin;
+			productReference = D2AAC0630554660B00DB518D /* libgdalplugin.dylib */;
+			productType = "com.apple.product-type.library.dynamic";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		08FB7793FE84155DC02AAC07 /* Project object */ = {
+			isa = PBXProject;
+			buildConfigurationList = 1F29D58308CCDD7100DA2723 /* Build configuration list for PBXProject "libgdalplugin" */;
+			hasScannedForEncodings = 1;
+			mainGroup = 08FB7794FE84155DC02AAC07 /* libgdalplugin */;
+			projectDirPath = "";
+			targets = (
+				D2AAC0620554660B00DB518D /* libgdalplugin */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		D2AAC0610554660B00DB518D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1FF61010082ED83D004EB1E4 /* ossimGdalType.cpp in Sources */,
+				1FF61012082ED83D004EB1E4 /* ossimGdalOgrVectorAnnotation.cpp in Sources */,
+				1FF61015082ED83D004EB1E4 /* ossimGdalTileSource.cpp in Sources */,
+				1FF61018082ED83D004EB1E4 /* ossimGdalTiledDataset.cpp in Sources */,
+				1FF61019082ED83D004EB1E4 /* ossimOgcWktTranslator.cpp in Sources */,
+				1FF6101A082ED83D004EB1E4 /* ossimGdalFactory.cpp in Sources */,
+				1FF6101C082ED83D004EB1E4 /* ossimGdalPluginInit.cpp in Sources */,
+				1FF6101E082ED83D004EB1E4 /* ossimGdalImageWriterFactory.cpp in Sources */,
+				1FF6101F082ED83D004EB1E4 /* ossimOgrGdalTileSource.cpp in Sources */,
+				1FF61021082ED83D004EB1E4 /* ossimGdalWriter.cpp in Sources */,
+				1FC39D7508DD1F25003E4D9E /* ossimGdalProjectionFactory.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		1F29D58008CCDD7100DA2723 /* Development */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_MODEL_TUNING = G5;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = /usr/local/include/ossim;
+				INSTALL_PATH = /usr/local/lib;
+				LIBRARY_STYLE = DYNAMIC;
+				MACH_O_TYPE = mh_dylib;
+				PREBINDING = NO;
+				PRODUCT_NAME = libgdalplugin;
+				ZERO_LINK = YES;
+			};
+			name = Development;
+		};
+		1F29D58108CCDD7100DA2723 /* Deployment */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_MODEL_TUNING = G5;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					__OSSIM_DARWIN__,
+					DARWIN,
+					MACOSX,
+					"MPI_SETTING=1",
+					"FREETYPE_SETTING=1",
+					GEOTIFF_ENABLED,
+					"_FILE_OFFSET_BITS=64",
+					_LARGE_FILES,
+				);
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					../../../../ossim/src/ossim_core,
+					../../../../ossim_plugins,
+				);
+				INSTALL_PATH = /usr/local/lib;
+				LIBRARY_STYLE = DYNAMIC;
+				MACH_O_TYPE = mh_dylib;
+				OTHER_CFLAGS = "";
+				PREBINDING = NO;
+				PRODUCT_NAME = libgdalplugin;
+				ZERO_LINK = NO;
+			};
+			name = Deployment;
+		};
+		1F29D58208CCDD7100DA2723 /* Default */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_MODEL_TUNING = G5;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = /usr/local/include/ossim;
+				INSTALL_PATH = /usr/local/lib;
+				LIBRARY_STYLE = DYNAMIC;
+				MACH_O_TYPE = mh_dylib;
+				PREBINDING = NO;
+				PRODUCT_NAME = libgdalplugin;
+			};
+			name = Default;
+		};
+		1F29D58408CCDD7100DA2723 /* Development */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+			};
+			name = Development;
+		};
+		1F29D58508CCDD7100DA2723 /* Deployment */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS = "";
+				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = "";
+			};
+			name = Deployment;
+		};
+		1F29D58608CCDD7100DA2723 /* Default */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+			};
+			name = Default;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		1F29D57F08CCDD7100DA2723 /* Build configuration list for PBXNativeTarget "libgdalplugin" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1F29D58008CCDD7100DA2723 /* Development */,
+				1F29D58108CCDD7100DA2723 /* Deployment */,
+				1F29D58208CCDD7100DA2723 /* Default */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Default;
+		};
+		1F29D58308CCDD7100DA2723 /* Build configuration list for PBXProject "libgdalplugin" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1F29D58408CCDD7100DA2723 /* Development */,
+				1F29D58508CCDD7100DA2723 /* Deployment */,
+				1F29D58608CCDD7100DA2723 /* Default */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Default;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 08FB7793FE84155DC02AAC07 /* Project object */;
+}
