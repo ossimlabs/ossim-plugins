@@ -11,7 +11,7 @@
 // $Id: ossimPngPluginInit.cpp 22998 2014-11-23 21:38:13Z gpotts $
 
 #include <ossim/plugin/ossimSharedObjectBridge.h>
-#include "ossimPluginConstants.h"
+#include <ossim/plugin/ossimPluginConstants.h>
 #include "ossimPngReaderFactory.h"
 #include "ossimPngWriterFactory.h"
 #include "ossimPngCodecFactory.h"

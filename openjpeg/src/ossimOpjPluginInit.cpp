@@ -11,7 +11,7 @@
 // $Id: ossimOpjPluginInit.cpp 11046 2007-05-25 18:03:03Z gpotts $
 
 #include <ossim/plugin/ossimSharedObjectBridge.h>
-#include "ossimPluginConstants.h"
+#include <ossim/plugin/ossimPluginConstants.h>
 #include "ossimOpjReaderFactory.h"
 #include "ossimOpjWriterFactory.h"
 #include <ossim/imaging/ossimImageHandlerRegistry.h>

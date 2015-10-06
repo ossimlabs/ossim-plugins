@@ -10,7 +10,7 @@
 // $Id
 
 #include <ossim/plugin/ossimSharedObjectBridge.h>
-#include "ossimPluginConstants.h"
+#include <ossim/plugin/ossimPluginConstants.h>
 #include "ossimOpenCvObjectFactory.h"
 #include <ossim/base/ossimString.h>
 #include <ossim/base/ossimObjectFactoryRegistry.h>

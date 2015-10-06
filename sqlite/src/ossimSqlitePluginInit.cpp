@@ -12,7 +12,7 @@
 
 #include <ossim/plugin/ossimSharedObjectBridge.h>
 #include "ossimSqliteInfoFactory.h"
-#include "ossimPluginConstants.h"
+#include <ossim/plugin/ossimPluginConstants.h>
 #include "ossimSqliteReaderFactory.h"
 #include "ossimSqliteWriterFactory.h"
 #include <ossim/imaging/ossimImageHandlerRegistry.h>
