@@ -1,5 +1,3 @@
-PROJECT(ossim-pdal-plugin)
-
 SET(BUILD_OSSIM_FRAMEWORKS "OFF")
 SET(OSSIM_PLUGIN_LINK_TYPE "SHARED")
 
@@ -24,9 +22,10 @@ else(PDAL_FOUND)
 endif(PDAL_FOUND)
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
-set(requiredLibs ${requiredLibs} ossim-pdal-plugin )
-
 
 add_subdirectory( src )
-add_subdirectory( test )
+
+#IF(BUILD_OSSIM_TESTS)
+#   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test ${CMAKE_CURRENT_BINARY_DIR}/test)
+#ENDIF()
 

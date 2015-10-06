@@ -1,8 +1,7 @@
-PROJECT(ossim-gdal-plugin)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_BINARY_DIR}/src)
 
-SET(BUILD_OSSIM_FRAMEWORKS "OFF")
-SET(OSSIM_PLUGIN_LINK_TYPE "SHARED")
+#IF(BUILD_OSSIM_TESTS)
+#   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test ${CMAKE_CURRENT_BINARY_DIR}/test)
+#ENDIF()
 
-subdirs(src)
-subdirs(test)
 

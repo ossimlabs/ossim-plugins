@@ -11,6 +11,7 @@ else()
 endif()
 
 
+set(requiredLibs ${requiredLibs} ossim-pdal-plugin )
 message( STATUS "Required libs       = ${requiredLibs}" )
 
 # ---

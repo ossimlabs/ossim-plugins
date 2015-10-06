@@ -1,5 +1,3 @@
-PROJECT(ossim-mrsid-plugin)
-
 # Specify location of MrSID SDK containing Raster and LIDAR subdirectories. 
 # It is assumed here that a symlink exists called MRSID_SDK_DIR in 
 # this directory and points to the SDK directory. You can alternatively 
@@ -12,5 +10,8 @@ SET(BUILD_OSSIM_FRAMEWORKS "OFF")
 SET(OSSIM_PLUGIN_LINK_TYPE "SHARED")
 
 subdirs(src)
-subdirs(test)
+
+#IF(BUILD_OSSIM_TESTS)
+#   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test ${CMAKE_CURRENT_BINARY_DIR}/test)
+#ENDIF()
 
