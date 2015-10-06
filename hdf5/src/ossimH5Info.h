@@ -17,7 +17,7 @@
 #include <ossim/base/ossimConstants.h>
 #include <ossim/support_data/ossimInfoBase.h>
 #include <ossim/base/ossimFilename.h>
-#include "../ossimPluginConstants.h"
+#include <ossim/plugin/ossimPluginConstants.h>
 
 class ossimEndian;
 

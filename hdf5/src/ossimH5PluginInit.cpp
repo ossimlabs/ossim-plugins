@@ -19,7 +19,7 @@
 #include <ossim/projection/ossimProjectionFactoryRegistry.h>
 #include <ossim/support_data/ossimInfoFactoryRegistry.h>
 
-#include "../ossimPluginConstants.h"
+#include <ossim/plugin/ossimPluginConstants.h>
 #include "ossimH5ReaderFactory.h"
 #include "ossimH5InfoFactory.h"
 #include "ossimH5ProjectionFactory.h"

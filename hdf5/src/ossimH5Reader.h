@@ -14,7 +14,7 @@
 #ifndef ossimH5Reader_HEADER
 #define ossimH5Reader_HEADER 1
 
-#include "../ossimPluginConstants.h"
+#include <ossim/plugin/ossimPluginConstants.h>
 #include <ossim/base/ossimIrect.h>
 #include <ossim/base/ossimRefPtr.h>
 #include <ossim/base/ossimMetadataInterface.h>

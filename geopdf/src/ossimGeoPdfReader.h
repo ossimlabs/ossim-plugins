@@ -24,7 +24,7 @@
 #include <podofo/podofo.h>
 
 //ossim includes
-#include "../ossimPluginConstants.h"
+#include <ossim/plugin/ossimPluginConstants.h>
 #include <ossim/base/ossimIpt.h>
 #include <ossim/base/ossimIrect.h>
 #include <ossim/imaging/ossimImageHandler.h>

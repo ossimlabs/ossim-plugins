@@ -11,7 +11,7 @@
 // $Id: ossimKmlSuperOverlayPluginInit.cpp 2470 2011-04-26 15:32:19Z david.burken $
 
 #include <ossim/plugin/ossimSharedObjectBridge.h>
-#include "../ossimPluginConstants.h"
+#include <ossim/plugin/ossimPluginConstants.h>
 // #include <ossim/imaging/ossimImageHandlerRegistry.h>
 #include <ossim/imaging/ossimImageWriterFactoryRegistry.h>
 #include <ossim/imaging/ossimOverviewBuilderFactoryRegistry.h>

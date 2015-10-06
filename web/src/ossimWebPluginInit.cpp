@@ -10,7 +10,7 @@
 //----------------------------------------------------------------------------
 // $Id: ossimKakaduPluginInit.cpp 20202 2011-11-04 13:57:13Z gpotts $
 
-#include "../ossimPluginConstants.h"
+#include <ossim/plugin/ossimPluginConstants.h>
 #include <ossim/plugin/ossimSharedPluginRegistry.h>
 #include <ossim/base/ossimString.h>
 #include <ossim/base/ossimKeywordlist.h>

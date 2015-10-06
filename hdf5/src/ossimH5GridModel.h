@@ -21,7 +21,7 @@
 #include <ossim/base/ossimPolygon.h>
 #include <ossim/projection/ossimCoarseGridModel.h>
 
-#include "../ossimPluginConstants.h"
+#include <ossim/plugin/ossimPluginConstants.h>
 
 #include <string>
 
