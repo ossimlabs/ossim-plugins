@@ -1,5 +1,5 @@
-set(LIB_NAME ossim-gdal-plugin)
-MESSAGE( "************** LIBRARY SETUP FOR ossim-gdal-plugin******************")
+set(LIB_NAME ossim_gdal_plugin)
+MESSAGE( "************** LIBRARY SETUP FOR ossim_gdal_plugin ******************")
 
 # Include ossim cmake stuff:
 include(OssimVersion)

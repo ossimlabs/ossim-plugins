@@ -1,5 +1,5 @@
-set(LIB_NAME ossim-mrsid-plugin)
-MESSAGE( "************** LIBRARY SETUP FOR ossim-mrsid-plugin******************")
+set(LIB_NAME ossim_mrsid_plugin)
+MESSAGE( "************** LIBRARY SETUP FOR ossim_mrsid_plugin ******************")
 
 # Include ossim cmake stuff:
 include(OssimVersion)

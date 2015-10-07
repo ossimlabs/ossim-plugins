@@ -1,5 +1,5 @@
-set(LIB_NAME ossimopencv_plugin)
-MESSAGE( "************** LIBRARY SETUP FOR ossimopencv_plugin ******************")
+set(LIB_NAME ossim_opencv_plugin)
+MESSAGE( "************** LIBRARY SETUP FOR ossim_opencv_plugin ******************")
 
 # Include ossim cmake stuff:
 include(OssimVersion)

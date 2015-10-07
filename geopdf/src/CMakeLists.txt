@@ -1,5 +1,5 @@
-set(LIB_NAME ossimgeopdf_plugin)
-MESSAGE( "************** LIBRARY SETUP FOR ossimgeopdf_plugin******************")
+set(LIB_NAME ossim_geopdf_plugin)
+MESSAGE( "************** LIBRARY SETUP FOR ossim_geopdf_plugin ******************")
 
 # Include ossim cmake stuff:
 include(OssimVersion)

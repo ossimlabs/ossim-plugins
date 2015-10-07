@@ -1,5 +1,5 @@
-set(LIB_NAME ossimhdf5_plugin)
-MESSAGE( "************** LIBRARY SETUP FOR ossimhdf5_plugin******************")
+set(LIB_NAME ossim_hdf5_plugin)
+MESSAGE( "************** LIBRARY SETUP FOR ossim_hdf5_plugin ******************")
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 # Include ossim cmake stuff:

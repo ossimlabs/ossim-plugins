@@ -1,5 +1,5 @@
-set(LIB_NAME ossimweb_plugin)
-MESSAGE( "**************START  LIBRARY SETUP FOR ossimweb_plugin******************")
+set(LIB_NAME ossim_web_plugin)
+MESSAGE( "**************START  LIBRARY SETUP FOR ossim_web_plugin ******************")
 
 # Include ossim cmake stuff:
 include(OssimVersion)

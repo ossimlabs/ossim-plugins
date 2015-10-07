@@ -1,6 +1,6 @@
-set(LIB_NAME ossim-kakadu-plugin)
+set(LIB_NAME ossim_kakadu_plugin)
 
-message( "************** LIBRARY SETUP FOR ossimkakadu_plugin ******************")
+message( "************** LIBRARY SETUP FOR ossim_kakadu_plugin ******************")
 
 # Include ossim cmake stuff:
 include(OssimVersion)

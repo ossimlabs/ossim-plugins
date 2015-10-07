@@ -1,5 +1,5 @@
-set(LIB_NAME ossimsqlite_plugin)
-MESSAGE( "************** LIBRARY SETUP FOR ossimsqlite_plugin******************")
+set(LIB_NAME ossim_sqlite_plugin)
+MESSAGE( "************** LIBRARY SETUP FOR ossim_sqlite_plugin ******************")
 
 # Include ossim cmake stuff:
 include(OssimVersion)

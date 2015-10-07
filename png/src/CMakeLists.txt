@@ -1,5 +1,5 @@
-set(LIB_NAME ossimpng_plugin)
-MESSAGE( "************** LIBRARY SETUP FOR ossimpng_plugin******************")
+set(LIB_NAME ossim_png_plugin)
+MESSAGE( "************** LIBRARY SETUP FOR ossim_png_plugin ******************")
 
 # Include ossim cmake stuff:
 include(OssimVersion)

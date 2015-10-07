@@ -1,5 +1,5 @@
-set(LIB_NAME ossim-pdal-plugin)
-message( "************** LIBRARY SETUP FOR ossimpdal_plugin******************")
+set(LIB_NAME ossim_pdal_plugin)
+message( "************** LIBRARY SETUP FOR ossim_pdal_plugin ******************")
 
 # Include ossim cmake stuff:
 include(OssimVersion)

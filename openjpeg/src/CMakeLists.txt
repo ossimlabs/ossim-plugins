@@ -1,6 +1,6 @@
-set(LIB_NAME ossimopenjpeg_plugin)
+set(LIB_NAME ossim_openjpeg_plugin)
 
-message( "************** LIBRARY SETUP FOR ossimopenjpeg_plugin******************")
+message( "************** LIBRARY SETUP FOR ossim_openjpeg_plugin ******************")
 
 # Include ossim cmake stuff:
 include(OssimVersion)
