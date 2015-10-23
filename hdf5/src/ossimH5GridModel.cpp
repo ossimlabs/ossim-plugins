@@ -878,7 +878,7 @@ bool ossimH5GridModel::getWktFootprint( std::string& s ) const
 
       std::ostringstream os;
 
-      os <<  setprecision(10) << "POLYGON((";
+      os <<  setprecision(10) << "MULTIPOLYGON(((";
       const ossim_int32 STEP = 128;
       
       ossimIrect rect( 0, 0, theImageSize.x-1, theImageSize.y-1 );  
@@ -1000,7 +1000,7 @@ bool ossimH5GridModel::getWktFootprint( std::string& s ) const
 
       if ( !status ) break; // Found "nan" so get out.
       
-      os << "))";
+      os << ")))";
       s = os.str();
 
       // Trailing break from while ( FOREVER ) loop:

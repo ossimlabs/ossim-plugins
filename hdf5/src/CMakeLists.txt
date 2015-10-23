@@ -1,5 +1,5 @@
 set(LIB_NAME ossim_hdf5_plugin)
-MESSAGE( "************** LIBRARY SETUP FOR ossim_hdf5_plugin ******************")
+MESSAGE( "************** LIBRARY SETUP FOR ossimhdf5_plugin******************")
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 # Include ossim cmake stuff:
@@ -10,13 +10,21 @@ include(OssimUtilities)
 SET(requiredLibs)
 
 set(HDF5_USE_STATIC_LIBRARIES FALSE)
-find_package(HDF5 COMPONENTS CXX C)
-IF(HDF5_FOUND)
-   INCLUDE_DIRECTORIES( ${HDF5_INCLUDE_DIR} )
-   SET(requiredLibs ${requiredLibs} ${HDF5_CXX_LIBRARIES} ${HDF5_LIBRARIES} )
-ELSE(HDF5_FOUND)
-   MESSAGE(FATAL_ERROR "Could not find hdf5")
-ENDIF(HDF5_FOUND)
+
+# Look for HDF5A first; if not found, fall back to HDF5.
+find_package(HDF5A)
+IF(HDF5A_FOUND)
+   INCLUDE_DIRECTORIES( ${HDF5A_INCLUDE_DIR} )
+   SET(requiredLibs ${requiredLibs} ${HDF5A_LIBRARIES} )
+ELSE(HDF5A_FOUND)
+   find_package(HDF5 COMPONENTS CXX C)
+   IF(HDF5_FOUND)
+      INCLUDE_DIRECTORIES( ${HDF5_INCLUDE_DIR} )
+      SET(requiredLibs ${requiredLibs} ${HDF5_CXX_LIBRARIES} ${HDF5_LIBRARIES} )
+   ELSE(HDF5_FOUND)
+      MESSAGE(FATAL_ERROR "Could not find hdf5")
+   ENDIF(HDF5_FOUND)
+ENDIF(HDF5A_FOUND)
 
 FILE(GLOB_RECURSE OSSIMPLUGIN_SRCS *.cpp)
 FILE(GLOB_RECURSE OSSIMPLUGIN_HEADERS *.h)

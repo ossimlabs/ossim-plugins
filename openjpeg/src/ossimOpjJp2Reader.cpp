@@ -722,16 +722,26 @@ ossimRefPtr<ossimImageGeometry> ossimOpjJp2Reader::getImageGeometryFromGeotiffBo
          // Note: The box has the 16 GEOTIFF_UUID bytes in there so offset
          // address and size.
          //---
-         std::istringstream str;
-         str.rdbuf()->pubsetbuf( (char*)&box.front()+GEOTIFF_UUID_SIZE,
+#if 0
+         // This doesn't work with VS2010...
+         // Create a string stream and set the vector buffer as its source.
+         std::istringstream boxStream;
+         boxStream.rdbuf()->pubsetbuf( (char*)&box.front()+GEOTIFF_UUID_SIZE,
                                  box.size()-GEOTIFF_UUID_SIZE );
+#else
+         // convert the vector into a string
+         std::string boxString( box.begin()+GEOTIFF_UUID_SIZE, box.end() );
+         std::istringstream boxStream;
+         boxStream.str( boxString );
+#endif
+
 
          // Give the stream to tiff info to create a geometry.
          ossimTiffInfo info;
          ossim_uint32 entry = 0;
          ossimKeywordlist kwl; // Used to capture geometry data. 
          
-         if ( info.getImageGeometry(str, kwl, entry) )
+         if ( info.getImageGeometry(boxStream, kwl, entry) )
          {
             //---
             // The tiff embedded in the geojp2 only has one line
@@ -827,8 +837,8 @@ ossimRefPtr<ossimImageGeometry> ossimOpjJp2Reader::getImageGeometryFromGmlBox()
 #if 0
          // This doesn't work with VS2010...
          // Create a string stream and set the vector buffer as its source.
-         std::istringstream str;
-         str.rdbuf()->pubsetbuf( (char*)&box.front(), box.size() );
+         std::istringstream boxStream;
+         boxStream.rdbuf()->pubsetbuf( (char*)&box.front(), box.size() );
 #else
          // convert the vector into a string
          std::string boxString( box.begin(), box.end() );

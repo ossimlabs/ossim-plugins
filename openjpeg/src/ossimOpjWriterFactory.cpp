@@ -74,7 +74,7 @@ ossimImageFileWriter* ossimOpjWriterFactory::createWriter(
    else
    {
       // See if the type name is supported by the writer.
-      writer = new ossimOpjJp2Writer;
+      writer = new ossimOpjJp2Writer(typeName);
       if ( writer->hasImageType(typeName) == false )
       {
          writer = 0;
@@ -109,7 +109,14 @@ void ossimOpjWriterFactory::getTypeNameList(std::vector<ossimString>& typeList) 
 
 void ossimOpjWriterFactory::getImageTypeList(std::vector<ossimString>& imageTypeList) const
 {
+   // include both geotiff and gmljp2 headers
    imageTypeList.push_back( ossimString("ossim_opj_jp2") );
+
+   // include only a geotiff header
+   imageTypeList.push_back( ossimString("ossim_opj_geojp2") ); 
+
+   // include only a gmljp2 header
+   imageTypeList.push_back( ossimString("ossim_opj_gmljp2") ); 
 }
 
 void ossimOpjWriterFactory::getImageFileWritersBySuffix(

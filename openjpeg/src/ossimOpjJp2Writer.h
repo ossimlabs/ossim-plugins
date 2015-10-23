@@ -28,6 +28,14 @@ public:
    /* default constructor */
    ossimOpjJp2Writer();
 
+   /* 
+    * constructor with typeName
+    *   if typeName=="ossim_opj_geojp2", only write geotiff header
+    *   if typeName=="ossim_opj_gmljp2", only write gmljp2 header
+    *   else, write both headers
+    */
+   ossimOpjJp2Writer( const ossimString& typeName );
+
    /* virtual destructor */
    virtual ~ossimOpjJp2Writer();
 
@@ -45,7 +53,7 @@ public:
     *
     * Appends this writer image types to list "imageTypeList".
     *
-    * This writer only has one type "j2k".
+    * This writer has types "ossim_opj_jp2", "ossim_opj_geojp2", and "ossim_opj_gmljp2".
     *
     * @param imageTypeList stl::vector<ossimString> list to append to.
     */
@@ -113,7 +121,9 @@ public:
 
    /**
     * @param imageType
-    * @return true if "imagetype" is one of, "image/jp2" or "ossim_opj_jp2".
+    * @return true if "imagetype" is one of: 
+    * "image/jp2" or "image/j2k"
+    * "ossim_opj_jp2", ossim_opj_geojp2", or "ossim_opj_gmljp2"
     */
    bool hasImageType(const ossimString& imageType) const;
 
@@ -156,6 +166,8 @@ private:
    bool                m_ownsStreamFlag;
    bool                m_overviewFlag;
    ossimOpjCompressor* m_compressor;
+   bool                m_do_geojp2;
+   bool                m_do_gmljp2;
 
    TYPE_DATA
 

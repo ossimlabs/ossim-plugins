@@ -83,14 +83,15 @@ public:
    virtual void getTypeNameList(std::vector<ossimString>& typeList)const;
    
    /**
-    * @brief Adds "ossim_opj_jp2" to writer list.
+    * @brief Adds "ossim_opj_jp2", "ossim_opj_geojp2", and "ossim_opj_gmljp2" to writer list.
     * @param imageTypeList List to append to.
     */
    virtual void getImageTypeList(std::vector<ossimString>& imageTypeList)const;
 
    /**
-    * @brief Adds "ossim_opg_jp2" to writer list.
-    * @param imageTypeList List to append to.
+    * @brief Adds an ossimOpjJp2Writer instance to writer list.
+    * @param result List to append to.
+    * @param ext file extension should be either "jp2" or "j2k"
     */
    virtual void getImageFileWritersBySuffix(
       ossimImageWriterFactoryBase::ImageFileWriterList& result,

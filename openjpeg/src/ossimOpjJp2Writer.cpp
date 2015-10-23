@@ -43,7 +43,7 @@ static ossimTrace traceDebug("ossimOpjJp2Writer:debug");
 static const ossimIpt DEFAULT_TILE_SIZE(1024, 1024);
 
 //---
-// For the "ident" program which will find all exanded $Id$
+// For the "ident" program which will find all expanded $Id$
 // them.
 //---
 #if OSSIM_ID_ENABLED
@@ -54,7 +54,9 @@ ossimOpjJp2Writer::ossimOpjJp2Writer()
    : ossimImageFileWriter(),
      m_outputStream(0),
      m_ownsStreamFlag(false),
-     m_compressor(new ossimOpjCompressor())
+     m_compressor(new ossimOpjCompressor()),
+     m_do_geojp2(true),
+     m_do_gmljp2(true)
 {
    //---
    // Uncomment for debug mode:
@@ -78,6 +80,45 @@ ossimOpjJp2Writer::ossimOpjJp2Writer()
 
    // Set the output image type in the base class.
    setOutputImageType(getShortName());
+}
+
+ossimOpjJp2Writer::ossimOpjJp2Writer( const ossimString& typeName )
+   : ossimImageFileWriter(),
+     m_outputStream(0),
+     m_ownsStreamFlag(false),
+     m_compressor(new ossimOpjCompressor()),
+     m_do_geojp2(typeName.contains("ossim_opj_geojp2")),
+     m_do_gmljp2(typeName.contains("ossim_opj_gmljp2"))
+{
+   //---
+   // Uncomment for debug mode:
+   // traceDebug.setTraceFlag(true);
+   //---
+
+   if (traceDebug())
+   {
+      ossimNotify(ossimNotifyLevel_DEBUG)
+         << "ossimOpjJp2Writer::ossimOpjJp2Writer entered" << std::endl;
+#if OSSIM_ID_ENABLED
+      ossimNotify(ossimNotifyLevel_DEBUG)
+         << "OSSIM_ID:  "
+         << OSSIM_ID
+         << std::endl;
+#endif
+   }
+
+   // Since there is no internal geometry set the flag to write out one.
+   // setWriteExternalGeometryFlag(true);
+
+   // Set the output image type in the base class.
+   setOutputImageType(getShortName());
+
+   // If typeName is unrecognized, write out both geotiff and gmljp2 headers
+   if ( !m_do_geojp2 && !m_do_gmljp2 )
+   {
+       m_do_geojp2 = true;
+       m_do_gmljp2 = true;
+   }
 }
 
 ossimOpjJp2Writer::~ossimOpjJp2Writer()
@@ -229,9 +270,10 @@ bool ossimOpjJp2Writer::writeStream()
 
       // Write the geotiff and gml boxes:
       // Overwrite!!!  Supreme hack. (drb - 20150326)
-      writeGeotiffBox(m_outputStream, m_compressor);
-      writeGmlBox(m_outputStream, m_compressor);
-
+      if ( m_do_geojp2 == true )
+         writeGeotiffBox(m_outputStream, m_compressor);
+      if ( m_do_gmljp2 == true )
+         writeGmlBox(m_outputStream, m_compressor);
       m_outputStream->flush();
 
       std::streamoff newJp2cBoxPos = m_outputStream->tellp();
@@ -439,6 +481,8 @@ void ossimOpjJp2Writer::getPropertyNames(std::vector<ossimString>& propertyNames
 void ossimOpjJp2Writer::getImageTypeList(std::vector<ossimString>& imageTypeList)const
 {
    imageTypeList.push_back( getShortName() );
+   imageTypeList.push_back( "ossim_opj_geojp2" );
+   imageTypeList.push_back( "ossim_opj_gmljp2" );
 }
 
 ossimString ossimOpjJp2Writer::getExtension() const
@@ -456,7 +500,9 @@ bool ossimOpjJp2Writer::hasImageType(const ossimString& imageType) const
    bool result = false; 
    if ( (imageType == getShortName()) ||
         (imageType == "image/jp2")    ||
-        (imageType == "image/j2k") )
+        (imageType == "image/j2k")    ||
+        (imageType == "ossim_opj_geojp2") ||
+        (imageType == "ossim_opj_gmljp2") )
    {
       result = true;
    }
