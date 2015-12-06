@@ -1,5 +1,5 @@
-set(LIB_NAME ossimkmlsuperoverlay_plugin)
-MESSAGE( "************** LIBRARY SETUP FOR ossimkmlsuperoverlay_plugin******************")
+set(LIB_NAME ossim_kml_plugin)
+MESSAGE( "************** LIBRARY SETUP FOR ossim_kml_plugin******************")
 
 # Include ossim cmake stuff:
 include(OssimVersion)
