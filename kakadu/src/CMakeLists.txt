@@ -48,8 +48,7 @@ else(OSSIM_FOUND)
 endif(OSSIM_FOUND)
 
 if(KAKADU_ROOT_SRC)
-   include_directories(${KAKADU_ROOT_SRC}/coresys
-                       ${KAKADU_ROOT_SRC}/managed/all_includes)
+   include_directories(${KAKADU_ROOT_SRC}/managed/all_includes)
 else(KAKADU_ROOT_SRC)
    message(SEND_ERROR "Please pass in the KAKADU_ROOT_SRC and point it to the root source tree")
    set(KAKADU_ROOT_SRC "" CACHE STRING "Specify the root location where the kakadu source tree is located")
