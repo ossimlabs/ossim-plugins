@@ -1,5 +1,5 @@
 set(LIB_NAME ossim_hdf5_plugin)
-MESSAGE( "************** LIBRARY SETUP FOR ossimhdf5_plugin******************")
+MESSAGE( "************** LIBRARY SETUP FOR ossim_hdf5_plugin******************")
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 # Include ossim cmake stuff:
@@ -41,6 +41,9 @@ if(OSSIM_INSTALL_PLUGINS_WITH_VERSION)
 else(OSSIM_INSTALL_PLUGINS_WITH_VERSION)
    set(INSTALL_LIBRARY_DIR   "${INSTALL_LIBRARY_DIR}/ossim/plugins")
 endif(OSSIM_INSTALL_PLUGINS_WITH_VERSION)
+if(WIN32)
+ set(INSTALL_RUNTIME_DIR "${INSTALL_RUNTIME_DIR}/ossim/plugins")
+endif()
 
 OSSIM_LINK_LIBRARY(${LIB_NAME}
                    COMPONENT_NAME ossim TYPE "${OSSIM_PLUGIN_LINK_TYPE}"
