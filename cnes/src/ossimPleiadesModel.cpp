@@ -204,51 +204,64 @@ namespace ossimplugins
 
       // Generate metadata and rpc filename
       if ( (file.ext().downcase() != "jp2" && file.ext().downcase() != "tif")
-          || !file.exists())
+           || !file.exists())
       {
          //not a valid file
          return false;
       }
       else
       {
-        // DIMAPv1
-        ossimFilename DIMv1xmlFileTmp = file;
-        DIMv1xmlFileTmp.setFile("PHRDIMAP");
-        DIMv1xmlFileTmp.setExtension("XML");
+         
+         // DIMAPv1
+         ossimFilename DIMv1xmlFileTmp = file;
+         DIMv1xmlFileTmp.setFile("PHRDIMAP");
+         DIMv1xmlFileTmp.setExtension("XML");
 
-        if (DIMv1xmlFileTmp.exists())
-          {
-          DIMxmlFile = DIMv1xmlFileTmp;
-          RPCxmlFile = DIMv1xmlFileTmp;
-          }
-        else
-          {
-          // DIMAPv2
-          DIMxmlFile = file.path();
-          RPCxmlFile = file.path();
-          ossimFilename DIMxmlFileTmp = file.file();
-          ossimFilename RPCxmlFileTmp;
+         if (DIMv1xmlFileTmp.exists())
+         {
+            DIMxmlFile = DIMv1xmlFileTmp;
+            RPCxmlFile = DIMv1xmlFileTmp;
+         }
+         else
+         {
+            //---
+            // DIMAPv2
+            // Example file names:
+            // DIM_PHR1A_P_201202250025329_SEN_PRG_FC_5110-001.XML
+            // IMG_PHR1A_P_201202250025329_SEN_PRG_FC_5110-001_R1C1.tif
+            // RPC_PHR1A_P_201202250025329_SEN_PRG_FC_5110-001.XML
+            //---
+            DIMxmlFile = file.path();
+            RPCxmlFile = file.path();
+            ossimFilename DIMxmlFileTmp = file.file();
+            ossimFilename RPCxmlFileTmp;
+           
+            DIMxmlFileTmp = DIMxmlFileTmp.file().replaceStrThatMatch("^IMG_", "DIM_");
 
-          DIMxmlFileTmp = DIMxmlFileTmp.file().replaceStrThatMatch("^IMG_", "DIM_");
-          DIMxmlFileTmp = DIMxmlFileTmp.replaceStrThatMatch("_R[0-9]+C[0-9]+\\.(JP2|TIF)$", ".XML");
-          // Check if it is an XML extension
-          if( DIMxmlFileTmp.ext() != "XML")
+            //---
+            // Below substitution failing on lower case "tif" extension.
+            // Replacee with sustitute + setExtension call.  (drb 17 Feb. 2016)
+            // DIMxmlFileTmp =
+            // DIMxmlFileTmp.replaceStrThatMatch("_R[0-9]+C[0-9]+\\.(JP2|TIF)$", ".XML");
+            //---
+            DIMxmlFileTmp = DIMxmlFileTmp.replaceStrThatMatch("_R[0-9]+C[0-9]", "");
+            DIMxmlFileTmp.setExtension("XML");
+           
+            RPCxmlFileTmp = DIMxmlFileTmp.file().replaceStrThatMatch("^DIM_", "RPC_");
+           
+            DIMxmlFile = DIMxmlFile.dirCat(DIMxmlFileTmp);
+            RPCxmlFile = RPCxmlFile.dirCat(RPCxmlFileTmp);
+         }
+        
+         if (!DIMxmlFile.exists())
+         {
+            if (traceDebug())
+            {
+               ossimNotify(ossimNotifyLevel_DEBUG)
+                  << "PHR main DIMAP file " << DIMxmlFile << " doesn't exist ...\n";
+            }
             return false;
-
-          RPCxmlFileTmp = DIMxmlFileTmp.file().replaceStrThatMatch("^DIM_", "RPC_");
-
-          DIMxmlFile = DIMxmlFile.dirCat(DIMxmlFileTmp);
-          RPCxmlFile = RPCxmlFile.dirCat(RPCxmlFileTmp);
-          }
-
-        if (!DIMxmlFile.exists())
-        {
-          if (traceDebug())
-          {
-            ossimNotify(ossimNotifyLevel_DEBUG) << "PHR main DIMAP file " << DIMxmlFile << " doesn't exist ...\n";
-          }
-          return false;
-        }
+         }
       }
 
       if (traceDebug())
@@ -256,19 +269,20 @@ namespace ossimplugins
          ossimNotify(ossimNotifyLevel_DEBUG) << "Metadata xml file: " << DIMxmlFile << "\n";
          ossimNotify(ossimNotifyLevel_DEBUG) << "RPC xml file: " << RPCxmlFile << "\n";
       }
-
+      
       ossimString processingLevel;
       // Parse the metadata xml file
       if ( !theSupportData.valid() )
          theSupportData = new ossimPleiadesDimapSupportData();
-
+      
       if(!theSupportData->parseXmlFile(DIMxmlFile))
       {
          theSupportData = 0; // ossimRefPtr
          if (traceDebug())
          {
-           ossimNotify(ossimNotifyLevel_DEBUG) << "ossimPleiadesModel::open DEBUG:"
-                                               << "\nCould not open correctly DIMAP file" << std::endl;
+            ossimNotify(ossimNotifyLevel_DEBUG)
+               << "ossimPleiadesModel::open DEBUG:"
+               << "\nCould not open correctly DIMAP file" << std::endl;
          }
          return false;
       }
@@ -284,8 +298,9 @@ namespace ossimplugins
          if (!theSupportData->parseXmlFile(RPCxmlFile))
          {
             theSupportData = 0; // ossimRefPtr
-            ossimNotify(ossimNotifyLevel_WARN) << "ossimPleiadesModel::open WARNING:"
-                                               << "\nCould not open correctly RPC file" << std::endl;
+            ossimNotify(ossimNotifyLevel_WARN)
+               << "ossimPleiadesModel::open WARNING:"
+               << "\nCould not open correctly RPC file" << std::endl;
             return false;
          }
 
