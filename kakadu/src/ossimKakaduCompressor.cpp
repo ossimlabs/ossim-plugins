@@ -33,6 +33,7 @@
 #include <ossim/imaging/ossimImageGeometry.h>
 
 #include <ossim/support_data/ossimGeoTiff.h>
+#include <ossim/support_data/ossimNitfJ2klraTag.h>
 
 #include <jp2.h>
 #include <cmath> /* ceil */
@@ -1371,6 +1372,27 @@ bool ossimKakaduCompressor::writeGeotiffBox(const ossimImageGeometry* geom,
    return result;
    
 } // End: ossimKakaduCompressor::writeGeotiffBox
+
+void ossimKakaduCompressor::initialize(ossimNitfJ2klraTag* j2klraTag) const
+{
+   if ( j2klraTag )
+   {
+      j2klraTag->setOrigin(0);
+      j2klraTag->setLevelsO( (ossim_uint32)m_levels );
+      // bands set in writer.
+      j2klraTag->setLayersO( (ossim_uint32)m_layerSpecCount );
+
+      for (ossim_uint32 id = 0; id < (ossim_uint32)m_layerSpecCount; ++id)
+      {
+         j2klraTag->setLayerId( id, id);
+
+         // Need to calculate:
+         // j2klraTag->setLayerBitRate( id, 
+         ossimNotify(ossimNotifyLevel_DEBUG)
+            << "\nsize:  " << m_layerByteSizes[id];
+      }
+   }
+}
 
 void ossimKakaduCompressor::initializeCodingParams(kdu_core::kdu_params* cod,
                                                    const ossimIrect& imageRect)

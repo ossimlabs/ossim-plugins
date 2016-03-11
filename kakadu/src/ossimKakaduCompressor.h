@@ -31,6 +31,7 @@ class ossimImageData;
 class ossimImageGeometry;
 class ossimIpt;
 class ossimKakaduCompressedTarget;
+class ossimNitfJ2klraTag;
 
 namespace kdu_supp
 {
@@ -228,6 +229,11 @@ public:
                         const ossimIrect& rect,
                         const ossimFilename& tmpFile,
                         ossimPixelType pixelType);
+
+   /**
+    * @brief Initializes the tag.
+    */
+   void initialize(ossimNitfJ2klraTag* j2klraTag) const;
    
 private:
 

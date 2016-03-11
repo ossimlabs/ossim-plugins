@@ -65,7 +65,8 @@ bool ossimH5GridModel::setGridNodes( H5::DataSet* latDataSet,
       
       if ( m_crossesDateline )
       {
-         theLonGrid.setDomainType(ossimDblGrid::CONTINUOUS);
+         // theLonGrid.setDomainType(ossimDblGrid::CONTINUOUS);
+         theLonGrid.setDomainType(ossimDblGrid::WRAP_360);
       }
       else
       {

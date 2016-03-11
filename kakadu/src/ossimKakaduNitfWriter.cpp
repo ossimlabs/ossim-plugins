@@ -35,6 +35,7 @@
 #include <ossim/support_data/ossimNitfFileHeaderV2_1.h>
 #include <ossim/support_data/ossimNitfImageHeader.h>
 #include <ossim/support_data/ossimNitfImageHeaderV2_1.h>
+#include <ossim/support_data/ossimNitfJ2klraTag.h>
 
 #include <ostream>
 
@@ -282,6 +283,16 @@ bool ossimKakaduNitfWriter::writeStream()
    
    // Write the geometry info to the image header.
    writeGeometry(iHdr.get(), theInputConnection.get());
+
+#if 0
+   // Add the J2KLRA TRE:
+   ossimRefPtr<ossimNitfJ2klraTag> j2klraTag = new ossimNitfJ2klraTag();
+   m_compressor->initialize( j2klraTag.get() );
+   j2klraTag->setBandsO( BANDS );
+   ossimRefPtr<ossimNitfRegisteredTag> tag = j2klraTag.get();
+   ossimNitfTagInformation tagInfo( tag );
+   iHdr->addTag( tagInfo );
+#endif
    
    // Write the image header to stream capturing the stream position.
    iHdr->writeStream(*m_outputStream);
