@@ -46,6 +46,7 @@ static ossimTrace traceDebug ("ossimTieMeasurementGenerator:debug");
 //*****************************************************************************
 ossimTieMeasurementGenerator::ossimTieMeasurementGenerator()
    :
+   m_initOK(false),
    m_src(0),
    m_igxA(0),
    m_igxB(0),

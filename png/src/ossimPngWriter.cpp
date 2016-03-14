@@ -32,9 +32,6 @@ RTTI_DEF1(ossimPngWriter,
 	  "ossimPngWriter",
 	  ossimImageFileWriter)
 
-static const char DEFAULT_FILE_NAME[] = "output.png";
-static const ossim_int32 DEFAULT_PNG_QUALITY = 75;
-
 static const char COMPRESSION_LEVEL_KW[] = "compression_level";
 static const char ADD_ALPHA_CHANNEL_KW[] = "add_alpha_channel";
 
