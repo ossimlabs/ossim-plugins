@@ -1373,7 +1373,8 @@ bool ossimKakaduCompressor::writeGeotiffBox(const ossimImageGeometry* geom,
    
 } // End: ossimKakaduCompressor::writeGeotiffBox
 
-void ossimKakaduCompressor::initialize(ossimNitfJ2klraTag* j2klraTag) const
+void ossimKakaduCompressor::initialize( ossimNitfJ2klraTag* j2klraTag,
+                                        ossim_uint32 actualBitsPerPixel ) const
 {
    if ( j2klraTag )
    {
@@ -1382,14 +1383,27 @@ void ossimKakaduCompressor::initialize(ossimNitfJ2klraTag* j2klraTag) const
       // bands set in writer.
       j2klraTag->setLayersO( (ossim_uint32)m_layerSpecCount );
 
-      for (ossim_uint32 id = 0; id < (ossim_uint32)m_layerSpecCount; ++id)
+      const ossim_float64 TP = m_imageRect.area();
+      if ( TP )
       {
-         j2klraTag->setLayerId( id, id);
+         for (ossim_uint32 id = 0; id < (ossim_uint32)m_layerSpecCount; ++id)
+         {
+            j2klraTag->setLayerId( id, id);
 
-         // Need to calculate:
-         // j2klraTag->setLayerBitRate( id, 
-         ossimNotify(ossimNotifyLevel_DEBUG)
-            << "\nsize:  " << m_layerByteSizes[id];
+            if ( m_layerByteSizes[id] != KDU_LONG_MAX )
+            {
+               j2klraTag->setLayerBitRate(
+                  id, ( m_layerByteSizes[id] / (TP * 0.125) ) );
+            }
+            else
+            {
+               //---
+               // KDU_LONG_MAX indicates that the final quality layer should
+               // include all compressed bits. (abpp=actuall bits per pixel)
+               //---
+               j2klraTag->setLayerBitRate( id, actualBitsPerPixel );
+            }
+         }
       }
    }
 }
