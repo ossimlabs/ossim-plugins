@@ -234,7 +234,8 @@ bool ossimKakaduNitfWriter::writeStream()
    iHdr->setPixelType(ossimNitfCommon::getNitfPixelType(SCALAR));
    
    // Set the actual bits per pixel (ABPP) field.
-   iHdr->setActualBitsPerPixel(ossim::getActualBitsPerPixel(SCALAR));
+   ossim_uint32 abpp = ossim::getActualBitsPerPixel(SCALAR);
+   iHdr->setActualBitsPerPixel( abpp );
    
    // Set the bits per pixel (NBPP) field.
    iHdr->setBitsPerPixel(ossim::getBitsPerPixel(SCALAR));
@@ -284,15 +285,13 @@ bool ossimKakaduNitfWriter::writeStream()
    // Write the geometry info to the image header.
    writeGeometry(iHdr.get(), theInputConnection.get());
 
-#if 0
    // Add the J2KLRA TRE:
    ossimRefPtr<ossimNitfJ2klraTag> j2klraTag = new ossimNitfJ2klraTag();
-   m_compressor->initialize( j2klraTag.get() );
+   m_compressor->initialize( j2klraTag.get(), abpp );
    j2klraTag->setBandsO( BANDS );
    ossimRefPtr<ossimNitfRegisteredTag> tag = j2klraTag.get();
    ossimNitfTagInformation tagInfo( tag );
    iHdr->addTag( tagInfo );
-#endif
    
    // Write the image header to stream capturing the stream position.
    iHdr->writeStream(*m_outputStream);

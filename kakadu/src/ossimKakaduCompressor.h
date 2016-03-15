@@ -232,8 +232,11 @@ public:
 
    /**
     * @brief Initializes the tag.
+    * @param j2klraTag Pointer to tag.  Initialized by this.
+    * @param actualBitsPerPixel for scalar type.
     */
-   void initialize(ossimNitfJ2klraTag* j2klraTag) const;
+   void initialize( ossimNitfJ2klraTag* j2klraTag,
+                    ossim_uint32 actualBitsPerPixel ) const;
    
 private:
 
