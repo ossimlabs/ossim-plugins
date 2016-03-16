@@ -46,12 +46,16 @@ static ossimTrace traceDebug("ossimKakaduCompressor:debug");
 
 static const ossim_int32 DEFAULT_LEVELS = 5;
 
+//---
 // Matches ossimKakaduCompressionQuality enumeration:
+// EPJE = Exploitation Preferred J2K Encoding
+//---
 static const ossimString COMPRESSION_QUALITY[] = { "unknown",
                                                    "user_defined",
                                                    "numerically_lossless",
                                                    "visually_lossless",
-                                                   "lossy" };
+                                                   "lossy",
+                                                   "epje" };
 
 static void transfer_bytes(
    kdu_core::kdu_line_buf &dest, kdu_core::kdu_byte *src,
@@ -1030,7 +1034,8 @@ void ossimKakaduCompressor::setQualityType(ossimKakaduCompressionQuality type)
    // and lossy need to set the reversible flag to false.
    //---
    if ( (type == ossimKakaduCompressor::OKP_VISUALLY_LOSSLESS) ||
-        (type == ossimKakaduCompressor::OKP_LOSSY) )
+        (type == ossimKakaduCompressor::OKP_LOSSY) ||
+        (type == ossimKakaduCompressor::OKP_EPJE) )
    {
       setReversibleFlag(false);
    }
@@ -1182,12 +1187,14 @@ ossimRefPtr<ossimProperty> ossimKakaduCompressor::getProperty(
          
       // constraint list
       vector<ossimString> constraintList;
-      constraintList.push_back(COMPRESSION_QUALITY[ossimKakaduCompressor::
-                                                   OKP_NUMERICALLY_LOSSLESS]);
-      constraintList.push_back(COMPRESSION_QUALITY[ossimKakaduCompressor::
-                                                   OKP_VISUALLY_LOSSLESS]);
-      constraintList.push_back(COMPRESSION_QUALITY[ossimKakaduCompressor::
-                                                   OKP_LOSSY]);
+      constraintList.push_back(
+         COMPRESSION_QUALITY[ossimKakaduCompressor::OKP_NUMERICALLY_LOSSLESS]);
+      constraintList.push_back(
+         COMPRESSION_QUALITY[ossimKakaduCompressor::OKP_VISUALLY_LOSSLESS]);
+      constraintList.push_back(
+         COMPRESSION_QUALITY[ossimKakaduCompressor::OKP_LOSSY]);
+      constraintList.push_back(
+         COMPRESSION_QUALITY[ossimKakaduCompressor::OKP_EPJE]);
       
       p = new ossimStringProperty(name,
                                   value,
@@ -1433,7 +1440,14 @@ void ossimKakaduCompressor::initializeCodingParams(kdu_core::kdu_params* cod,
       // Set the compression order.  Note LRCP is the current kakadu default.
       // L=layer; R=resolution C=component; P=position
       //---
-      setProgressionOrder(cod, Corder_LRCP);
+      if ( m_qualityType != OKP_EPJE )
+      {
+         setProgressionOrder(cod, Corder_LRCP);
+      }
+      else
+      {
+         setProgressionOrder(cod, Corder_RLCP);
+      }
       
       // total pixels
       const ossim_float64 TP = imageRect.area();
@@ -1510,6 +1524,60 @@ void ossimKakaduCompressor::initializeCodingParams(kdu_core::kdu_params* cod,
          }
          case ossimKakaduCompressor::OKP_VISUALLY_LOSSLESS:
          {
+            setReversibleFlag(false);
+            
+            setWaveletKernel(cod, Ckernels_W9X7);
+            
+            m_layerSpecCount = 19;
+            m_layerByteSizes.resize(m_layerSpecCount);
+            m_layerByteSizes[0] =
+               static_cast<kdu_core::kdu_long>(std::ceil( TP * 0.03125 * 0.125 ));
+            m_layerByteSizes[1] =
+               static_cast<kdu_core::kdu_long>(std::ceil(TP * 0.0625* 0.125 ));
+            m_layerByteSizes[2] =
+               static_cast<kdu_core::kdu_long>(std::ceil(TP * 0.125* 0.125 ));
+            m_layerByteSizes[3] =
+               static_cast<kdu_core::kdu_long>(std::ceil(TP * 0.25* 0.125 ));
+            m_layerByteSizes[4] =
+               static_cast<kdu_core::kdu_long>(std::ceil(TP * 0.5* 0.125 ));
+            m_layerByteSizes[5] =
+               static_cast<kdu_core::kdu_long>(std::ceil(TP * 0.6* 0.125 ));
+            m_layerByteSizes[6] =
+               static_cast<kdu_core::kdu_long>(std::ceil(TP * 0.7* 0.125 ));
+            m_layerByteSizes[7] =
+               static_cast<kdu_core::kdu_long>(std::ceil(TP * 0.8* 0.125 ));
+            m_layerByteSizes[8] =
+               static_cast<kdu_core::kdu_long>(std::ceil(TP * 0.9* 0.125 ));
+            m_layerByteSizes[9] =
+               static_cast<kdu_core::kdu_long>(std::ceil(TP * 1.0* 0.125 ));
+            m_layerByteSizes[10] =
+               static_cast<kdu_core::kdu_long>(std::ceil(TP * 1.1* 0.125 ));
+             m_layerByteSizes[11] =
+               static_cast<kdu_core::kdu_long>(std::ceil(TP * 1.2* 0.125 ));
+            m_layerByteSizes[12] =
+               static_cast<kdu_core::kdu_long>(std::ceil(TP * 1.3* 0.125 ));
+            m_layerByteSizes[13] =
+               static_cast<kdu_core::kdu_long>(std::ceil(TP * 1.5* 0.125 ));
+            m_layerByteSizes[14] =
+               static_cast<kdu_core::kdu_long>(std::ceil(TP * 1.7* 0.125 ));
+            m_layerByteSizes[15] =
+               static_cast<kdu_core::kdu_long>(std::ceil(TP * 2.0* 0.125 ));
+            m_layerByteSizes[16] =
+               static_cast<kdu_core::kdu_long>(std::ceil(TP * 2.3* 0.125 ));
+            m_layerByteSizes[17] =
+               static_cast<kdu_core::kdu_long>(std::ceil(TP * 2.8* 0.125 ));
+            m_layerByteSizes[18] =
+               static_cast<kdu_core::kdu_long>(std::ceil(TP * 3.5* 0.125 ));
+            break;
+         }
+         case ossimKakaduCompressor::OKP_EPJE:
+         {
+            //---
+            // Exploitation Preferred J2K Encoding(EPJE):
+            // This is currently the same as VISUALLY_LOSSLESS but making
+            // separate code block as I anticipate tweaking this.
+            // drb - 16 Mar. 2016
+            //---
             setReversibleFlag(false);
             
             setWaveletKernel(cod, Ckernels_W9X7);
@@ -1670,6 +1738,10 @@ void ossimKakaduCompressor::setQualityTypeString(const ossimString& s)
    {
       setQualityType(ossimKakaduCompressor::OKP_LOSSY);
    }
+   else if (type == "epje")
+   {
+      setQualityType(ossimKakaduCompressor::OKP_EPJE);
+   }
    else
    {
       if ( traceDebug() )
@@ -1741,7 +1813,7 @@ void ossimKakaduCompressor::setProgressionOrder(kdu_core::kdu_params* cod,
    //---
    if (cod)
    {
-      if ( (corder < 0) || (corder > 4) )
+      if ( (corder < 0) || (corder > 5) )
       {
          corder = Corder_LRCP;
       }
