@@ -10,10 +10,6 @@
 /* this file defines the API for the core Potrace library. For a more
    detailed description of the API, see potracelib.pdf */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* ---------------------------------------------------------------------- */
 /* tracing parameters */
 
@@ -136,9 +132,5 @@ void potrace_state_free(potrace_state_t *st);
 char *potrace_version(void);
 
 int potrace_geojson(FILE *fout, potrace_path_t *plist);
-
-#ifdef  __cplusplus
-} /* end of extern "C" */
-#endif
 
 #endif /* POTRACELIB_H */

@@ -11,7 +11,10 @@
 #include <ossim/util/ossimUtility.h>
 #include <ossim/plugin/ossimPluginConstants.h>
 #include <ossim/imaging/ossimImageHandler.h>
+
+extern "C" {
 #include "potracelib.h"
+}
 
 class OSSIM_DLL ossimPotraceUtil : public ossimUtility
 {
