@@ -10,6 +10,8 @@
 
 #include <ossim/util/ossimUtility.h>
 #include <ossim/plugin/ossimPluginConstants.h>
+#include <ossim/imaging/ossimImageHandler.h>
+#include "potracelib.h"
 
 class OSSIM_DLL ossimPotraceUtil : public ossimUtility
 {
@@ -33,8 +35,15 @@ public:
    virtual void getKwlTemplate(ossimKeywordlist& kwl);
 
 private:
-   double m_tolerance;
+   potrace_bitmap_t* convertToBitmap();
+   bool writeGeoJSON(potrace_path_t* vectorList);
 
+   double m_tolerance;
+   ossimFilename m_inputRasterFname;
+   ossimFilename m_outputVectorFname;
+   ossimFilename m_bitmapFname;
+
+   ossimRefPtr<ossimImageHandler> m_inputHandler;
 };
 
 #endif /* #ifndef ossimPotraceUtility_HEADER */

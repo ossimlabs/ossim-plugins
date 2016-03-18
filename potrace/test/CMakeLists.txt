@@ -1,4 +1,4 @@
-message( "************** Begin: CMAKE SETUP FOR potrace-plugin-test ******************" )
+message( "   Begin: CMAKE SETUP FOR potrace-plugin-test " )
 
 cmake_minimum_required (VERSION 2.8)
 
@@ -10,8 +10,14 @@ else()
    set(LIBSUFFIX "")
 endif()
 
+find_package(ossim)
+if(OSSIM_FOUND)
+   include_directories( ${OSSIM_INCLUDE_DIR} )
+   set( requiredLibs ${requiredLibs} ${OSSIM_LIBRARIES} )
+else(OSSIM_FOUND)
+   message(FATAL_ERROR "Could not find ossim")
+endif(OSSIM_FOUND)
 
-set(requiredLibs ${requiredLibs} ossim-potrace-plugin )
 message( STATUS "Required libs       = ${requiredLibs}" )
 
 # ---
@@ -26,7 +32,6 @@ set_target_properties(ossim-potrace-plugin-test
                       PROPERTIES 
                       RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
-# pdal-plugin-test application links with required libs.
+# potrace-plugin-test application links with required libs.
 target_link_libraries( ossim-potrace-plugin-test ${requiredLibs} )
 
-message( "************** End: CMAKE SETUP FOR potrace-plugin-test ******************" )

@@ -1,5 +1,4 @@
 set(LIB_NAME ossim_potrace_plugin)
-message( "************** LIBRARY SETUP FOR ossim_potrace_plugin ******************")
 
 # Include ossim cmake stuff:
 include(OssimVersion)
@@ -8,7 +7,15 @@ include(OssimUtilities)
 
 set(requiredLibs)
 
-file(GLOB_RECURSE OSSIMPLUGIN_SRCS *.cpp)
+find_package(ossim)
+if(OSSIM_FOUND)
+   include_directories( ${OSSIM_INCLUDE_DIR} )
+   set( requiredLibs ${requiredLibs} ${OSSIM_LIBRARIES} )
+else(OSSIM_FOUND)
+   message(FATAL_ERROR "Could not find ossim")
+endif(OSSIM_FOUND)
+
+file(GLOB_RECURSE OSSIMPLUGIN_SRCS *.cpp *.c)
 file(GLOB_RECURSE OSSIMPLUGIN_HEADERS *.h)
 
 #---
