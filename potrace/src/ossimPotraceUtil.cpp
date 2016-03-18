@@ -114,6 +114,13 @@ bool ossimPotraceUtil::execute()
             <<endl;
       return false;
    }
+   // Vector coordinates are in image space. Need to convert to geographic lat/lon:
+   ossimRefPtr<ossimImageGeometry> geom = m_inputHandler->getImageGeometry();
+   if (!geom.valid())
+   {
+      cout <<"ossimPotraceUtil:"<<__LINE__<<" Encountered null image geometry!"<<endl;
+      return false;
+   }
 
    // Convert raster to bitmap:
    potrace_bitmap_t* potraceBitmap = convertToBitmap();
@@ -122,18 +129,12 @@ bool ossimPotraceUtil::execute()
 
    // Perform vectorization:
    potrace_param_t* potraceParam = potrace_param_default();
+   potraceParam->turdsize = 10;
+   potraceParam->alphamax = 0;
    potrace_state_t* potraceOutput = potrace_trace(potraceParam, potraceBitmap);
    if (!potraceOutput)
    {
       cout <<"ossimPotraceUtil:"<<__LINE__<<" Null pointer returned from potrace_trace!"<<endl;
-      return false;
-   }
-
-   // Vector coordinates are in image space. Need to convert to geographic lat/lon:
-   ossimRefPtr<ossimImageGeometry> geom = m_inputHandler->getImageGeometry();
-   if (!geom.valid())
-   {
-      cout <<"ossimPotraceUtil:"<<__LINE__<<" Encountered null image geometry!"<<endl;
       return false;
    }
 
@@ -168,9 +169,9 @@ bool ossimPotraceUtil::execute()
 
    // Release memory:
    potrace_state_free(potraceOutput);
-   delete potraceBitmap->map;
+   //free(potraceBitmap->map);
    delete potraceBitmap;
-   delete potraceParam;
+   free(potraceParam);
 
    return true;
 }
