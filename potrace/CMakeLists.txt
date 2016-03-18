@@ -13,9 +13,6 @@ else(OSSIM_FOUND)
 endif(OSSIM_FOUND)
 
 add_subdirectory( src )
-
-#IF(BUILD_OSSIM_TESTS)
-   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test ${CMAKE_CURRENT_BINARY_DIR}/test)
-#ENDIF()
+add_subdirectory( app )
 
 message( "************** END SETUP FOR ossim_potrace_plugin ******************" )

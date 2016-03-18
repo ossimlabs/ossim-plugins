@@ -1,4 +1,4 @@
-message( "   Begin: CMAKE SETUP FOR potrace-plugin-test " )
+message( "   Begin: CMAKE SETUP FOR ossim-potrace app " )
 
 cmake_minimum_required (VERSION 2.8)
 
@@ -21,17 +21,17 @@ endif(OSSIM_FOUND)
 message( STATUS "Required libs       = ${requiredLibs}" )
 
 # ---
-# potrace-plugin-test app:
+# ossim-potrace app:
 # ---
 
 # Add the executable:
-add_executable(ossim-potrace-plugin-test plugin-test.cpp )
+add_executable(ossim-potrace ossim-potrace.cpp )
 
 # Set the output dir:
-set_target_properties(ossim-potrace-plugin-test 
+set_target_properties(ossim-potrace 
                       PROPERTIES 
                       RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
-# potrace-plugin-test application links with required libs.
-target_link_libraries( ossim-potrace-plugin-test ${requiredLibs} )
+# ossim-potrace application links with required libs.
+target_link_libraries( ossim-potrace ${requiredLibs} )
 

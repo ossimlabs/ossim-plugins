@@ -17,7 +17,10 @@
 
 int usage(char* app_name)
 {
-   cout << "\nUsage: "<<app_name<<" [ <filename> ]\n" << endl;
+   cout << "\nUtility app to convert a raster image to geojson vector list. Any non-null pixel in "
+         "the raster is treated as an \"on\" pixel for converting to bitmap before performing "
+         "trace."<<endl;
+   cout << "\nUsage: "<<app_name<<" <filename> \n" << endl;
    return 1;
 }
 
@@ -25,12 +28,10 @@ int main(int argc, char** argv)
 {
    ossimInit::instance()->initialize(argc, argv);
 
-   if (argc == 1)
+   if ((argc < 2)  || (ossimString(argv[1]).contains("--help")))
       return usage(argv[0]);
 
-   ossimFilename fname = "simulated.tif";
-   if (argc > 2)
-      fname = argv[1];
+   ossimFilename fname = argv[1];
 
    ossimRefPtr<ossimUtility> util = ossimUtilityRegistry::instance()->createUtility("potrace");
 
