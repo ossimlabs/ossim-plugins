@@ -51,7 +51,8 @@ public:
       OKP_USER_DEFINED         = 1,
       OKP_NUMERICALLY_LOSSLESS = 2,
       OKP_VISUALLY_LOSSLESS    = 3,
-      OKP_LOSSY                = 4
+      OKP_LOSSY                = 4,
+      OKP_EPJE                 = 5  // Exploitation Preferred J2K Encoding
    };
 
    /** default constructor */
