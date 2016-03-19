@@ -278,20 +278,24 @@ ossimProjection* ossimGdalProjectionFactory::createProjection(const ossimFilenam
                  units,
                  true);
 
-         std::stringstream mString;
+         std::stringstream matrixString;
          // store as a 4x4 matrix
-         mString << ossimString::toString(geoTransform[1], 20)
-                 << " " << ossimString::toString(geoTransform[2], 20)
-                 << " " << 0 << " "
-                 << ossimString::toString(geoTransform[0], 20)
-                 << " " << ossimString::toString(geoTransform[4], 20)
-                 << " " << ossimString::toString(geoTransform[5], 20)
-                 << " " << 0 << " "
-                 << ossimString::toString(geoTransform[3], 20)
-                 << " " << 0 << " " << 0 << " " << 1 << " " << 0
-                 << " " << 0 << " " << 0 << " " << 0 << " " << 1;
-
-         kwl.add(ossimKeywordNames::IMAGE_MODEL_TRANSFORM_MATRIX_KW, mString.str().c_str(), true);
+         matrixString
+            << ossimString::toString(geoTransform[1], 20)
+            << " " << ossimString::toString(geoTransform[2], 20)
+            << " " << 0 << " "
+            << ossimString::toString(geoTransform[0], 20)
+            << " " << ossimString::toString(geoTransform[4], 20)
+            << " " << ossimString::toString(geoTransform[5], 20)
+            << " " << 0 << " "
+            << ossimString::toString(geoTransform[3], 20)
+            << " " << 0 << " " << 0 << " " << 1 << " " << 0
+            << " " << 0 << " " << 0 << " " << 0 << " " << 1;
+         
+         kwl.add(ossimKeywordNames::IMAGE_MODEL_TRANSFORM_MATRIX_KW,
+                 matrixString.str().c_str(), true);
+         kwl.add(ossimKeywordNames::IMAGE_MODEL_TRANSFORM_UNIT_KW,
+                 units.string().c_str(), true);
 
          //---
          // SPECIAL CASE:  ArcGrid in British National Grid
