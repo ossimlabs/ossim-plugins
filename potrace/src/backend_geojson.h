@@ -7,9 +7,8 @@
 #define BACKEND_GEO_H
 
 #include "potracelib.h"
-#include "imginfo.h"
 
-int page_geojson(FILE *fout, potrace_path_t *plist, imginfo_t *imginfo);
+int page_geojson(FILE *fout, potrace_path_t *plist, int as_polygons);
 
 #endif /* BACKEND_GEO_H */
 

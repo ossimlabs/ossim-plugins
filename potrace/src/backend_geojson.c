@@ -16,14 +16,10 @@
 
 #include "potracelib.h"
 #include "curve.h"
-#include "trans.h"
 #include "backend_geojson.h"
 #include "lists.h"
 #include "auxiliary.h"
 #include "imginfo.h"
-
-/* ---------------------------------------------------------------------- */
-/* auxiliary */
 
 /* return a point on a 1-dimensional Bezier segment */
 static inline double bezier(double t, double x0, double x1, double x2, double x3) {
@@ -31,7 +27,7 @@ static inline double bezier(double t, double x0, double x1, double x2, double x3
   return s*s*s*x0 + 3*(s*s*t)*x1 + 3*(t*t*s)*x2 + t*t*t*x3;
 }
 
-static char *format = "%f";
+static char *format = "%.8f"; // for geographic point to millimeter precision
 
 /* Convert a floating-point number to a string, using a pre-determined
    format. The format must be previously set with set_format().
@@ -53,83 +49,65 @@ static char *round_to_unit(double x) {
 
 static dpoint_t cur;
 
-static void geojson_moveto(FILE *fout, dpoint_t p, trans_t tr) {
-  dpoint_t q;
-
-  q = trans(p, tr);
-
-  fprintf(fout, "[%s, %s]", round_to_unit(q.x), round_to_unit(q.y));
-
-  cur = q;
+static void geojson_moveto(FILE *fout, dpoint_t p)
+{
+  fprintf(fout, "[%s, %s]", round_to_unit(p.x), round_to_unit(p.y));
+  cur = p;
 }
 
-static void geojson_lineto(FILE *fout, dpoint_t p, trans_t tr) {
-  dpoint_t q;
+static void geojson_lineto(FILE *fout, dpoint_t p)
+{
+  fprintf(fout, ", [%s, %s]", round_to_unit(p.x), round_to_unit(p.y));
 
-  q = trans(p, tr);
-
-  fprintf(fout, ", [%s, %s]", round_to_unit(q.x), round_to_unit(q.y));
-
-  cur = q;
+  cur = p;
 }
 
-static void geojson_curveto(FILE *fout, dpoint_t p1, dpoint_t p2, dpoint_t p3, trans_t tr) {
-  dpoint_t q1;
-  dpoint_t q2;
-  dpoint_t q3;
+static void geojson_curveto(FILE *fout, dpoint_t p1, dpoint_t p2, dpoint_t p3)
+{
   double step, t;
   int i;
   double x, y;
 
-  q1 = trans(p1, tr);
-  q2 = trans(p2, tr);
-  q3 = trans(p3, tr);
-
   step = 1.0 / 8.0;
 
   for (i=0, t=step; i<8; i++, t+=step) {
-    x = bezier(t, cur.x, q1.x, q2.x, q3.x);
-    y = bezier(t, cur.y, q1.y, q2.y, q3.y);
+    x = bezier(t, cur.x, p1.x, p2.x, p3.x);
+    y = bezier(t, cur.y, p1.y, p2.y, p3.y);
 
     fprintf(fout, ", [%s, %s]", round_to_unit(x), round_to_unit(y));
   }
 
-  cur = q3;
+  cur = p3;
 }
 
-/* ---------------------------------------------------------------------- */
-/* functions for converting a path to an SVG path element */
 
-static int geojson_path(FILE *fout, potrace_curve_t *curve, trans_t tr) {
+static int geojson_path(FILE *fout, potrace_curve_t *curve) {
   int i;
   dpoint_t *c;
   int m = curve->n;
 
-  fprintf(fout, "      [");
-
   c = curve->c[m-1];
-  geojson_moveto(fout, c[2], tr);
+  geojson_moveto(fout, c[2]); // Write last point in the curve as the first entry for closure
 
   for (i=0; i<m; i++) {
     c = curve->c[i];
     switch (curve->tag[i]) {
     case POTRACE_CORNER:
-      geojson_lineto(fout, c[1], tr);
-      geojson_lineto(fout, c[2], tr);
+      geojson_lineto(fout, c[1]);
+      geojson_lineto(fout, c[2]);
       break;
     case POTRACE_CURVETO:
-      geojson_curveto(fout, c[0], c[1], c[2], tr);
+      geojson_curveto(fout, c[0], c[1], c[2]);
       break;
     }
   }
-
-  fprintf(fout, " ]");
 
   return 0;
 }
 
 
-static void write_polygons(FILE *fout, potrace_path_t *tree, trans_t tr, int first) {
+static void write_polygons(FILE *fout, potrace_path_t *tree, int first )
+{
   potrace_path_t *p, *q;
 
   for (p=tree; p; p=p->sibling) {
@@ -142,52 +120,74 @@ static void write_polygons(FILE *fout, potrace_path_t *tree, trans_t tr, int fir
     fprintf(fout, "    \"type\": \"Polygon\",\n");
     fprintf(fout, "    \"coordinates\": [\n");
 
-    geojson_path(fout, &p->curve, tr);
+    fprintf(fout, "      [");
+    geojson_path(fout, &p->curve);
+    fprintf(fout, " ]");
 
-    for (q=p->childlist; q; q=q->sibling) {
-      fprintf(fout, ",\n");
-      geojson_path(fout, &q->curve, tr);
+    // Traverse all siblings of this path's child:
+    for (q=p->childlist; q; q=q->sibling)
+    {
+      fprintf(fout, ",\n      [");
+      geojson_path(fout, &q->curve);
+      fprintf(fout, " ]");
     }
 
     fprintf(fout, "    ]\n");
     fprintf(fout, "  }\n");
     fprintf(fout, "}");
 
-    for (q=p->childlist; q; q=q->sibling) {
-      write_polygons(fout, q->childlist, tr, 0);
-    }
+    for (q=p->childlist; q; q=q->sibling)
+      write_polygons(fout, q->childlist, 0);
 
     first = 0;
   }
 }
 
+  static void write_line_strings(FILE *fout, potrace_path_t *tree, int first )
+  {
+    potrace_path_t *p, *q;
+
+    for (p=tree; p; p=p->sibling)
+    {
+      if (!first)
+         fprintf(fout, ",\n");
+
+      fprintf(fout, "{ \"type\": \"Feature\",\n");
+      fprintf(fout, "  \"properties\": { },\n");
+      fprintf(fout, "  \"geometry\": {\n");
+      fprintf(fout, "    \"type\": \"LineString\",\n");
+      fprintf(fout, "    \"coordinates\": [\n");
+
+      geojson_path(fout, &p->curve);
+
+      fprintf(fout, "    ]\n"); // close coordinates list
+      fprintf(fout, "  }\n"); // close geometry
+      fprintf(fout, "}"); // close feature
+
+      // Recursive call treating all children as separate line segments:
+      for (q=p->childlist; q; q=q->sibling)
+         write_line_strings(fout, q, 0);
+
+      first = 0;
+    }
+  }
+
 /* ---------------------------------------------------------------------- */
 /* Backend. */
 
 /* public interface for GeoJSON */
-int page_geojson(FILE *fout, potrace_path_t *plist, imginfo_t *imginfo) {
-
-  trans_t tr;
-
-  /* set up the coordinate transform (rotation) */
-  tr.bb[0] = imginfo->trans.bb[0]+imginfo->lmar+imginfo->rmar;
-  tr.bb[1] = imginfo->trans.bb[1]+imginfo->tmar+imginfo->bmar;
-  tr.orig[0] = imginfo->trans.orig[0]+imginfo->lmar;
-  tr.orig[1] = imginfo->trans.orig[1]+imginfo->bmar;
-  tr.x[0] = imginfo->trans.x[0];
-  tr.x[1] = imginfo->trans.x[1];
-  tr.y[0] = imginfo->trans.y[0];
-  tr.y[1] = imginfo->trans.y[1];
-
-  /* set the print format for floating point numbers */
-  format = "%.8f";
-
+int page_geojson(FILE *fout, potrace_path_t *plist, int as_polygons)
+{
   /* header */
   fprintf(fout, "{\n");
   fprintf(fout, "\"type\": \"FeatureCollection\",\n");
   fprintf(fout, "\"features\": [\n");
+  fflush(fout);
 
-  write_polygons(fout, plist, tr, 1);
+  if (as_polygons)
+     write_polygons(fout, plist, 1);
+  else
+     write_line_strings(fout, plist, 1);
 
   /* write footer */
   fprintf(fout, "\n]\n");

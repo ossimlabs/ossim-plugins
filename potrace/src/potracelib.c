@@ -116,29 +116,9 @@ char *potrace_version(void) {
   return s;
 }
 
-int potrace_geojson(FILE *fout, potrace_path_t *plist)
+int potrace_geojson(FILE *fout, potrace_path_t *plist, int as_polygons)
 {
-   imginfo_t imgInfo;
-   imgInfo.pixwidth = 0;
-   imgInfo.pixheight = 0;
-   imgInfo.width = 0;
-   imgInfo.height = 0;
-   imgInfo.lmar = 0;
-   imgInfo.rmar = 0;
-   imgInfo.tmar = 0;
-   imgInfo.bmar = 0;
-   imgInfo.trans.bb[0] = 0;
-   imgInfo.trans.bb[0] = 0;
-   imgInfo.trans.orig[0] = 0;
-   imgInfo.trans.orig[1] = 0;
-   imgInfo.trans.x[0] = 1.0;
-   imgInfo.trans.y[0] = 0.0;
-   imgInfo.trans.x[1] = 0.0;
-   imgInfo.trans.y[1] = 1.0;
-   imgInfo.trans.scalex = 180.0; // Used for formatting output precision
-   imgInfo.trans.scaley = 90.0;
-
-   int r = page_geojson(fout, plist, &imgInfo);
+   int r = page_geojson(fout, plist, as_polygons);
    return r;
 }
 

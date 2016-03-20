@@ -131,6 +131,6 @@ void potrace_state_free(potrace_state_t *st);
    of potracelib */
 char *potrace_version(void);
 
-int potrace_geojson(FILE *fout, potrace_path_t *plist);
+int potrace_geojson(FILE *fout, potrace_path_t *plist, int as_polygons);
 
 #endif /* POTRACELIB_H */

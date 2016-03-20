@@ -21,7 +21,6 @@ static const string TOLERANCE_KW = "tolerance";
 
 
 ossimPotraceUtil::ossimPotraceUtil()
-:  m_tolerance(0)
 {
 }
 
@@ -39,23 +38,12 @@ void ossimPotraceUtil::setUsage(ossimArgumentParser& ap)
    ossimString usageString = ap.getApplicationName();
    usageString += " [options] <output-vector-file>";
    au->setCommandLineUsage(usageString);
-
-   // Set the command line options:
-   au->addCommandLineOption("--tolerance <float>",
-         "tolerance +- deviation from threshold for marginal classifications. Defaults to 0.05.");
 }
 
 bool ossimPotraceUtil::initialize(ossimArgumentParser& ap)
 {
    string ts1;
    ossimArgumentParser::ossimParameter sp1(ts1);
-   string ts2;
-   ossimArgumentParser::ossimParameter sp2(ts2);
-   string ts3;
-   ossimArgumentParser::ossimParameter sp3(ts3);
-
-   if ( ap.read("--tolerance", sp1))
-      m_kwl.addPair(TOLERANCE_KW, ts1);
 
    if (!ossimUtility::initialize(ap))
       return false;
@@ -84,18 +72,13 @@ void ossimPotraceUtil::initialize(const ossimKeywordlist& kwl)
       m_kwl.addList( kwl, true );
    }
 
-   value = m_kwl.findKey(TOLERANCE_KW);
-   if (!value.empty())
-      m_tolerance = value.toDouble();
-
-
    m_inputRasterFname = m_kwl.findKey(ossimKeywordNames::IMAGE_FILE_KW);
 
    m_outputVectorFname = m_kwl.findKey(ossimKeywordNames::OUTPUT_FILE_KW);
    if (m_outputVectorFname.empty())
    {
       m_outputVectorFname = m_inputRasterFname;
-      m_outputVectorFname.setExtension("geojson");
+      m_outputVectorFname.setExtension("json");
    }
 
    ossimUtility::initialize(kwl);
@@ -246,7 +229,7 @@ bool ossimPotraceUtil::writeGeoJSON(potrace_path_t* vectorList)
       return false;
    }
 
-   potrace_geojson(outFile, vectorList);
+   potrace_geojson(outFile, vectorList, 0);
 
    return true;
 }

@@ -41,7 +41,6 @@ private:
    potrace_bitmap_t* convertToBitmap();
    bool writeGeoJSON(potrace_path_t* vectorList);
 
-   double m_tolerance;
    ossimFilename m_inputRasterFname;
    ossimFilename m_outputVectorFname;
    ossimFilename m_bitmapFname;
