@@ -15,12 +15,13 @@
 using namespace std;
 
 const char* ossimPotraceUtil::DESCRIPTION =
-      "Computes vector representation of input image.";
+      "Computes vector representation of input raster image.";
 
-static const string TOLERANCE_KW = "tolerance";
+static const string MODE_KW = "mode";
 
 
 ossimPotraceUtil::ossimPotraceUtil()
+:  m_mode (LINESTRING)
 {
 }
 
@@ -36,8 +37,15 @@ void ossimPotraceUtil::setUsage(ossimArgumentParser& ap)
    // Set the general usage:
    ossimApplicationUsage* au = ap.getApplicationUsage();
    ossimString usageString = ap.getApplicationName();
-   usageString += " [options] <output-vector-file>";
+   usageString += " [options] <input-raster-file> [<output-vector-file>]";
    au->setCommandLineUsage(usageString);
+
+   // Set the command line options:
+   au->addCommandLineOption("--mode polygon|linestring",
+         "Specifies whether to represent foreground-background boundary as polygons or line-strings"
+         ". Polygons are closed regions surrounding either null or non-null pixels. Most viewers "
+         "will represent polygons as solid blobs. Line-strings only outline the boundary but do not"
+         " maintain sense of \"insideness\"");
 }
 
 bool ossimPotraceUtil::initialize(ossimArgumentParser& ap)
@@ -48,6 +56,9 @@ bool ossimPotraceUtil::initialize(ossimArgumentParser& ap)
    if (!ossimUtility::initialize(ap))
       return false;
 
+   if ( ap.read("--mode", sp1))
+      m_kwl.addPair(MODE_KW, ts1);
+
    // Remaining argument is input and output file names:
    if (ap.argc() > 1)
    {
@@ -55,7 +66,15 @@ bool ossimPotraceUtil::initialize(ossimArgumentParser& ap)
       if (ap.argc() > 2)
          m_kwl.add(ossimKeywordNames::OUTPUT_FILE_KW, ap.argv()[2]);
    }
+   else
+   {
+      setUsage(ap);
+      ap.reportError("Missing input raster filename.");
+      ap.writeErrorMessages(ossimNotify(ossimNotifyLevel_NOTICE));
+      return false;
+   }
 
+   initialize(m_kwl);
    return true;
 }
 
@@ -70,6 +89,18 @@ void ossimPotraceUtil::initialize(const ossimKeywordlist& kwl)
       // Start with clean options keyword list.
       m_kwl.clear();
       m_kwl.addList( kwl, true );
+   }
+
+   value = m_kwl.findKey(MODE_KW);
+   if (value.contains("polygon"))
+      m_mode = POLYGON;
+   else if (value.contains("linestring"))
+      m_mode = LINESTRING;
+   else
+   {
+      xmsg <<"ossimPotraceUtil:"<<__LINE__<<" Unallowed mode requested: <"<<value<<">."
+            <<endl;
+      throw(xmsg.str());
    }
 
    m_inputRasterFname = m_kwl.findKey(ossimKeywordNames::IMAGE_FILE_KW);
@@ -161,8 +192,9 @@ bool ossimPotraceUtil::execute()
 
 void ossimPotraceUtil::getKwlTemplate(ossimKeywordlist& kwl)
 {
-   ossimUtility::getKwlTemplate(kwl);
-   kwl.add(TOLERANCE_KW.c_str(), "TBR");
+   kwl.add(MODE_KW.c_str(), "polygom|linestring");
+   kwl.add(ossimKeywordNames::IMAGE_FILE_KW, "<input-raster-file>");
+   kwl.add(ossimKeywordNames::OUTPUT_FILE_KW, "<output-vector-file>");
 }
 
 potrace_bitmap_t* ossimPotraceUtil::convertToBitmap()
@@ -229,7 +261,7 @@ bool ossimPotraceUtil::writeGeoJSON(potrace_path_t* vectorList)
       return false;
    }
 
-   potrace_geojson(outFile, vectorList, 0);
+   potrace_geojson(outFile, vectorList, (int) (m_mode == POLYGON));
 
    return true;
 }

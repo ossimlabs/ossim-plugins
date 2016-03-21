@@ -11,39 +11,25 @@
 #include <ossim/base/ossimKeywordNames.h>
 #include <ossim/util/ossimUtilityRegistry.h>
 #include <assert.h>
-#include "../src/ossimPotraceUtil.h"
-
-#define TEST_READER false
-
-int usage(char* app_name)
-{
-   cout << "\nUtility app to convert a raster image to geojson vector list. Any non-null pixel in "
-         "the raster is treated as an \"on\" pixel for converting to bitmap before performing "
-         "trace."<<endl;
-   cout << "\nUsage: "<<app_name<<" <filename> \n" << endl;
-   return 1;
-}
 
 int main(int argc, char** argv)
 {
-   ossimInit::instance()->initialize(argc, argv);
-
-   if ((argc < 2)  || (ossimString(argv[1]).contains("--help")))
-      return usage(argv[0]);
-
-   ossimFilename fname = argv[1];
+   ossimArgumentParser ap (&argc, argv);
+   ossimInit::instance()->initialize(ap);
 
    ossimRefPtr<ossimUtility> util = ossimUtilityRegistry::instance()->createUtility("potrace");
-
    if (!util.valid())
    {
-      cout << "Bad pointer returned from utility factory." << endl;
+      cout << "Bad pointer returned from utility factory. Make sure ossim_potrace_plugin library "
+            "exists and is properly referenced in your OSSIM preferences file." << endl;
       return 1;
    }
-   ossimKeywordlist kwl;
-   kwl.add(ossimKeywordNames::IMAGE_FILE_KW, fname.chars());
-   util->initialize(kwl);
-   util->execute();
+
+   if (!util->initialize(ap))
+      return 1;
+
+   if (!util->execute())
+      return 1;
 
    return 0;
 }

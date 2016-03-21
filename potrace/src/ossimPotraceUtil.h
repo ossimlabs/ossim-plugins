@@ -20,6 +20,7 @@ class OSSIM_DLL ossimPotraceUtil : public ossimUtility
 {
 public:
    static const char* DESCRIPTION;
+   enum OutputMode { POLYGON, LINESTRING };
 
    ossimPotraceUtil();
 
@@ -44,7 +45,7 @@ private:
    ossimFilename m_inputRasterFname;
    ossimFilename m_outputVectorFname;
    ossimFilename m_bitmapFname;
-
+   OutputMode m_mode;
    ossimRefPtr<ossimImageHandler> m_inputHandler;
 };
 
