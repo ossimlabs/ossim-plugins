@@ -96,7 +96,7 @@ void ossimPotraceUtil::initialize(const ossimKeywordlist& kwl)
       m_mode = POLYGON;
    else if (value.contains("linestring"))
       m_mode = LINESTRING;
-   else
+   else if (!value.empty())
    {
       xmsg <<"ossimPotraceUtil:"<<__LINE__<<" Unallowed mode requested: <"<<value<<">."
             <<endl;
