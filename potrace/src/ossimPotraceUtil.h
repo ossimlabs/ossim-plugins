@@ -47,6 +47,7 @@ private:
    ossimFilename m_bitmapFname;
    OutputMode m_mode;
    ossimRefPtr<ossimImageHandler> m_inputHandler;
+   bool m_outputToConsole;
 };
 
 #endif /* #ifndef ossimPotraceUtility_HEADER */

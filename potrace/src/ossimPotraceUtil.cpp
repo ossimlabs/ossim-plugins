@@ -21,7 +21,8 @@ static const string MODE_KW = "mode";
 
 
 ossimPotraceUtil::ossimPotraceUtil()
-:  m_mode (LINESTRING)
+:  m_mode (LINESTRING),
+   m_outputToConsole(false)
 {
 }
 
@@ -104,12 +105,13 @@ void ossimPotraceUtil::initialize(const ossimKeywordlist& kwl)
    }
 
    m_inputRasterFname = m_kwl.findKey(ossimKeywordNames::IMAGE_FILE_KW);
-
    m_outputVectorFname = m_kwl.findKey(ossimKeywordNames::OUTPUT_FILE_KW);
    if (m_outputVectorFname.empty())
    {
+      // Output to the active console stream
       m_outputVectorFname = m_inputRasterFname;
       m_outputVectorFname.setExtension("json");
+      m_outputToConsole = true;
    }
 
    ossimUtility::initialize(kwl);
@@ -253,6 +255,8 @@ potrace_bitmap_t* ossimPotraceUtil::convertToBitmap()
 
 bool ossimPotraceUtil::writeGeoJSON(potrace_path_t* vectorList)
 {
+   ostringstream xmsg;
+
    FILE* outFile = fopen(m_outputVectorFname.chars(), "w");
    if (!outFile)
    {
@@ -262,6 +266,21 @@ bool ossimPotraceUtil::writeGeoJSON(potrace_path_t* vectorList)
    }
 
    potrace_geojson(outFile, vectorList, (int) (m_mode == POLYGON));
+   fclose(outFile);
+
+   if (m_outputToConsole && m_consoleStream)
+   {
+      ifstream vectorFile (m_outputVectorFname.chars());
+      if (vectorFile.fail())
+      {
+         xmsg <<"ossimPotraceUtil:"<<__LINE__<<" Error encountered opening temporary vector file at: "
+               "<"<<m_outputVectorFname<<">."<<endl;
+         throw(xmsg.str());
+      }
+
+      *m_consoleStream << vectorFile.rdbuf();
+      vectorFile.close();
+   }
 
    return true;
 }
