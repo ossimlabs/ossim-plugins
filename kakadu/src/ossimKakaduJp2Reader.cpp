@@ -32,6 +32,8 @@
 #include <ossim/projection/ossimProjectionFactoryRegistry.h>
 
 #include <ossim/support_data/ossimFgdcXmlDoc.h>
+#include <ossim/support_data/ossimGmlSupportData.h>
+#include <ossim/support_data/ossimJp2Info.h>
 #include <ossim/support_data/ossimJ2kSizRecord.h>
 #include <ossim/support_data/ossimJ2kSotRecord.h>
 #include <ossim/support_data/ossimTiffInfo.h>
@@ -907,137 +909,231 @@ ossimRefPtr<ossimImageGeometry> ossimKakaduJp2Reader::getImageGeometry()
 ossimRefPtr<ossimImageGeometry> ossimKakaduJp2Reader::getInternalImageGeometry()
 {
    static const char MODULE[] = "ossimKakaduJp2Reader::getInternalImageGeometry";
+
+   if (traceDebug())
+   {
+      ossimNotify(ossimNotifyLevel_DEBUG) << MODULE << " entered...\n";
+   }
+
    ossimRefPtr<ossimImageGeometry> geom = 0;
+   
+   if ( isOpen() )
+   {
+      // Try to get geom from GML box:
+      geom = getImageGeometryFromGmlBox();
+      
+      if ( geom.valid() == false )
+      {
+         // Try to get geom from geotiff box:
+         geom = getImageGeometryFromGeotiffBox();
+      }
+   }
+   
+   if (traceDebug())
+   {
+      ossimNotify(ossimNotifyLevel_DEBUG) << MODULE << " exited...\n";
+   }
+   
+   return geom;
+
+} // End: ossimKakaduJp2Reader::getInternalImageGeometry()
+ 
+ossimRefPtr<ossimImageGeometry> ossimKakaduJp2Reader::getImageGeometryFromGeotiffBox()
+{
+   static const char MODULE[] = "ossimKakaduJp2Reader::getImageGeometryFromGeotiffBox";
+
    if (traceDebug())
    {
       ossimNotify(ossimNotifyLevel_DEBUG) << MODULE << " entered...\n";
    }
    
-   kdu_supp::jp2_family_src* familySrc = new kdu_supp::jp2_family_src();
-   
-   familySrc->open(theImageFile.c_str(), true);
-   kdu_supp::jp2_input_box box;
-   box.open(familySrc);
+   ossimRefPtr<ossimImageGeometry> geom = 0;
 
-   const ossim_uint8 GEOTIFF_UUID[GEOTIFF_UUID_SIZE] = 
+   if ( isOpen() )
    {
-      0xb1, 0x4b, 0xf8, 0xbd,
-      0x08, 0x3d, 0x4b, 0x43,
-      0xa5, 0xae, 0x8c, 0xd7,
-      0xd5, 0xa6, 0xce, 0x03
-   };
+      std::ifstream str;
+      str.open( theImageFile.c_str(), std::ios_base::in | std::ios_base::binary);
 
-   const ossim_uint8 MSIG_UUID[16] = 
-   {
-      0x96, 0xA9, 0xF1, 0xF1,
-      0xDC, 0x98, 0x40, 0x2D,
-      0xA7, 0xAE, 0xD6, 0x8E,
-      0x34, 0x45, 0x18, 0x09
-   };
-   
-   while(box.exists()&&!geom.valid())
-   {
-#if 0 // debug stuff
-      ossim_uint32 boxType =  box.get_box_type();
-      char ch[] = { (char) ( boxType >> 24 ), (char) ( boxType >> 16 ), (char) ( boxType >> 8 ) ,
-                    (char) ( boxType >> 0 ), '\0' };
-      
-      std::cout << ch << std::endl;
-      std::cout << std::hex << "BOX TYPE = " << box.get_box_type()
-                << std::dec << " bytes = " << box.get_remaining_bytes() << std::endl;
-#endif
-      
-      switch(box.get_box_type())
+      if ( str.is_open() )
       {
-         case jp2_uuid_4cc:
+         std::vector<ossim_uint8> box;
+         ossimJp2Info jp2Info;
+         
+         std::streamoff boxPos = jp2Info.getGeotiffBox( str, box );
+         
+         if (traceDebug())
          {
-            std::vector<kdu_byte> byteBuffer;
-            byteBuffer.resize(box.get_remaining_bytes());
-            box.read(&byteBuffer.front(), box.get_remaining_bytes());
-            if(memcmp((char*)&byteBuffer.front(),GEOTIFF_UUID, GEOTIFF_UUID_SIZE)==0)
-            {
-               ossimTiffInfo info;
-               std::istringstream str(ossimString((char*)&byteBuffer.front()+GEOTIFF_UUID_SIZE,
-                                                  (char*)&byteBuffer.front() + byteBuffer.size()));
-               ossim_uint32 entry = 0;
-               ossimKeywordlist kwl; // Used to capture geometry data. 
+            ossimNotify(ossimNotifyLevel_DEBUG)
+               << "Found geotiff uuid at: " << boxPos+8 << "\n";
+         }
+         
+         //---
+         // Create a string stream and set the vector buffer as its source.
+         // Note: The box has the 16 GEOTIFF_UUID bytes in there so offset
+         // address and size.
+         //---
+#if 0
+         // This doesn't work with VS2010...
+         // Create a string stream and set the vector buffer as its source.
+         std::istringstream boxStream;
+         boxStream.rdbuf()->pubsetbuf( (char*)&box.front()+GEOTIFF_UUID_SIZE,
+                                       box.size()-GEOTIFF_UUID_SIZE );
+#else
+         // convert the vector into a string
+         std::string boxString( box.begin()+GEOTIFF_UUID_SIZE, box.end() );
+         std::istringstream boxStream;
+         boxStream.str( boxString );
+#endif
 
-               if ( info.getImageGeometry(str, kwl, entry) )
+         // Give the stream to tiff info to create a geometry.
+         ossimTiffInfo info;
+         ossim_uint32 entry = 0;
+         ossimKeywordlist kwl; // Used to capture geometry data. 
+         
+         if ( info.getImageGeometry(boxStream, kwl, entry) )
+         {
+            //---
+            // The tiff embedded in the geojp2 only has one line
+            // and one sample by design so overwrite the lines and
+            // samples with the real value.
+            //---
+            ossimString pfx = "image";
+            pfx += ossimString::toString(entry);
+            pfx += ".";
+            
+            // Add the lines.
+            kwl.add(pfx.chars(), ossimKeywordNames::NUMBER_LINES_KW,
+                    getNumberOfLines(0), true);
+            
+            // Add the samples.
+            kwl.add(pfx.chars(), ossimKeywordNames::NUMBER_SAMPLES_KW,
+                    getNumberOfSamples(0), true);
+            
+            // Create the projection.
+            ossimRefPtr<ossimProjection> proj =
+               ossimProjectionFactoryRegistry::instance()->createProjection(kwl, pfx);
+            if ( proj.valid() )
+            {
+               // Create and assign projection to our ossimImageGeometry object.
+               geom = new ossimImageGeometry();
+               geom->setProjection( proj.get() );
+               if (traceDebug())
                {
-                  //---
-                  // The tiff embedded in the geojp2 only has one line
-                  // and one sample by design so overwrite the lines and
-                  // samples with the real value.
-                  //---
-                  ossimString pfx = "image";
-                  pfx += ossimString::toString(entry);
-                  pfx += ".";
-                  
-                  // Add the lines.
-                  kwl.add(pfx.chars(), ossimKeywordNames::NUMBER_LINES_KW,
-                          getNumberOfLines(0), true);
-                  
-                  // Add the samples.
-                  kwl.add(pfx.chars(), ossimKeywordNames::NUMBER_SAMPLES_KW,
-                          getNumberOfSamples(0), true);
-                  
+                  ossimNotify(ossimNotifyLevel_DEBUG) << "Found GeoTIFF box." << std::endl;
+               }
+               
+               // Get the internal raster pixel alignment type and set the base class.
+               const char* lookup = kwl.find(pfx.chars(), ossimKeywordNames::PIXEL_TYPE_KW);
+               if ( lookup )
+               {
+                  ossimString type = lookup;
+                  type.downcase();
+                  if ( type == "pixel_is_area" )
+                  {
+                     thePixelType = OSSIM_PIXEL_IS_AREA;
+                  }
+                  else if ( type == "pixel_is_point" )
+                  {
+                     thePixelType = OSSIM_PIXEL_IS_POINT;
+                  }
+               }
+            }
+         }
+      }
+   }
+
+   if (traceDebug())
+   {
+      ossimNotify(ossimNotifyLevel_DEBUG) << MODULE << " exited...\n";
+   }
+   
+   return geom;
+   
+} // End: ossimKakaduJp2Reader::getImageGeometryFromGeotiffBox
+
+
+ossimRefPtr<ossimImageGeometry> ossimKakaduJp2Reader::getImageGeometryFromGmlBox()
+{
+   static const char M[] = "ossimKakaduJp2Reader::getImageGeometryFromGmlBox";
+   
+   if (traceDebug())
+   {
+      ossimNotify(ossimNotifyLevel_DEBUG) << M << " entered...\n";
+   }
+   
+   ossimRefPtr<ossimImageGeometry> geom = 0;
+   
+   if ( isOpen() )
+   {
+      std::ifstream str;
+      str.open( theImageFile.c_str(), std::ios_base::in | std::ios_base::binary);
+      
+      if ( str.is_open() )
+      {
+         std::vector<ossim_uint8> box;
+         ossimJp2Info jp2Info;
+         
+         std::streamoff boxPos = jp2Info.getGmlBox( str, box );
+         
+         if ( boxPos && box.size() )
+         {
+            if (traceDebug())
+            {
+               ossimNotify(ossimNotifyLevel_DEBUG)
+                  << "Found gml box at: " << boxPos+8
+                  << "\nbox size: " << box.size() << "\n";
+            }
+            
+#if 0
+            // This doesn't work with VS2010...
+            // Create a string stream and set the vector buffer as its source.
+            std::istringstream boxStream;
+            boxStream.rdbuf()->pubsetbuf( (char*)&box.front(), box.size() );
+#else
+            // convert the vector into a string
+            std::string boxString( box.begin(), box.end() );
+            std::istringstream boxStream;
+            boxStream.str( boxString );
+#endif
+            
+            ossimGmlSupportData* gml = new ossimGmlSupportData();
+            
+            if ( gml->initialize( boxStream ) )
+            {
+               ossimKeywordlist geomKwl;
+               if ( gml->getImageGeometry( geomKwl ) )
+               {
+                  // Make projection:
                   // Create the projection.
                   ossimRefPtr<ossimProjection> proj =
-                     ossimProjectionFactoryRegistry::instance()->createProjection(kwl, pfx);
+                     ossimProjectionFactoryRegistry::instance()->createProjection( geomKwl );
                   if ( proj.valid() )
                   {
                      // Create and assign projection to our ossimImageGeometry object.
                      geom = new ossimImageGeometry();
                      geom->setProjection( proj.get() );
-                     if (traceDebug())
-                     {
-                        ossimNotify(ossimNotifyLevel_DEBUG) << "Found GeoTIFF box." << std::endl;
-                     }
-                     
-                     // Get the internal raster pixel alignment type and set the base class.
-                     const char* lookup = kwl.find(pfx.chars(), ossimKeywordNames::PIXEL_TYPE_KW);
-                     if ( lookup )
-                     {
-                        ossimString type = lookup;
-                        type.downcase();
-                        if ( type == "pixel_is_area" )
-                        {
-                           thePixelType = OSSIM_PIXEL_IS_AREA;
-                        }
-                        else if ( type == "pixel_is_point" )
-                        {
-                           thePixelType = OSSIM_PIXEL_IS_POINT;
-                        }
-                     }
                   }
                }
-            }  
-            else if(memcmp((char*)&byteBuffer.front(),MSIG_UUID, 16)==0)
-            {
-               
             }
-            break;
-         }
-         case jp2_xml_4cc:// gml could be here
-         {
-            break;
-         }
-         case jp2_association_4cc: // ASOC BOX GML stuff could be here
-         {
-            break;
-         }
-         default:
-         {
-            break;
+            
+            // Cleanup:
+            delete gml;
+            gml = 0;
          }
       }
-      box.close();
-      box.open_next();
    }
-   familySrc->close();
-   delete familySrc;
+
+   if (traceDebug())
+   {
+      ossimNotify(ossimNotifyLevel_DEBUG)
+         << M << " exit status = " << (geom.valid()?"true":"false\n")
+         << std::endl;   
+   }
+   
    return geom;
-}
+   
+} // End: ossimKakaduJp2Reader::getImageGeometryFromGmlBox
+
 
 ossimRefPtr<ossimImageGeometry> ossimKakaduJp2Reader::getMetadataImageGeometry() const
 {

@@ -199,7 +199,8 @@ bool ossimKakaduJp2Writer::writeStream()
          return false;
       } 
 
-      writeGeotiffBox(m_compressor);
+      writeGeotiffBox( m_compressor );
+      writeGmlBox( m_compressor );
 
       m_compressor->openJp2Codestream();
 
@@ -305,6 +306,26 @@ bool ossimKakaduJp2Writer::writeGeotiffBox(ossimKakaduCompressor* compressor)
    return result;
    
 } // End: ossimKakaduJp2Writer::writeGeotffBox
+
+bool ossimKakaduJp2Writer::writeGmlBox(ossimKakaduCompressor* compressor)
+{
+   bool result = false;
+   
+   if ( theInputConnection.valid() && compressor )
+   {
+      ossimRefPtr<ossimImageGeometry> geom = theInputConnection->getImageGeometry();
+      if ( geom.valid() )
+      {
+         // Output rect.
+         ossimIrect rect = theInputConnection->getBoundingRect();
+
+         result = compressor->writeGmlBox( geom.get(), rect );
+      }
+   }
+
+   return result;
+   
+} // End: ossimKakaduJp2Writer::writeGmlBox
 
 bool ossimKakaduJp2Writer::saveState(ossimKeywordlist& kwl,
                                       const char* prefix)const

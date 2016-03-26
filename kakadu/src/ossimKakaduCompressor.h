@@ -225,12 +225,22 @@ public:
     * @param rect Output rectangle (view rect).
     * @param tmpFile Temp tiff file to write out for reading back in.
     * @param pixelType OSSIM_PIXEL_IS_POINT(0) or OSSIM_PIXEL_IS_AREA(1)
+    * @return true on success, false on error.
     */
    bool writeGeotiffBox(const ossimImageGeometry* geom,
                         const ossimIrect& rect,
                         const ossimFilename& tmpFile,
                         ossimPixelType pixelType);
 
+   /**
+    * @brief Writes the GML box to the jp2
+    * @param geom Output image geometry.
+    * @param rect Output rectangle (view rect).
+    * @return true on success, false on error.
+    */
+   bool writeGmlBox( const ossimImageGeometry* geom,
+                     const ossimIrect& rect );
+   
    /**
     * @brief Initializes the tag.
     * @param j2klraTag Pointer to tag.  Initialized by this.

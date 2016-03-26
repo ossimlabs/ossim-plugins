@@ -197,11 +197,6 @@ public:
    virtual ossimRefPtr<ossimImageGeometry> getImageGeometry();
 
    /**
-    * @param Method to get geometry from the embedded JP2 GeoTIFF Box.
-    */
-   virtual ossimRefPtr<ossimImageGeometry> getInternalImageGeometry();
-
-   /**
     * Method to the load (recreate) the state of an object from a keyword
     * list.  Return true if ok or false on error.
     */
@@ -231,6 +226,21 @@ protected:
                                 ossimImageData* result);   
    
 private:
+
+   /**
+    * @param Method to get geometry from the embedded JP2 Boxes.
+    */
+   virtual ossimRefPtr<ossimImageGeometry> getInternalImageGeometry();
+
+   /**
+    * @param Method to get geometry from the embedded JP2 GeoTIFF Box.
+    */
+   virtual ossimRefPtr<ossimImageGeometry> getImageGeometryFromGeotiffBox();
+
+   /**
+    * @param Method to get geometry from the embedded JP2 GML Box.
+    */
+   virtual ossimRefPtr<ossimImageGeometry> getImageGeometryFromGmlBox();
 
    /**
     * @param Method to get geometry from the various external files like
