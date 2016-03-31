@@ -23,15 +23,4 @@ message( STATUS "Required libs       = ${requiredLibs}" )
 # ---
 # ossim-potrace app:
 # ---
-
-# Add the executable:
-add_executable(ossim-potrace ossim-potrace.cpp )
-
-# Set the output dir:
-set_target_properties(ossim-potrace 
-                      PROPERTIES 
-                      RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
-
-# ossim-potrace application links with required libs.
-target_link_libraries( ossim-potrace ${requiredLibs} )
-
+OSSIM_SETUP_APPLICATION(ossim-potrace INSTALL COMMAND_LINE COMPONENT_NAME ossim SOURCE_FILES ossim-potrace.cpp)
