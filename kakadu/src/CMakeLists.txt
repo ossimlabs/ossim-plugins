@@ -75,7 +75,7 @@ file(GLOB OSSIMPLUGIN_HEADERS *.h)
 
 message( STATUS "KAKADU_ROOT_SRC    = ${KAKADU_ROOT_SRC}")
 message( STATUS "KAKADU_LIBRARY     = ${KAKADU_LIBRARY}")
-message( STATUS "KAKADU_AUX_LIBRARY = ${KAKADU_LIBRARY}")
+message( STATUS "KAKADU_AUX_LIBRARY = ${KAKADU_AUX_LIBRARY}")
 message( STATUS "Kakadu plugin required libs = ${requiredLibs}")
 
 #---

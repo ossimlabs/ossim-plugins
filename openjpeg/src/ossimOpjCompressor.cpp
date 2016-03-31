@@ -703,10 +703,9 @@ bool ossimOpjCompressor::writeGeotiffBox(std::ostream* stream,
    
 } // End: ossimOpjCompressor::writeGeotiffBox
 
-bool ossimOpjCompressor::writeGmlBox(std::ostream* stream,
-                                     const ossimImageGeometry* geom,
-                                     const ossimIrect& /* rect */,
-                                     ossimPixelType /* pixelType */)
+bool ossimOpjCompressor::writeGmlBox( std::ostream* stream,
+                                      const ossimImageGeometry* geom,
+                                      const ossimIrect& rect )
 {
    // cout << "ossimOpjCompressor::writeGmlBox entered..." << endl;
    
@@ -716,7 +715,7 @@ bool ossimOpjCompressor::writeGmlBox(std::ostream* stream,
    {
       ossimGmlSupportData* gml = new ossimGmlSupportData();
 
-      if ( gml->initialize( geom ) )  
+      if ( gml->initialize( geom, rect ) )  
       {
          const ossim_uint8 ASOC_BOX_ID[4] = 
          {

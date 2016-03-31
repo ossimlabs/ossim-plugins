@@ -559,7 +559,7 @@ bool ossimOpjJp2Writer::writeGmlBox(std::ostream* stream, ossimOpjCompressor* co
          // Output rect.
          ossimIrect rect = theInputConnection->getBoundingRect();
          
-         result = compressor->writeGmlBox(stream, geom.get(), rect, getPixelType());
+         result = compressor->writeGmlBox(stream, geom.get(), rect );
       }
    }
 

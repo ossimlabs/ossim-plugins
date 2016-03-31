@@ -220,12 +220,10 @@ public:
     * @param stream The stream to write to.
     * @param geom Output image geometry.
     * @param rect Output rectangle (view rect).
-    * @param pixelType OSSIM_PIXEL_IS_POINT(0) or OSSIM_PIXEL_IS_AREA(1)
     */
-   bool writeGmlBox(std::ostream* stream,
-                    const ossimImageGeometry* geom,
-                    const ossimIrect& rect,
-                    ossimPixelType pixelType);
+   bool writeGmlBox( std::ostream* stream,
+                     const ossimImageGeometry* geom,
+                     const ossimIrect& rect );
    
 private:
 

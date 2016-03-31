@@ -134,7 +134,19 @@ protected:
 
 private:
 
+   /**
+    * @brief Writes geotiff box if input has good geometry.
+    * @param compressor Writes to this.
+    * @return true on success, false on error.
+    */
    bool writeGeotiffBox(ossimKakaduCompressor* compressor);
+
+   /**
+    * @brief Writes GML box if input has good geometry.
+    * @param compressor Writes to this.
+    * @return true on success, false on error.
+    */
+   bool writeGmlBox(ossimKakaduCompressor* compressor);   
 
    ossimKakaduCompressor* m_compressor;
    std::ostream*          m_outputStream;

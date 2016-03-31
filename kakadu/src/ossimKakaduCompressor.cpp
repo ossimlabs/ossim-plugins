@@ -33,6 +33,7 @@
 #include <ossim/imaging/ossimImageGeometry.h>
 
 #include <ossim/support_data/ossimGeoTiff.h>
+#include <ossim/support_data/ossimGmlSupportData.h>
 #include <ossim/support_data/ossimNitfJ2klraTag.h>
 
 #include <jp2.h>
@@ -1330,7 +1331,6 @@ bool ossimKakaduCompressor::loadState(const ossimKeywordlist& kwl,
    return true;
 }
 
-
 bool ossimKakaduCompressor::writeGeotiffBox(const ossimImageGeometry* geom,
                                             const ossimIrect& rect,
                                             const ossimFilename& tmpFile,
@@ -1369,7 +1369,6 @@ bool ossimKakaduCompressor::writeGeotiffBox(const ossimImageGeometry* geom,
             m_jp2Target->open_next( UUID_TYPE );
             m_jp2Target->write(
                static_cast<kdu_core::kdu_byte*>(&buf.front()), static_cast<int>(buf.size()));
-            
             m_jp2Target->close();
             result = true;
          }
@@ -1379,6 +1378,113 @@ bool ossimKakaduCompressor::writeGeotiffBox(const ossimImageGeometry* geom,
    return result;
    
 } // End: ossimKakaduCompressor::writeGeotiffBox
+
+bool ossimKakaduCompressor::writeGmlBox( const ossimImageGeometry* geom,
+                                         const ossimIrect& rect )
+{
+   bool result = false;
+
+   if ( geom && m_jp2Target )
+   {
+      ossimGmlSupportData* gml = new ossimGmlSupportData();
+      if ( gml->initialize( geom, rect ) )
+      {
+         // Write the xml to a stream.
+         ostringstream xmlStr;
+         if ( gml->write( xmlStr ) )
+         {
+            const ossim_uint8 ASOC_BOX_ID[4] = 
+            {
+               0x61, 0x73, 0x6F, 0x63
+            };
+            
+            const ossim_uint8 LBL_BOX_ID[4] = 
+            {
+               0x6C, 0x62, 0x6C, 0x20
+            };
+
+            const ossim_uint8 XML_BOX_ID[4] = 
+            {
+               0x78, 0x6D, 0x6C, 0x20
+            };
+            
+            ossim_uint32 xmlDataSize = xmlStr.str().size();
+            
+            // Set the 1st asoc box size and type
+            ossim_uint32 boxSize = xmlDataSize + 17 + 8 + 8 + 8 + 8 + 8 + 8;
+            if (ossim::byteOrder() == OSSIM_LITTLE_ENDIAN)
+            {
+               ossimEndian endian;
+               endian.swap( boxSize );
+            }
+
+            const ossim_uint32 ASOC_BOX = 0x61736f63;
+
+            m_jp2Target->open_next( ASOC_BOX );
+            
+            //m_jp2Target->close();
+            //m_jp2Target->write( (const kdu_core::kdu_byte*)&boxSize, 4); // 1st asoc size
+            // m_jp2Target->write( (const kdu_core::kdu_byte*)ASOC_BOX_ID, 4); // 1st asoc type
+
+            // Set the 1st lbl box size, type, and data
+            boxSize = 8 + 8;
+            if (ossim::byteOrder() == OSSIM_LITTLE_ENDIAN)
+            {
+                ossimEndian endian;
+                endian.swap( boxSize );
+            }
+
+            m_jp2Target->write((kdu_core::kdu_byte*)&boxSize, 4); // 1st lbl size
+            m_jp2Target->write((const kdu_core::kdu_byte*)LBL_BOX_ID, 4); // 1st lbl type
+            m_jp2Target->write((const kdu_core::kdu_byte*)"gml.data", 8); // 1st lbl data
+
+            // Set the 2nd asoc box size and type
+            boxSize = xmlDataSize + 17 + 8 + 8 + 8;
+            if (ossim::byteOrder() == OSSIM_LITTLE_ENDIAN)
+            {
+                ossimEndian endian;
+                endian.swap( boxSize );
+            }
+            m_jp2Target->write((kdu_core::kdu_byte*)&boxSize, 4); // 2nd asoc size
+            m_jp2Target->write((const kdu_core::kdu_byte*)ASOC_BOX_ID, 4); // 2nd asoc type
+
+            // Set the 2nd lbl box size, type, and data
+            boxSize = 17 + 8;
+            if (ossim::byteOrder() == OSSIM_LITTLE_ENDIAN)
+            {
+                ossimEndian endian;
+                endian.swap( boxSize );
+            }
+            m_jp2Target->write((kdu_core::kdu_byte*)&boxSize, 4); // 2nd lbl size
+            m_jp2Target->write((const kdu_core::kdu_byte*)LBL_BOX_ID, 4); // 2nd lbl type
+            m_jp2Target->write((const kdu_core::kdu_byte*)"gml.root-instance", 17); // 2nd lbl data
+
+            // Set the xml box size, type, and data
+            boxSize = xmlDataSize + 8;
+            if (ossim::byteOrder() == OSSIM_LITTLE_ENDIAN)
+            {
+                ossimEndian endian;
+                endian.swap( boxSize );
+            }
+            m_jp2Target->write((kdu_core::kdu_byte*)&boxSize, 4); // xml size
+            m_jp2Target->write((const kdu_core::kdu_byte*)XML_BOX_ID, 4); // xml type
+            m_jp2Target->write((const kdu_core::kdu_byte*)xmlStr.str().data(),
+                               xmlDataSize); // xml data
+
+            m_jp2Target->close();
+            result = true;
+         }
+      }
+      
+      // cleanup:
+      delete gml;
+      gml = 0;
+      
+   } // if ( geom && m_jp2Target )
+
+   return result;
+   
+} // End: ossimKakaduCompressor::writeGmlBox
 
 void ossimKakaduCompressor::initialize( ossimNitfJ2klraTag* j2klraTag,
                                         ossim_uint32 actualBitsPerPixel ) const
