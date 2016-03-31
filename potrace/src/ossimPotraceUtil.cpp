@@ -171,9 +171,11 @@ bool ossimPotraceUtil::execute()
 
             imgPt.x = path->curve.c[i][v].x;
             imgPt.y = path->curve.c[i][v].y;
-            geom->localToWorld(imgPt, gndPt);
-            path->curve.c[i][v].x = gndPt.lon;
-            path->curve.c[i][v].y = gndPt.lat;
+            if (geom->localToWorld(imgPt, gndPt))
+            {
+               path->curve.c[i][v].x = gndPt.lon;
+               path->curve.c[i][v].y = gndPt.lat;
+            }
          }
       }
       path = path->next;

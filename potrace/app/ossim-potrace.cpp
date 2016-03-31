@@ -8,8 +8,10 @@
 #include <ossim/init/ossimInit.h>
 #include <ossim/base/ossimStringProperty.h>
 #include <ossim/base/ossimKeywordlist.h>
+#include <ossim/base/ossimArgumentParser.h>
 #include <ossim/base/ossimKeywordNames.h>
 #include <ossim/util/ossimUtilityRegistry.h>
+#include <ossim/util/ossimUtility.h>
 #include <assert.h>
 
 int main(int argc, char** argv)

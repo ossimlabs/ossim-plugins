@@ -112,7 +112,8 @@ static void write_polygons(FILE *fout, potrace_path_t *tree, int first )
 
   for (p=tree; p; p=p->sibling) {
 
-    if (!first) fprintf(fout, ",\n");
+    if (!first)
+       fprintf(fout, ",\n");
 
     fprintf(fout, "{ \"type\": \"Feature\",\n");
     fprintf(fout, "  \"properties\": { },\n");
@@ -165,7 +166,8 @@ static void write_polygons(FILE *fout, potrace_path_t *tree, int first )
       fprintf(fout, "}"); // close feature
 
       // Recursive call treating all children as separate line segments:
-      for (q=p->childlist; q; q=q->sibling)
+      q = p->childlist;
+      if (q)
          write_line_strings(fout, q, 0);
 
       first = 0;
