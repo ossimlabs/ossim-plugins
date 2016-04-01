@@ -16,6 +16,7 @@
 #include "trace.h"
 #include "progress.h"
 #include "backend_geojson.h"
+#include "bitmap_io.h"
 
 /* default parameters */
 static const potrace_param_t param_default = {
@@ -120,5 +121,10 @@ int potrace_geojson(FILE *fout, potrace_path_t *plist, int as_polygons)
 {
    int r = page_geojson(fout, plist, as_polygons);
    return r;
+}
+
+void potrace_writepbm(FILE *pbm, potrace_bitmap_t *potraceBitmap)
+{
+   bm_writepbm(pbm, potraceBitmap);
 }
 

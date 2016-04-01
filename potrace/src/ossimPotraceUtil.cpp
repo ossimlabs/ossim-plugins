@@ -154,6 +154,8 @@ bool ossimPotraceUtil::execute()
       return false;
    }
 
+   ossimIrect rect = m_inputHandler->getImageRectangle();
+
    potrace_path_t* potracePaths = potraceOutput->plist;
    potrace_path_t* path = potracePaths;
    ossimDpt imgPt;
@@ -171,11 +173,9 @@ bool ossimPotraceUtil::execute()
 
             imgPt.x = path->curve.c[i][v].x;
             imgPt.y = path->curve.c[i][v].y;
-            if (geom->localToWorld(imgPt, gndPt))
-            {
-               path->curve.c[i][v].x = gndPt.lon;
-               path->curve.c[i][v].y = gndPt.lat;
-            }
+            geom->localToWorld(imgPt, gndPt);
+            path->curve.c[i][v].x = gndPt.lon;
+            path->curve.c[i][v].y = gndPt.lat;
          }
       }
       path = path->next;
@@ -196,7 +196,7 @@ bool ossimPotraceUtil::execute()
 
 void ossimPotraceUtil::getKwlTemplate(ossimKeywordlist& kwl)
 {
-   kwl.add(MODE_KW.c_str(), "polygom|linestring");
+   kwl.add(MODE_KW.c_str(), "polygon|linestring");
    kwl.add(ossimKeywordNames::IMAGE_FILE_KW, "<input-raster-file>");
    kwl.add(ossimKeywordNames::OUTPUT_FILE_KW, "<output-vector-file>");
 }
@@ -222,18 +222,24 @@ potrace_bitmap_t* ossimPotraceUtil::convertToBitmap()
    ossimRefPtr<ossimImageData> tile = sequencer->getNextTile();
    double null_pix = tile->getNullPix(0);
    unsigned long offset=0;
+   ossimIpt pt_ul, pt, pt_lr;
 
    // Loop to fill bitmap buffer:
    while (tile.valid())
    {
-      ossimIpt pt (tile->getOrigin());
-      ossimIpt lastPt (pt.x + tile->getWidth() - 1, pt.y + tile->getHeight() - 1);
+      pt_ul = tile->getOrigin();
+      pt_lr.x = pt_ul.x + tile->getWidth();
+      pt_lr.y = pt_ul.y + tile->getHeight();
+      if (pt_lr.x > rect.lr().x)
+         pt_lr.x = rect.lr().x;
+      if (pt_lr.y > rect.lr().y)
+         pt_lr.y = rect.lr().y;
 
       // Nested loops over all pixels in input tile:
-      for (; pt.y <= lastPt.y; ++pt.y)
+      for (pt.y=pt_ul.y; pt.y < pt_lr.y; ++pt.y)
       {
-         offset = tile->getOrigin().x/pixelsPerWord + pt.y*potraceBitmap->dy;
-         for (pt.x = tile->getOrigin().x; pt.x <= lastPt.x; )
+         offset = pt_ul.x/pixelsPerWord + pt.y*potraceBitmap->dy;
+         for (pt.x=pt_ul.x; pt.x<pt_lr.x; )
          {
             // Loop to pack a word buffer with pixel on (non-null) or off bit in proper positions:
             unsigned long wordBuf = 0;
@@ -242,7 +248,7 @@ potrace_bitmap_t* ossimPotraceUtil::convertToBitmap()
                unsigned long pixel = (tile->getPix(pt) != null_pix) ? 1 : 0;
                wordBuf |= pixel << bitpos;
                ++pt.x;
-               if (pt.x > lastPt.x)
+               if (pt.x >= pt_lr.x)
                   break;
             }
             potraceBitmap->map[offset++] = wordBuf;
@@ -251,6 +257,11 @@ potrace_bitmap_t* ossimPotraceUtil::convertToBitmap()
 
       tile = sequencer->getNextTile();
    }
+
+   ossimFilename bmFile (m_outputVectorFname);
+   bmFile.setExtension("pbm");
+   FILE* pbm = fopen(bmFile.chars(), "w");
+   potrace_writepbm(pbm, potraceBitmap);
 
    return potraceBitmap;
 }

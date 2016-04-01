@@ -133,4 +133,6 @@ char *potrace_version(void);
 
 int potrace_geojson(FILE *fout, potrace_path_t *plist, int as_polygons);
 
+void potrace_writepbm(FILE *fout, potrace_bitmap_t *bm);
+
 #endif /* POTRACELIB_H */
