@@ -258,10 +258,12 @@ potrace_bitmap_t* ossimPotraceUtil::convertToBitmap()
       tile = sequencer->getNextTile();
    }
 
+#if 0
    ossimFilename bmFile (m_outputVectorFname);
    bmFile.setExtension("pbm");
    FILE* pbm = fopen(bmFile.chars(), "w");
    potrace_writepbm(pbm, potraceBitmap);
+#endif
 
    return potraceBitmap;
 }
