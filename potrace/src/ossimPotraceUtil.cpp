@@ -10,6 +10,7 @@
 #include <ossim/imaging/ossimImageHandlerRegistry.h>
 #include <ossim/imaging/ossimImageSourceSequencer.h>
 #include <ossim/base/ossimKeywordNames.h>
+#include <ossim/base/ossimException.h>
 #include <sstream>
 
 using namespace std;
@@ -101,7 +102,7 @@ void ossimPotraceUtil::initialize(const ossimKeywordlist& kwl)
    {
       xmsg <<"ossimPotraceUtil:"<<__LINE__<<" Unallowed mode requested: <"<<value<<">."
             <<endl;
-      throw(xmsg.str());
+      throw ossimException(xmsg.str());
    }
 
    m_inputRasterFname = m_kwl.findKey(ossimKeywordNames::IMAGE_FILE_KW);
@@ -162,8 +163,7 @@ bool ossimPotraceUtil::execute()
    ossimGpt gndPt;
    while (path)
    {
-      int numSegments = path->curve.n;
-      for (int i=0; i<numSegments; ++i)
+      for (int i=0; i<path->curve.n;)
       {
          // Convert up 3 possible vertices per segment
          for (int v=0; v<3; ++v)
@@ -173,10 +173,59 @@ bool ossimPotraceUtil::execute()
 
             imgPt.x = path->curve.c[i][v].x;
             imgPt.y = path->curve.c[i][v].y;
+
+            // Potrace reasonably assumes that active pixels on edge need to be bound by a polygon.
+            // Override this behavior by avoiding consideration of edge pixels. This involves
+            // editing the potrace paths returned by the trace algorithm, splitting the paths into
+            // separate independent paths when they encounter an edge. Any segments lying near the
+            // edge of the image rectangle will be removed from the path list.
+            // TODO: This is tailored for use by the shoreline algorith in OSSIM core. This should
+            // be generalized by giving the caller the choice of bounding shapes touching the edges.
+            // (OLK 04/2016).
+
+            // Check for edge of image condition and avoid any vertices and associated segment there
+            //if ((imgPt.x == rect.ul().x) || (imgPt.x == rect.lr().x) ||
+            //    (imgPt.y == rect.ul().y) || (imgPt.y == rect.lr().y))
+            if ((fabs(imgPt.x-rect.ul().x)<=1) || (fabs(imgPt.x-rect.lr().x)<=1) ||
+                (fabs(imgPt.y-rect.ul().y)<=1) || (fabs(imgPt.y-rect.lr().y)<=1))
+            {
+               // Need to flag as endpoint to the path to avoid forced closure:
+               if (i>1)
+                  path->curve.tag[i-1] = POTRACE_ENDPOINT;
+
+               // Need to ignore this segment and split the containing path into two separate paths:
+               potrace_path_t* new_path = new potrace_path_t;
+               new_path->area = 1;
+               new_path->sign = 1;
+               new_path->next = path->next;
+               new_path->sibling = 0; // Seems to work but scary
+               new_path->childlist = 0;
+               new_path->priv = path->priv; // No longer needed at this point in the game unless a
+                                            // different backend than GeoJSON is used.
+               path->next = new_path; // Link in the new path
+               new_path->curve.n = path->curve.n - i - 1;
+               new_path->curve.c = new potrace_dpoint_t[new_path->curve.n][3];
+               new_path->curve.tag = new int[new_path->curve.n];
+               for (int j=0; j<new_path->curve.n; j++)
+               {
+                  for (int u=0; u<3; ++u)
+                  {
+                     new_path->curve.c[j][u].x = path->curve.c[j+i+1][u].x;
+                     new_path->curve.c[j][u].y = path->curve.c[j+i+1][u].y;
+                  }
+                  new_path->curve.tag[j] = path->curve.tag[j+i+1];
+               }
+               path->curve.n = i;
+
+               break; // out of vertex loop
+            }
+
+            // Good segment, reproject to geographic:
             geom->localToWorld(imgPt, gndPt);
             path->curve.c[i][v].x = gndPt.lon;
             path->curve.c[i][v].y = gndPt.lat;
          }
+         ++i;
       }
       path = path->next;
    }
@@ -186,7 +235,7 @@ bool ossimPotraceUtil::execute()
       return false;
 
    // Release memory:
-   potrace_state_free(potraceOutput);
+   //potrace_state_free(potraceOutput);
    //free(potraceBitmap->map);
    delete potraceBitmap;
    free(potraceParam);
@@ -280,7 +329,7 @@ bool ossimPotraceUtil::writeGeoJSON(potrace_path_t* vectorList)
       return false;
    }
 
-   potrace_geojson(outFile, vectorList, (int) (m_mode == POLYGON));
+   potrace_geojson(outFile, vectorList, (int) (m_mode == LINESTRING));
    fclose(outFile);
 
    if (m_outputToConsole && m_consoleStream)
@@ -290,7 +339,7 @@ bool ossimPotraceUtil::writeGeoJSON(potrace_path_t* vectorList)
       {
          xmsg <<"ossimPotraceUtil:"<<__LINE__<<" Error encountered opening temporary vector file at: "
                "<"<<m_outputVectorFname<<">."<<endl;
-         throw(xmsg.str());
+         throw ossimException(xmsg.str());
       }
 
       *m_consoleStream << vectorFile.rdbuf();

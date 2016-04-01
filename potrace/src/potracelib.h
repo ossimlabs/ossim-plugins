@@ -71,6 +71,7 @@ typedef struct potrace_dpoint_s potrace_dpoint_t;
 /* segment tags */
 #define POTRACE_CURVETO 1
 #define POTRACE_CORNER 2
+#define POTRACE_ENDPOINT 3
 
 /* closed curve segment */
 struct potrace_curve_s {
@@ -131,8 +132,10 @@ void potrace_state_free(potrace_state_t *st);
    of potracelib */
 char *potrace_version(void);
 
+/* Stub for GeoJSON output */
 int potrace_geojson(FILE *fout, potrace_path_t *plist, int as_polygons);
 
+/* Stub for debug utility for outputting intermediate bitmap file */
 void potrace_writepbm(FILE *fout, potrace_bitmap_t *bm);
 
 #endif /* POTRACELIB_H */

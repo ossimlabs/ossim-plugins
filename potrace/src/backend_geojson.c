@@ -82,17 +82,29 @@ static void geojson_curveto(FILE *fout, dpoint_t p1, dpoint_t p2, dpoint_t p3)
 
 
 static int geojson_path(FILE *fout, potrace_curve_t *curve) {
-  int i;
+  int i=0;
   dpoint_t *c;
+  
   int m = curve->n;
+  if (m == 0)
+    return 0;
 
-  c = curve->c[m-1];
-  geojson_moveto(fout, c[2]); // Write last point in the curve as the first entry for closure
+  if (curve->tag[m-1] != POTRACE_ENDPOINT)
+  {
+     c = curve->c[m-1]; // Set last point in the curve as the first entry for closure
+  }
+  else
+  {
+     c = curve->c[0]; // This is a path that is not closed
+     i=1;
+  }
+  geojson_moveto(fout, c[2]); // Write first point in the curve as the first entry for closure
 
-  for (i=0; i<m; i++) {
+  for (; i<m; i++) {
     c = curve->c[i];
     switch (curve->tag[i]) {
     case POTRACE_CORNER:
+    case POTRACE_ENDPOINT:
       geojson_lineto(fout, c[1]);
       geojson_lineto(fout, c[2]);
       break;
@@ -112,31 +124,34 @@ static void write_polygons(FILE *fout, potrace_path_t *tree, int first )
 
   for (p=tree; p; p=p->sibling) {
 
-    if (!first)
-       fprintf(fout, ",\n");
-
-    fprintf(fout, "{ \"type\": \"Feature\",\n");
-    fprintf(fout, "  \"properties\": { },\n");
-    fprintf(fout, "  \"geometry\": {\n");
-    fprintf(fout, "    \"type\": \"Polygon\",\n");
-    fprintf(fout, "    \"coordinates\": [\n");
-
-    fprintf(fout, "      [");
-    geojson_path(fout, &p->curve);
-    fprintf(fout, " ]");
-
-    // Traverse all siblings of this path's child:
-    for (q=p->childlist; q; q=q->sibling)
+     // Skip any entries with no points (possible after paths split due to edge encounter):
+    if (p->curve.n != 0)
     {
-      fprintf(fout, ",\n      [");
-      geojson_path(fout, &q->curve);
-      fprintf(fout, " ]");
+       if (!first)
+          fprintf(fout, ",\n");
+
+       fprintf(fout, "{ \"type\": \"Feature\",\n");
+       fprintf(fout, "  \"properties\": { },\n");
+       fprintf(fout, "  \"geometry\": {\n");
+       fprintf(fout, "    \"type\": \"Polygon\",\n");
+       fprintf(fout, "    \"coordinates\": [\n");
+
+       fprintf(fout, "      [");
+       geojson_path(fout, &p->curve);
+       fprintf(fout, " ]");
+
+       // Traverse all siblings of this path's child:
+       for (q=p->childlist; q; q=q->sibling)
+       {
+          fprintf(fout, ",\n      [");
+          geojson_path(fout, &q->curve);
+          fprintf(fout, " ]");
+       }
+
+       fprintf(fout, "    ]\n");
+       fprintf(fout, "  }\n");
+       fprintf(fout, "}");
     }
-
-    fprintf(fout, "    ]\n");
-    fprintf(fout, "  }\n");
-    fprintf(fout, "}");
-
     for (q=p->childlist; q; q=q->sibling)
       write_polygons(fout, q->childlist, 0);
 
@@ -150,20 +165,24 @@ static void write_polygons(FILE *fout, potrace_path_t *tree, int first )
 
     for (p=tree; p; p=p->sibling)
     {
-      if (!first)
-         fprintf(fout, ",\n");
+       // Skip any entries with no points (possible after paths split due to edge encounter):
+      if (p->curve.n != 0)
+      {
+         if (!first)
+            fprintf(fout, ",\n");
 
-      fprintf(fout, "{ \"type\": \"Feature\",\n");
-      fprintf(fout, "  \"properties\": { },\n");
-      fprintf(fout, "  \"geometry\": {\n");
-      fprintf(fout, "    \"type\": \"LineString\",\n");
-      fprintf(fout, "    \"coordinates\": [\n");
+         fprintf(fout, "{ \"type\": \"Feature\",\n");
+         fprintf(fout, "  \"properties\": { },\n");
+         fprintf(fout, "  \"geometry\": {\n");
+         fprintf(fout, "    \"type\": \"LineString\",\n");
+         fprintf(fout, "    \"coordinates\": [\n");
 
-      geojson_path(fout, &p->curve);
+         geojson_path(fout, &p->curve);
 
-      fprintf(fout, "    ]\n"); // close coordinates list
-      fprintf(fout, "  }\n"); // close geometry
-      fprintf(fout, "}"); // close feature
+         fprintf(fout, "    ]\n"); // close coordinates list
+         fprintf(fout, "  }\n"); // close geometry
+         fprintf(fout, "}"); // close feature
+      }
 
       // Recursive call treating all children as separate line segments:
       q = p->childlist;
