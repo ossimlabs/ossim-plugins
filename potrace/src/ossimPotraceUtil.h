@@ -8,7 +8,7 @@
 #ifndef ossimPotraceUtility_HEADER
 #define ossimPotraceUtility_HEADER 1
 
-#include <ossim/util/ossimUtility.h>
+#include <ossim/util/ossimChipProcUtil.h>
 #include <ossim/plugin/ossimPluginConstants.h>
 #include <ossim/imaging/ossimImageHandler.h>
 
@@ -16,7 +16,7 @@ extern "C" {
 #include "potracelib.h"
 }
 
-class OSSIM_DLL ossimPotraceUtil : public ossimUtility
+class OSSIM_DLL ossimPotraceUtil : public ossimChipProcUtil
 {
 public:
    static const char* DESCRIPTION;
@@ -39,15 +39,17 @@ public:
    virtual void getKwlTemplate(ossimKeywordlist& kwl);
 
 private:
-   potrace_bitmap_t* convertToBitmap();
+   virtual void initProcessingChain();
+   virtual void finalizeChain();
+   potrace_bitmap_t* convertToBitmap(ossimImageSource* handler);
    bool writeGeoJSON(potrace_path_t* vectorList);
+   bool pixelIsMasked(const ossimIpt& image_pt, potrace_bitmap_t* bitmap) const;
 
-   ossimFilename m_inputRasterFname;
-   ossimFilename m_outputVectorFname;
-   ossimFilename m_bitmapFname;
    OutputMode m_mode;
-   ossimRefPtr<ossimImageHandler> m_inputHandler;
+   double m_alphamax;
+   int m_turdSize;
    bool m_outputToConsole;
+
 };
 
 #endif /* #ifndef ossimPotraceUtility_HEADER */
