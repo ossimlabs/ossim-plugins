@@ -960,88 +960,91 @@ ossimRefPtr<ossimImageGeometry> ossimKakaduJp2Reader::getImageGeometryFromGeotif
          ossimJp2Info jp2Info;
          
          std::streamoff boxPos = jp2Info.getGeotiffBox( str, box );
-         
-         if (traceDebug())
+
+         if ( box.size() )
          {
-            ossimNotify(ossimNotifyLevel_DEBUG)
-               << "Found geotiff uuid at: " << boxPos+8 << "\n";
-         }
+            if (traceDebug())
+            {
+               ossimNotify(ossimNotifyLevel_DEBUG)
+                  << "Found geotiff uuid at: " << boxPos+8 << "\n";
+            }
          
-         //---
-         // Create a string stream and set the vector buffer as its source.
-         // Note: The box has the 16 GEOTIFF_UUID bytes in there so offset
-         // address and size.
-         //---
+            //---
+            // Create a string stream and set the vector buffer as its source.
+            // Note: The box has the 16 GEOTIFF_UUID bytes in there so offset
+            // address and size.
+            //---
 #if 0
-         // This doesn't work with VS2010...
-         // Create a string stream and set the vector buffer as its source.
-         std::istringstream boxStream;
-         boxStream.rdbuf()->pubsetbuf( (char*)&box.front()+GEOTIFF_UUID_SIZE,
-                                       box.size()-GEOTIFF_UUID_SIZE );
+            // This doesn't work with VS2010...
+            // Create a string stream and set the vector buffer as its source.
+            std::istringstream boxStream;
+            boxStream.rdbuf()->pubsetbuf( (char*)&box.front()+GEOTIFF_UUID_SIZE,
+                                          box.size()-GEOTIFF_UUID_SIZE );
 #else
-         // convert the vector into a string
-         std::string boxString( box.begin()+GEOTIFF_UUID_SIZE, box.end() );
-         std::istringstream boxStream;
-         boxStream.str( boxString );
+            // convert the vector into a string
+            std::string boxString( box.begin()+GEOTIFF_UUID_SIZE, box.end() );
+            std::istringstream boxStream;
+            boxStream.str( boxString );
 #endif
 
-         // Give the stream to tiff info to create a geometry.
-         ossimTiffInfo info;
-         ossim_uint32 entry = 0;
-         ossimKeywordlist kwl; // Used to capture geometry data. 
+            // Give the stream to tiff info to create a geometry.
+            ossimTiffInfo info;
+            ossim_uint32 entry = 0;
+            ossimKeywordlist kwl; // Used to capture geometry data. 
          
-         if ( info.getImageGeometry(boxStream, kwl, entry) )
-         {
-            //---
-            // The tiff embedded in the geojp2 only has one line
-            // and one sample by design so overwrite the lines and
-            // samples with the real value.
-            //---
-            ossimString pfx = "image";
-            pfx += ossimString::toString(entry);
-            pfx += ".";
-            
-            // Add the lines.
-            kwl.add(pfx.chars(), ossimKeywordNames::NUMBER_LINES_KW,
-                    getNumberOfLines(0), true);
-            
-            // Add the samples.
-            kwl.add(pfx.chars(), ossimKeywordNames::NUMBER_SAMPLES_KW,
-                    getNumberOfSamples(0), true);
-            
-            // Create the projection.
-            ossimRefPtr<ossimProjection> proj =
-               ossimProjectionFactoryRegistry::instance()->createProjection(kwl, pfx);
-            if ( proj.valid() )
+            if ( info.getImageGeometry(boxStream, kwl, entry) )
             {
-               // Create and assign projection to our ossimImageGeometry object.
-               geom = new ossimImageGeometry();
-               geom->setProjection( proj.get() );
-               if (traceDebug())
+               //---
+               // The tiff embedded in the geojp2 only has one line
+               // and one sample by design so overwrite the lines and
+               // samples with the real value.
+               //---
+               ossimString pfx = "image";
+               pfx += ossimString::toString(entry);
+               pfx += ".";
+            
+               // Add the lines.
+               kwl.add(pfx.chars(), ossimKeywordNames::NUMBER_LINES_KW,
+                       getNumberOfLines(0), true);
+            
+               // Add the samples.
+               kwl.add(pfx.chars(), ossimKeywordNames::NUMBER_SAMPLES_KW,
+                       getNumberOfSamples(0), true);
+            
+               // Create the projection.
+               ossimRefPtr<ossimProjection> proj =
+                  ossimProjectionFactoryRegistry::instance()->createProjection(kwl, pfx);
+               if ( proj.valid() )
                {
-                  ossimNotify(ossimNotifyLevel_DEBUG) << "Found GeoTIFF box." << std::endl;
-               }
-               
-               // Get the internal raster pixel alignment type and set the base class.
-               const char* lookup = kwl.find(pfx.chars(), ossimKeywordNames::PIXEL_TYPE_KW);
-               if ( lookup )
-               {
-                  ossimString type = lookup;
-                  type.downcase();
-                  if ( type == "pixel_is_area" )
+                  // Create and assign projection to our ossimImageGeometry object.
+                  geom = new ossimImageGeometry();
+                  geom->setProjection( proj.get() );
+                  if (traceDebug())
                   {
-                     thePixelType = OSSIM_PIXEL_IS_AREA;
+                     ossimNotify(ossimNotifyLevel_DEBUG) << "Found GeoTIFF box." << std::endl;
                   }
-                  else if ( type == "pixel_is_point" )
+               
+                  // Get the internal raster pixel alignment type and set the base class.
+                  const char* lookup = kwl.find(pfx.chars(), ossimKeywordNames::PIXEL_TYPE_KW);
+                  if ( lookup )
                   {
-                     thePixelType = OSSIM_PIXEL_IS_POINT;
+                     ossimString type = lookup;
+                     type.downcase();
+                     if ( type == "pixel_is_area" )
+                     {
+                        thePixelType = OSSIM_PIXEL_IS_AREA;
+                     }
+                     else if ( type == "pixel_is_point" )
+                     {
+                        thePixelType = OSSIM_PIXEL_IS_POINT;
+                     }
                   }
                }
             }
          }
       }
    }
-
+   
    if (traceDebug())
    {
       ossimNotify(ossimNotifyLevel_DEBUG) << MODULE << " exited...\n";
