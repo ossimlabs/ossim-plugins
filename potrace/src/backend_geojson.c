@@ -163,7 +163,7 @@ static void write_polygons(FILE *fout, potrace_path_t *tree, int first )
   {
     potrace_path_t *p, *q;
 
-    for (p=tree; p; p=p->sibling)
+    for (p=tree; p; p=p->next)
     {
        // Skip any entries with no points (possible after paths split due to edge encounter):
       if (p->curve.n != 0)
@@ -183,12 +183,6 @@ static void write_polygons(FILE *fout, potrace_path_t *tree, int first )
          fprintf(fout, "  }\n"); // close geometry
          fprintf(fout, "}"); // close feature
       }
-
-      // Recursive call treating all children as separate line segments:
-      q = p->childlist;
-      if (q)
-         write_line_strings(fout, q, 0);
-
       first = 0;
     }
   }

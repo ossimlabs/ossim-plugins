@@ -13,6 +13,5 @@ else(OSSIM_FOUND)
 endif(OSSIM_FOUND)
 
 add_subdirectory( src )
-add_subdirectory( app )
 
 message( "************** END SETUP FOR ossim_potrace_plugin ******************" )

@@ -6,6 +6,7 @@
 //**************************************************************************************************
 
 #include "ossimPotraceUtil.h"
+#include <ossim/base/ossimArgumentParser.h>
 #include <ossim/base/ossimApplicationUsage.h>
 #include <ossim/imaging/ossimImageHandlerRegistry.h>
 #include <ossim/imaging/ossimImageSourceSequencer.h>
@@ -27,12 +28,17 @@ ossimPotraceUtil::ossimPotraceUtil()
 :  m_mode (LINESTRING),
    m_alphamax (1.0),
    m_turdSize (4),
-   m_outputToConsole(false)
+   m_outputToConsole(false),
+   m_maskBitmap (0),
+   m_productBitmap (0)
 {
 }
 
 ossimPotraceUtil::~ossimPotraceUtil()
 {
+   delete m_productBitmap;
+   if (m_maskBitmap)
+      delete m_maskBitmap;
 }
 
 void ossimPotraceUtil::setUsage(ossimArgumentParser& ap)
@@ -64,7 +70,7 @@ void ossimPotraceUtil::setUsage(ossimArgumentParser& ap)
    au->addCommandLineOption("--turdsize <int>", "suppress speckles of up to this many pixels.");
 }
 
-bool ossimChipProcUtil::initialize(ossimArgumentParser& ap)
+bool ossimPotraceUtil::initialize(ossimArgumentParser& ap)
 {
    string ts1;
    ossimArgumentParser::ossimParameter sp1(ts1);
@@ -150,13 +156,13 @@ bool ossimPotraceUtil::execute()
    }
 
    // Generate bitmap for input image:
-   potrace_bitmap_t* potraceBitmap = convertToBitmap(m_imgLayers[0].get());
+   m_productBitmap = convertToBitmap(m_imgLayers[0].get());
 
    // If there is a mask, generate a bitmap for it as well:
-   potrace_bitmap_t* maskBitmap = 0;
+   m_maskBitmap = 0;
    if (m_imgLayers.size() == 2)
    {
-      maskBitmap = convertToBitmap(m_imgLayers[1].get());
+      m_maskBitmap = convertToBitmap(m_imgLayers[1].get());
       m_mode = LINESTRING;
    }
 
@@ -164,98 +170,138 @@ bool ossimPotraceUtil::execute()
    potrace_param_t* potraceParam = potrace_param_default();
    potraceParam->turdsize = m_turdSize;
    potraceParam->alphamax = m_alphamax;
-   potrace_state_t* potraceOutput = potrace_trace(potraceParam, potraceBitmap);
+   potrace_state_t* potraceOutput = potrace_trace(potraceParam, m_productBitmap);
    if (!potraceOutput)
    {
       xmsg <<"ossimPotraceUtil:"<<__LINE__<<" Null pointer returned from potrace_trace!";
       throw ossimException(xmsg.str());
    }
 
+   if (m_mode == LINESTRING)
+      transformLineStrings(potraceOutput);
+   else
+      transformPolygons(potraceOutput);
+
+   // Write to output vector file:
+   if (!writeGeoJSON(potraceOutput->plist))
+      return false;
+
+   // Release memory:
+   //potrace_state_free(potraceOutput);
+   //free(potraceBitmap->map);
+   free(potraceParam);
+
+   return true;
+}
+
+void ossimPotraceUtil::transformLineStrings(potrace_state_t* potraceOutput)
+{
+   ossimIrect rect;
+   m_geom->getBoundingRect(rect);
+   rect.expand(ossimIpt(-1,-1));
+
    // Vector coordinates are in image space. Need geom to convert to geographic lat/lon:
-   potrace_path_t* potracePaths = potraceOutput->plist;
-   potrace_path_t* path = potracePaths;
+   potrace_path_t* path = potraceOutput->plist;
    ossimDpt imgPt;
    ossimGpt gndPt;
+
    while (path)
    {
-      for (int i=0; i<path->curve.n;)
+      int segment = 0;
+      while (segment<path->curve.n)
       {
-         // Convert up 3 possible vertices per segment
+         // Convert up to 3 possible vertices per segment
          for (int v=0; v<3; ++v)
          {
-            if ((v == 0) && (path->curve.tag[i] = POTRACE_CORNER))
+            if ((v == 0) && (path->curve.tag[segment] = POTRACE_CORNER))
                continue;
 
-            imgPt.x = path->curve.c[i][v].x;
-            imgPt.y = path->curve.c[i][v].y;
+            imgPt.x = path->curve.c[segment][v].x;
+            imgPt.y = path->curve.c[segment][v].y;
 
             // Potrace reasonably assumes that active pixels on edge need to be bound by a polygon.
             // Override this behavior by avoiding consideration of edge pixels. This involves
             // editing the potrace paths returned by the trace algorithm, splitting the paths into
             // separate independent paths when they encounter an edge. Any segments lying near the
             // edge of the image rectangle will be removed from the path list.
-
-            // Check for edge of image condition and avoid any vertices and associated segment there
-            //if ((imgPt.x == rect.ul().x) || (imgPt.x == rect.lr().x) ||
-            //    (imgPt.y == rect.ul().y) || (imgPt.y == rect.lr().y))
-            //if ((fabs(imgPt.x-rect.ul().x)<=1) || (fabs(imgPt.x-rect.lr().x)<=1) ||
-            //    (fabs(imgPt.y-rect.ul().y)<=1) || (fabs(imgPt.y-rect.lr().y)<=1))
-            if ((maskBitmap != 0) && pixelIsMasked(imgPt, maskBitmap))
+            if ( !rect.pointWithin(imgPt) || pixelIsMasked(imgPt, m_maskBitmap))
             {
-               // Need to flag as endpoint to the path to avoid forced closure:
-               if (i>1)
-                  path->curve.tag[i-1] = POTRACE_ENDPOINT;
-
                // Need to ignore this segment and split the containing path into two separate paths:
                potrace_path_t* new_path = new potrace_path_t;
                new_path->area = 1;
                new_path->sign = 1;
                new_path->next = path->next;
-               new_path->sibling = 0; // Seems to work but scary
+               new_path->sibling = 0;
                new_path->childlist = 0;
-               new_path->priv = path->priv; // No longer needed at this point in the game unless a
-                                            // different backend than GeoJSON is used.
-               path->next = new_path; // Link in the new path
-               new_path->curve.n = path->curve.n - i - 1;
+               new_path->priv = 0;
+               new_path->curve.n = path->curve.n - segment - 1;
                new_path->curve.c = new potrace_dpoint_t[new_path->curve.n][3];
                new_path->curve.tag = new int[new_path->curve.n];
-               for (int j=0; j<new_path->curve.n; j++)
+               for (int new_seg=0; new_seg<new_path->curve.n; new_seg++)
                {
                   for (int u=0; u<3; ++u)
                   {
-                     new_path->curve.c[j][u].x = path->curve.c[j+i+1][u].x;
-                     new_path->curve.c[j][u].y = path->curve.c[j+i+1][u].y;
+                     new_path->curve.c[new_seg][u].x = path->curve.c[new_seg+segment+1][u].x;
+                     new_path->curve.c[new_seg][u].y = path->curve.c[new_seg+segment+1][u].y;
                   }
-                  new_path->curve.tag[j] = path->curve.tag[j+i+1];
+                  new_path->curve.tag[new_seg] = path->curve.tag[new_seg+segment+1];
                }
-               path->curve.n = i;
+               if (segment == 0)
+               {
+                  if (path == potraceOutput->plist) // First in the trace list?
+                     potraceOutput->plist = new_path;
+                  delete path;
+                  path = new_path;
+                  segment = -1;
+               }
+               else
+               {
+                  path->curve.tag[segment-1] = POTRACE_ENDPOINT;
+                  path->next = new_path; // Link in the new path
+                  path->curve.n = segment;
+               }
 
                break; // out of vertex loop
             }
 
             // Good segment, reproject to geographic:
             m_geom->localToWorld(imgPt, gndPt);
-            path->curve.c[i][v].x = gndPt.lon;
-            path->curve.c[i][v].y = gndPt.lat;
+            path->curve.c[segment][v].x = gndPt.lon;
+            path->curve.c[segment][v].y = gndPt.lat;
          }
-         ++i;
+         ++segment;
       }
       path = path->next;
    }
+}
 
-   // Write to output vector file:
-   if (!writeGeoJSON(potracePaths))
-      return false;
+void ossimPotraceUtil::transformPolygons(potrace_state_t* potraceOutput)
+{
+   // Vector coordinates are in image space. Need geom to convert to geographic lat/lon:
+   potrace_path_t* path = potraceOutput->plist;
+   ossimDpt imgPt;
+   ossimGpt gndPt;
+   while (path)
+   {
+      for (int segment=0; segment<path->curve.n;)
+      {
+         // Convert up to 3 possible vertices per segment
+         for (int v=0; v<3; ++v)
+         {
+            if ((v == 0) && (path->curve.tag[segment] = POTRACE_CORNER))
+               continue;
 
-   // Release memory:
-   //potrace_state_free(potraceOutput);
-   //free(potraceBitmap->map);
-   delete potraceBitmap;
-   if (maskBitmap)
-      delete maskBitmap;
-   free(potraceParam);
+            imgPt.x = path->curve.c[segment][v].x;
+            imgPt.y = path->curve.c[segment][v].y;
 
-   return true;
+            m_geom->localToWorld(imgPt, gndPt);
+            path->curve.c[segment][v].x = gndPt.lon;
+            path->curve.c[segment][v].y = gndPt.lat;
+         }
+         ++segment;
+      }
+      path = path->next;
+   }
 }
 
 void ossimPotraceUtil::getKwlTemplate(ossimKeywordlist& kwl)
@@ -344,6 +390,9 @@ potrace_bitmap_t* ossimPotraceUtil::convertToBitmap(ossimImageSource* raster)
 
 bool ossimPotraceUtil::pixelIsMasked(const ossimIpt& image_pt, potrace_bitmap_t* bitmap) const
 {
+   if (bitmap == 0)
+      return false;
+
    int pixelsPerWord = 8 * sizeof(int*);
    unsigned long offset = image_pt.x/pixelsPerWord + image_pt.y*bitmap->dy;
    int shift = pixelsPerWord - (image_pt.x % pixelsPerWord) - 1;
@@ -367,7 +416,7 @@ bool ossimPotraceUtil::writeGeoJSON(potrace_path_t* vectorList)
       throw ossimException(xmsg.str());
    }
 
-   potrace_geojson(outFile, vectorList, (int) (m_mode == LINESTRING));
+   potrace_geojson(outFile, vectorList, (int) (m_mode == POLYGON));
    fclose(outFile);
 
    if (m_outputToConsole && m_consoleStream)

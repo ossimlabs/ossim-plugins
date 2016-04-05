@@ -44,12 +44,15 @@ private:
    potrace_bitmap_t* convertToBitmap(ossimImageSource* handler);
    bool writeGeoJSON(potrace_path_t* vectorList);
    bool pixelIsMasked(const ossimIpt& image_pt, potrace_bitmap_t* bitmap) const;
+   void transformLineStrings(potrace_state_t* pathTree);
+   void transformPolygons(potrace_state_t* pathTree);
 
    OutputMode m_mode;
    double m_alphamax;
    int m_turdSize;
    bool m_outputToConsole;
-
+   potrace_bitmap_t* m_maskBitmap;
+   potrace_bitmap_t* m_productBitmap;
 };
 
 #endif /* #ifndef ossimPotraceUtility_HEADER */
