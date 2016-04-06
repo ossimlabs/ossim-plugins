@@ -39,6 +39,16 @@ public:
    virtual void getKwlTemplate(ossimKeywordlist& kwl);
 
 private:
+   class Path
+   {
+   public:
+      Path() : closed(true) {}
+      ~Path();
+      void addPotraceCurve(potrace_curve_t& curve, int segment);
+      std::vector<ossimDpt> vertices;
+      bool closed;
+   };
+
    virtual void initProcessingChain();
    virtual void finalizeChain();
    potrace_bitmap_t* convertToBitmap(ossimImageSource* handler);

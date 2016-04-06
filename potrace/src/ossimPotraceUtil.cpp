@@ -196,82 +196,154 @@ bool ossimPotraceUtil::execute()
 
 void ossimPotraceUtil::transformLineStrings(potrace_state_t* potraceOutput)
 {
+   // This is a fairly complex process because potrace assumes all paths are closed, i.e., the
+   // last vertex of a path is the same as the first. For linestring mode, this is not always
+   // true since the path may hit the border or masked region, in which case it needs to be
+   // split into two or more paths.
+
    ossimIrect rect;
    m_geom->getBoundingRect(rect);
    rect.expand(ossimIpt(-1,-1));
 
    // Vector coordinates are in image space. Need geom to convert to geographic lat/lon:
    potrace_path_t* path = potraceOutput->plist;
+   potrace_path_t* pathToDelete;
    ossimDpt imgPt;
-   ossimGpt gndPt;
+   vector<Path*> originalPaths;
+   vector<Path*> adjustedPaths;
 
+   // Populate the std::vector with original list of potrace paths:
    while (path)
    {
-      int segment = 0;
-      while (segment<path->curve.n)
+      //cout << "\nProcessing path "<<(long)path<<endl;
+      if (path->curve.n > 0)
       {
-         // Convert up to 3 possible vertices per segment
-         for (int v=0; v<3; ++v)
+         // Start by converting all paths to C++ data structures:
+         Path* p = new Path;
+         for (int segment=0; segment<path->curve.n; ++segment)
          {
-            if ((v == 0) && (path->curve.tag[segment] = POTRACE_CORNER))
-               continue;
-
-            imgPt.x = path->curve.c[segment][v].x;
-            imgPt.y = path->curve.c[segment][v].y;
-
-            // Potrace reasonably assumes that active pixels on edge need to be bound by a polygon.
-            // Override this behavior by avoiding consideration of edge pixels. This involves
-            // editing the potrace paths returned by the trace algorithm, splitting the paths into
-            // separate independent paths when they encounter an edge. Any segments lying near the
-            // edge of the image rectangle will be removed from the path list.
-            if ( !rect.pointWithin(imgPt) || pixelIsMasked(imgPt, m_maskBitmap))
-            {
-               // Need to ignore this segment and split the containing path into two separate paths:
-               potrace_path_t* new_path = new potrace_path_t;
-               new_path->area = 1;
-               new_path->sign = 1;
-               new_path->next = path->next;
-               new_path->sibling = 0;
-               new_path->childlist = 0;
-               new_path->priv = 0;
-               new_path->curve.n = path->curve.n - segment - 1;
-               new_path->curve.c = new potrace_dpoint_t[new_path->curve.n][3];
-               new_path->curve.tag = new int[new_path->curve.n];
-               for (int new_seg=0; new_seg<new_path->curve.n; new_seg++)
-               {
-                  for (int u=0; u<3; ++u)
-                  {
-                     new_path->curve.c[new_seg][u].x = path->curve.c[new_seg+segment+1][u].x;
-                     new_path->curve.c[new_seg][u].y = path->curve.c[new_seg+segment+1][u].y;
-                  }
-                  new_path->curve.tag[new_seg] = path->curve.tag[new_seg+segment+1];
-               }
-               if (segment == 0)
-               {
-                  if (path == potraceOutput->plist) // First in the trace list?
-                     potraceOutput->plist = new_path;
-                  delete path;
-                  path = new_path;
-                  segment = -1;
-               }
-               else
-               {
-                  path->curve.tag[segment-1] = POTRACE_ENDPOINT;
-                  path->next = new_path; // Link in the new path
-                  path->curve.n = segment;
-               }
-
-               break; // out of vertex loop
-            }
-
-            // Good segment, reproject to geographic:
-            m_geom->localToWorld(imgPt, gndPt);
-            path->curve.c[segment][v].x = gndPt.lon;
-            path->curve.c[segment][v].y = gndPt.lat;
+            //cout << "  Processing segment "<<segment;
+            p->addPotraceCurve(path->curve, segment);
          }
+         originalPaths.push_back(p);
+      }
+      potrace_path_t* delete_this_path = path;
+      path = path->next;
+      free(delete_this_path); // Don't need old path anymore
+   }
+
+   // All paths are now represented by line segments in convenient C++ vector structure. Now
+   // need to filter out masked points, splitting up paths as they encounter the masked regions:
+   for (size_t i=0; i<originalPaths.size(); ++i)
+   {
+      Path* original = originalPaths[i];
+      bool outside = false;
+
+      //cout << "\nProcessing originalPath["<<i<<"] with numVertices="<<original->vertices.size()<<endl;
+      Path* adjusted = 0;
+      for (size_t v=0; v<original->vertices.size(); ++v)
+      {
+         imgPt = original->vertices[v];
+         if ( rect.pointWithin(imgPt) && !pixelIsMasked(imgPt, m_maskBitmap))
+         {
+            if (!adjusted)
+            {
+               adjusted = new Path;
+               adjustedPaths.push_back(adjusted);
+               //cout << "  Creating adjusted="<<(long)adjusted<<endl;
+            }
+            adjusted->vertices.push_back(imgPt);
+            //cout << "  Adding to adjusted, imgPt:"<<imgPt<<endl;
+
+            if (outside)
+            {
+               // Coming in from the outside, so not closed:
+               adjusted->closed = false;
+               outside = false;
+            }
+         }
+         else if (!outside)
+         {
+            // Just went outside. Close this adjusted path and start a new one:
+            //cout << "  Hit outside, end of adjusted:"<<(long)adjusted<<endl;
+            if (adjusted)
+               adjusted->closed = false;
+            adjusted = 0;
+            outside = true;
+         }
+      }
+   }
+
+   // The adjustedPaths list contains only vertices inside the ROI. Now need to move back into
+   // potrace space to prepare poitrace data structures for geojson output:
+   ossimGpt gndPt;
+   potrace_path_t* previous_path = 0;
+   for (size_t i=0; i<adjustedPaths.size(); ++i)
+   {
+      // Convert image point vertices to ground points and repopulate using potrace
+      // datastructures:
+      Path* adjusted = adjustedPaths[i];
+      //cout << "\nProcessing adjustedPaths["<<i<<"] with numVertices="<<adjusted->vertices.size()<<endl;
+      path = new potrace_path_t;
+      //cout << "  Created potrace path:"<<(long)path<<endl;
+      if (previous_path)
+         previous_path->next = path;
+      else
+         potraceOutput->plist = path;
+
+      int num_segments = (adjusted->vertices.size()+1)/2;
+      path->curve.n = num_segments;
+      path->curve.c = new potrace_dpoint_t[num_segments][3];
+      path->curve.tag = new int[num_segments];
+      path->area = 1;
+      path->sign = 1;
+      path->sibling = 0;
+      path->childlist = 0;
+      path->priv = 0;
+      path->next = 0;
+
+      // Loop to transfer the vertices to the potrace structure, transforming to lat, lon:
+      int segment = 0;
+      int adj_v = 0;
+      while (adj_v < adjusted->vertices.size())
+      {
+         path->curve.tag[segment] = POTRACE_CORNER;
+
+         // Transform:
+         imgPt = adjusted->vertices[adj_v++];
+         m_geom->localToWorld(imgPt, gndPt);
+         path->curve.c[segment][1].x = gndPt.lon;
+         path->curve.c[segment][1].y = gndPt.lat;
+         //cout << "  Inserted ["<<adj_v-1<<"], imgPt:"<<imgPt<<" --> ("<<gndPt.lon<<", "<<gndPt.lat<<")"<<endl;
+
+         if (adj_v == adjusted->vertices.size())
+         {
+            //cout << "  Inserted above as last"<<endl;
+
+            path->curve.c[segment][2].x = gndPt.lon;
+            path->curve.c[segment][2].y = gndPt.lat;
+         }
+         else
+         {
+            imgPt = adjusted->vertices[adj_v++];
+            m_geom->localToWorld(imgPt, gndPt);
+            path->curve.c[segment][2].x = gndPt.lon;
+            path->curve.c[segment][2].y = gndPt.lat;
+            //cout << "  Inserted ["<<adj_v-1<<"], imgPt:"<<imgPt<<" --> ("<<gndPt.lon<<", "<<gndPt.lat<<")"<<endl;
+         }
+
+         // Mark the last point as a line segment endpoint to avoid closure:
+         if (adj_v == adjusted->vertices.size() && !adjusted->closed)
+            path->curve.tag[segment] = POTRACE_ENDPOINT;
+
+         //cout << "  Finished segment:"<<segment<<", tag="<<path->curve.tag[segment]<<endl;
          ++segment;
       }
-      path = path->next;
+      previous_path = path;
+
+      // Don't need the adjusted path anymore:
+      delete adjusted;
+      adjusted = 0;
    }
 }
 
@@ -285,14 +357,19 @@ void ossimPotraceUtil::transformPolygons(potrace_state_t* potraceOutput)
    {
       for (int segment=0; segment<path->curve.n;)
       {
+         //cout << "\nWorking on path="<<(long)path<<" segment="<<segment<<", tag="<<path->curve.tag[segment]<<endl;
          // Convert up to 3 possible vertices per segment
          for (int v=0; v<3; ++v)
          {
-            if ((v == 0) && (path->curve.tag[segment] = POTRACE_CORNER))
+            if ((v == 0) && (path->curve.tag[segment] == POTRACE_CORNER))
+            {
+               //cout << "Hit corner"<<endl;
                continue;
+            }
 
             imgPt.x = path->curve.c[segment][v].x;
             imgPt.y = path->curve.c[segment][v].y;
+            //cout << "imgPt["<<v<<"] = "<<imgPt<<endl;
 
             m_geom->localToWorld(imgPt, gndPt);
             path->curve.c[segment][v].x = gndPt.lon;
@@ -380,7 +457,7 @@ potrace_bitmap_t* ossimPotraceUtil::convertToBitmap(ossimImageSource* raster)
       tile = sequencer->getNextTile();
    }
 
-#if 1
+#if 0
    FILE* pbm = fopen("TEMP.pbm", "w");
    potrace_writepbm(pbm, potraceBitmap);
 #endif
@@ -435,3 +512,62 @@ bool ossimPotraceUtil::writeGeoJSON(potrace_path_t* vectorList)
 
    return true;
 }
+
+ossimPotraceUtil::Path::~Path()
+{
+   vertices.clear();
+}
+
+
+void ossimPotraceUtil::Path::addPotraceCurve(potrace_curve_t& curve, int segment)
+{
+   potrace_dpoint_t *c = curve.c[segment];
+   if (curve.tag[segment] == POTRACE_CORNER)
+   {
+      // Just add next connected line segment
+      ossimDpt v1 (c[1].x, c[1].y);
+      ossimDpt v2 (c[2].x, c[2].y);
+      vertices.push_back(v1);
+      vertices.push_back(v2);
+      //cout <<"    Added corners    v1:"<<v1<<endl;
+      //cout <<"                     v2:"<<v2<<endl;
+   }
+   else
+   {
+      // Need to convert bezier curve representation to line segments:
+      ossimDpt v0;
+      ossimDpt v1 (c[0].x, c[0].y);
+      ossimDpt v2 (c[1].x, c[1].y);
+      ossimDpt v3 (c[2].x, c[2].y);
+
+      // Need the first vertex from the previous segment if available:
+      if (segment == 0)
+         v0 = v1;
+      else
+      {
+         c = curve.c[segment-1];
+         v0.x = c[2].x;
+         v0.y = c[2].y;
+      }
+      //cout <<"    Processing curve v0:"<<v0<<endl;
+      //cout <<"                     v1:"<<v1<<endl;
+      //cout <<"                     v2:"<<v2<<endl;
+      //cout <<"                     v3:"<<v3<<endl;
+
+      // Now loop to extract line segments from bezier curve:
+      double step, t, s;
+      ossimDpt vertex;
+      step = 1.0 / 8.0;
+      t = step;
+      for (int i=0; i<8; i++)
+      {
+         s = 1.0 - t;
+         vertex.x = s*s*s*v0.x + 3*(s*s*t)*v1.x + 3*(t*t*s)*v2.x + t*t*t*v3.x;
+         vertex.y = s*s*s*v0.y + 3*(s*s*t)*v1.y + 3*(t*t*s)*v2.y + t*t*t*v3.y;
+         vertices.push_back(vertex);
+         t += step;
+         //cout <<"    added vertex:"<<vertex<<endl;
+      }
+   }
+}
+

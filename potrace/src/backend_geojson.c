@@ -15,11 +15,6 @@
 #include <math.h>
 
 #include "potracelib.h"
-#include "curve.h"
-#include "backend_geojson.h"
-#include "lists.h"
-#include "auxiliary.h"
-#include "imginfo.h"
 
 /* return a point on a 1-dimensional Bezier segment */
 static inline double bezier(double t, double x0, double x1, double x2, double x3) {
@@ -47,22 +42,22 @@ static char *round_to_unit(double x) {
 /* ---------------------------------------------------------------------- */
 /* path-drawing auxiliary functions */
 
-static dpoint_t cur;
+static potrace_dpoint_t cur;
 
-static void geojson_moveto(FILE *fout, dpoint_t p)
+static void geojson_moveto(FILE *fout, potrace_dpoint_t p)
 {
   fprintf(fout, "[%s, %s]", round_to_unit(p.x), round_to_unit(p.y));
   cur = p;
 }
 
-static void geojson_lineto(FILE *fout, dpoint_t p)
+static void geojson_lineto(FILE *fout, potrace_dpoint_t p)
 {
   fprintf(fout, ", [%s, %s]", round_to_unit(p.x), round_to_unit(p.y));
 
   cur = p;
 }
 
-static void geojson_curveto(FILE *fout, dpoint_t p1, dpoint_t p2, dpoint_t p3)
+static void geojson_curveto(FILE *fout, potrace_dpoint_t p1, potrace_dpoint_t p2, potrace_dpoint_t p3)
 {
   double step, t;
   int i;
@@ -83,13 +78,13 @@ static void geojson_curveto(FILE *fout, dpoint_t p1, dpoint_t p2, dpoint_t p3)
 
 static int geojson_path(FILE *fout, potrace_curve_t *curve) {
   int i=0;
-  dpoint_t *c;
+  potrace_dpoint_t *c;
   
   int m = curve->n;
   if (m == 0)
     return 0;
 
-  if (curve->tag[m-1] != POTRACE_ENDPOINT)
+  if ((m > 1) && (curve->tag[m-1] != POTRACE_ENDPOINT))
   {
      c = curve->c[m-1]; // Set last point in the curve as the first entry for closure
   }
@@ -168,6 +163,7 @@ static void write_polygons(FILE *fout, potrace_path_t *tree, int first )
        // Skip any entries with no points (possible after paths split due to edge encounter):
       if (p->curve.n != 0)
       {
+
          if (!first)
             fprintf(fout, ",\n");
 
