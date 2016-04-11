@@ -275,14 +275,22 @@ void ossimPotraceUtil::transformLineStrings(potrace_state_t* potraceOutput)
    }
 
    // The adjustedPaths list contains only vertices inside the ROI. Now need to move back into
-   // potrace space to prepare poitrace data structures for geojson output:
+   // potrace space to prepare potrace data structures for geojson output:
    ossimGpt gndPt;
    potrace_path_t* previous_path = 0;
-   for (size_t i=0; i<adjustedPaths.size(); ++i)
+   vector<Path*>::iterator path_iter = adjustedPaths.begin();
+   while (path_iter != adjustedPaths.end())
    {
+      // Don't bother with single-vertex "paths":
+      Path* adjusted = *path_iter;
+      if (adjusted->vertices.size() < 2)
+      {
+         ++path_iter;
+         continue;
+      }
+
       // Convert image point vertices to ground points and repopulate using potrace
       // datastructures:
-      Path* adjusted = adjustedPaths[i];
       //cout << "\nProcessing adjustedPaths["<<i<<"] with numVertices="<<adjusted->vertices.size()<<endl;
       path = new potrace_path_t;
       //cout << "  Created potrace path:"<<(long)path<<endl;
@@ -344,6 +352,7 @@ void ossimPotraceUtil::transformLineStrings(potrace_state_t* potraceOutput)
       // Don't need the adjusted path anymore:
       delete adjusted;
       adjusted = 0;
+      ++path_iter;
    }
 }
 
