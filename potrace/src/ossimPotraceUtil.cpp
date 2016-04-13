@@ -283,7 +283,7 @@ void ossimPotraceUtil::transformLineStrings(potrace_state_t* potraceOutput)
    {
       // Don't bother with single-vertex "paths":
       Path* adjusted = *path_iter;
-      if (adjusted->vertices.size() < 2)
+      if (adjusted->vertices.size() < 3)
       {
          ++path_iter;
          continue;
