@@ -394,7 +394,7 @@ void ossimGpkgSpatialRefSysRecord::saveState( ossimKeywordlist& kwl,
    key = "organization";
    kwl.addPair(myPref, key, m_organization, true);
    
-   key = "oganization_coordsys_id";
+   key = "organization_coordsys_id";
    value = ossimString::toString(m_organization_coordsys_id).string();
    kwl.addPair( myPref, key, value, true);
 

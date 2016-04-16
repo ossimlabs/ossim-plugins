@@ -50,16 +50,21 @@ bool ossim_gpkg::checkSignature(std::istream& in)
 bool ossim_gpkg::checkApplicationId(std::istream& in)
 {
    //---
-   // Check the application_id:
+   // Check the application_id.
+   // From GeoPackage 1.0:
    // Requirement 2: Every GeoPackage must contain 0x47503130 ("GP10" in ACII)
    // in the application id field of the SQLite database header to indicate a
    // GeoPackage version 1.0 file.
+   // From GeoPackage 1.1:
+   // A GeoPackage SHALL contain 0x47503131 ("GP11" in ASCII) in the application
+   // id field of the SQLite database header to indicate a GeoPackage version 1.1 file.
    //---
    bool result = false;
    char APP_ID[4];
    in.seekg( 68, std::ios_base::beg );
    in.read(APP_ID, 4);
-   if ( (APP_ID[0] == 'G') && (APP_ID[1] == 'P') && (APP_ID[2] == '1') && (APP_ID[3] == '0') )
+   if ( (APP_ID[0] == 'G') && (APP_ID[1] == 'P') && (APP_ID[2] == '1') &&
+       ( (APP_ID[3] == '0') || (APP_ID[3] == '1') ) )
    {
       result = true;
    }
