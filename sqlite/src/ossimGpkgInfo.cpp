@@ -75,13 +75,23 @@ std::ostream& ossimGpkgInfo::print(std::ostream& out) const
    // Check for empty filename.
    if (m_file.size())
    {
+      ossimKeywordlist kwl;
+
+      std::ifstream fileStream;
+      fileStream.open(m_file.c_str(), std::ios_base::in | std::ios_base::binary);
+      char APP_ID[5];
+      fileStream.seekg( 68, std::ios_base::beg );
+      fileStream.read(APP_ID, 4);
+      APP_ID[4] = '\0';
+      std::string appId(APP_ID);
+      kwl.addPair("gpkg.", "version", appId, true);
+      fileStream.close();
+
       sqlite3* db;
       
       int rc = sqlite3_open_v2( m_file.c_str(), &db, SQLITE_OPEN_READONLY, 0);
       if ( rc == SQLITE_OK )
       {
-         ossimKeywordlist kwl;
-
          // Get the gpkg_contents records:
          std::string tableName = "gpkg_contents";
          std::vector< ossimRefPtr<ossimGpkgDatabaseRecordBase> > records;
