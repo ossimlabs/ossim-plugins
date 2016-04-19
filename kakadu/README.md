@@ -2,7 +2,17 @@
 
 OSSIM Plugin for reading and writing kakadu-formatted images. You must have a licensed kakadu SDK available.
 
-## Build Instructions
+Building Kakadu library example for linux 64 bit:
+$ mkdir -p $OSSIM_DEV_HOME/kakadu
+$ cd !$
+$ unzip <path/to/your/v7_7_1-1234C.zip>
+$ ln -s v7_7_1-1234C/ latest
+$ cd latest/make
+$ make -f Makefile-Linux-x86-64-gcc
+
+
+## Build Instructions for plugin:
+
 This plugin is built as part of the OSSIM suite of repositories. See the build instructions in [ossim/README.md](http://github.com/ossimlabs/ossim/blob/master/README.md). As long as this repository is located in the same parent directory as [OSSIM](http://github.com/ossimlabs/ossim), CMake will detect it and create the Makefiles in `<build-dir>/<build-type>/ossim-kakadu-plugin`. You can `cd` into that directory and type `make` if you only want to build the plugin.
 
 The kakadu libraries and SDK are required to build this plugin. In order for CMake to find the SDK, you need to do *one* of the following:
