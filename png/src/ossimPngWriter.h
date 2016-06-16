@@ -36,7 +36,7 @@ public:
    /** @return "ossim png writer" */
    virtual ossimString getLongName()  const;
 
-   /** @return "ossimPngReader" */
+   /** @return "ossimPngWriter" */
    virtual ossimString getClassName()    const;
 
    /**

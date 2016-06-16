@@ -166,6 +166,16 @@ namespace ossim_hdf5
    // ossimScalarType getScalarType( ossim_int32 typeClass, ossim_int32 id );
    ossimScalarType getScalarType( const H5::DataSet* dataset );
 
+   /**
+    * @brief Gets scalar type from args.
+    * @param typeClass H5T_INTEGER or H5T_FLOAT
+    * @param size In bytes of attribute.
+    * @param isSigned Integer data only, true if signed, false if not.
+    * @return ossimScalarType
+    */
+   ossimScalarType getScalarType( ossim_int32 typeClass,
+                                  size_t size,
+                                  bool isSigned );
 
    ossimScalarType getScalarType( ossim_int32 id );
    

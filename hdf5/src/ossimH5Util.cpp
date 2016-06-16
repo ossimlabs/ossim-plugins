@@ -67,7 +67,6 @@ void ossim_hdf5::printIterative( H5::H5File* file,
       {
          H5::Attribute attr( group->openAttribute( aIdx ) );
          ossim_hdf5::printAttribute( attr, prefix, out );
-         attr.close();
       }
       
       const hsize_t OBJ_COUNT = group->getNumObjs();
@@ -156,7 +155,6 @@ void ossim_hdf5::printObject(  H5::H5File* file,
    {
       H5::Attribute attr = dataset.openAttribute( aIdx );
       ossim_hdf5::printAttribute( attr, prefix, out );
-      attr.close();
    }
 
    // Extents:
@@ -170,7 +168,6 @@ void ossim_hdf5::printObject(  H5::H5File* file,
       out << prefix << exStr << ": " << extents[i] << std::endl;
    }
 
-   // ossimScalarType scalar = getScalarType( type_class, dataset.getId() );
    ossimScalarType scalar = ossim_hdf5::getScalarType( dataset.getId() );
    if ( scalar != OSSIM_SCALAR_UNKNOWN)
    {
@@ -321,10 +318,14 @@ void ossim_hdf5::printAttribute( const H5::Attribute& attr,
 
    if ( ( typeClass == H5T_INTEGER ) || ( typeClass == H5T_FLOAT ) )
    {
-      H5::IntType intType = attr.getIntType();
+      bool isSigned = false;
+      if ( typeClass == H5T_INTEGER )
+      {
+         H5::IntType intType = attr.getIntType();
+         isSigned = intType.getSign() == H5T_SGN_NONE ? false : true;
+      }
 
-      ossimScalarType scalar = ossim_hdf5::getScalarType( intType.getId() );
-      
+      ossimScalarType scalar = ossim_hdf5::getScalarType( typeClass, size, isSigned );
       ossimByteOrder order = ossim_hdf5::getByteOrder( &attr );
       ossimEndian* endian = 0;
       if ( ( size > 1 ) && ( order != ossim::byteOrder() ) )
@@ -490,8 +491,10 @@ void ossim_hdf5::printAttribute( const H5::Attribute& attr,
          << "ossimH5Util::printAttribute WARN: Unhandled type class: " << typeClass
          << std::endl;
    }
-
+   
    out << prefix << "." << name << ": " << value << std::endl;
+
+   type.close();
    
 } // End: ossim_hdf5::printAttribute
 
@@ -830,6 +833,87 @@ ossimScalarType ossim_hdf5::getScalarType( const H5::DataSet* dataset )
    
 } // End: ossim_hdf5::getScalarType( const H5::DataSet* dataset )
 
+ossimScalarType ossim_hdf5::getScalarType( ossim_int32 typeClass,
+                                           size_t size,
+                                           bool isSigned )
+{
+   ossimScalarType scalar = OSSIM_SCALAR_UNKNOWN;
+
+   H5T_class_t h5tClassType = (H5T_class_t)typeClass;
+
+   if ( h5tClassType == H5T_INTEGER )
+   {
+      if ( size == 1 )
+      {
+         if (!isSigned)
+         {
+            scalar = OSSIM_UINT8;
+         }
+         else
+         {
+            scalar = OSSIM_SINT8;
+         }
+      }
+      else if ( size == 2 )
+      {
+         if (!isSigned)
+         {
+            scalar = OSSIM_UINT16;
+         }
+         else
+         {
+            scalar = OSSIM_SINT16;
+         }
+      }
+      else if ( size == 4 )
+      {
+         if (!isSigned)
+         {
+            scalar = OSSIM_UINT32;
+         }
+         else
+         {
+            scalar = OSSIM_SINT32;
+         }
+      }
+      else if ( size == 8 )
+      {
+         if (!isSigned)
+         {
+            scalar = OSSIM_UINT64;
+         }
+         else
+         {
+            scalar = OSSIM_SINT64;
+         }
+      }
+      else
+      {
+         ossimNotify(ossimNotifyLevel_WARN)
+            << "unhandled scalar size: " << size << endl;
+      }
+   }
+   else if ( h5tClassType == H5T_FLOAT )
+   {
+      if ( size == 4 )
+      {
+         scalar = OSSIM_FLOAT32;
+      }
+      else
+      {
+         scalar = OSSIM_FLOAT64;
+      }
+   }
+   else
+   {
+      ossimNotify(ossimNotifyLevel_WARN)
+            << "unhandled type class: " << h5tClassType << endl;
+   }
+   
+   return scalar;
+}
+
+#if 1
 ossimScalarType ossim_hdf5::getScalarType( ossim_int32 id )
 {
    ossimScalarType scalar = OSSIM_SCALAR_UNKNOWN;
@@ -887,6 +971,7 @@ ossimScalarType ossim_hdf5::getScalarType( ossim_int32 id )
    
    return scalar;
 }
+#endif
 
 ossimByteOrder ossim_hdf5::getByteOrder( const H5::AbstractDs* obj )
 {

@@ -7,10 +7,7 @@
 // Description: A gdal data set from an ossim image handler.
 //
 //----------------------------------------------------------------------------
-// $Id: ossimGdalDataset.cpp 23003 2014-11-24 17:13:40Z dburken $
-
-
-#include <fstream>
+// $Id$
 
 #include <ossimGdalDataset.h>
 #include <ossimGdalType.h>
@@ -19,6 +16,7 @@
 #include <ossim/base/ossimTrace.h>
 #include <ossim/imaging/ossimImageHandler.h>
 #include <ossim/imaging/ossimImageHandlerRegistry.h>
+#include <fstream>
 
 static GDALDriver *poOssimGdalDriver = 0;
 
@@ -225,12 +223,6 @@ ossimGdalDatasetRasterBand::ossimGdalDatasetRasterBand(ossimGdalDataset* ds,
    nBlocksPerColumn = nRasterYSize / nBlockYSize;
    if (nRasterXSize % nBlockXSize) ++nBlocksPerRow;
    if (nRasterYSize % nBlockYSize) ++nBlocksPerColumn;
-
-   nSubBlocksPerRow = 0;
-   nSubBlocksPerColumn = 0;
-
-   bSubBlockingActive = FALSE;
-   papoBlocks = 0;
 
    nBlockReads = 0;
    bForceCachedIO = false;
