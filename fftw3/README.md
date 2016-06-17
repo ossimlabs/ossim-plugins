@@ -1,4 +1,4 @@
-# ossim-fftw-plugin
+# ossim-fftw3-plugin
 Contains C++ library code for accessing FFTW3 library as an ossimImageSourceFilter class.
 
 Requires the third-party open source library [FFTW3](https://www.fftw.org "FFTW3's Homepage").
