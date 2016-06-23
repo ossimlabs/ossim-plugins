@@ -49,7 +49,7 @@ void ossimPotraceUtil::setUsage(ossimArgumentParser& ap)
    // Set the general usage:
    ossimApplicationUsage* au = ap.getApplicationUsage();
    ossimString usageString = ap.getApplicationName();
-   usageString += " [options] <input-raster-file> [<output-vector-file>]";
+   usageString += " potrace [options] <input-raster-file> [<output-vector-file>]";
    au->setCommandLineUsage(usageString);
 
    // Set the command line options:
