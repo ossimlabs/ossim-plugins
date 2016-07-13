@@ -196,7 +196,32 @@ void ossim_hdf5::printObject(  H5::H5File* file,
       out << prefix << exStr << ": " << extents[i] << std::endl;
    }
 
-   ossimScalarType scalar = ossim_hdf5::getScalarType( dataset.getId() );
+   ossimScalarType scalar;
+   switch(type_class)
+   {
+      case H5T_INTEGER:
+      {
+         H5::IntType dataType = dataset.getIntType();
+         bool isSigned = dataType.getSign() == H5T_SGN_NONE ? false : true;
+
+         scalar = ossim_hdf5::getScalarType( type_class, dataType.getSize(), isSigned);
+
+         break;
+      }
+      case H5T_FLOAT:
+      {
+         H5::FloatType dataType = dataset.getFloatType();
+         bool isSigned = true;
+
+         scalar = ossim_hdf5::getScalarType( type_class, dataType.getSize(), isSigned);
+         break;
+      }
+      default:
+      {
+         scalar = OSSIM_SCALAR_UNKNOWN;
+      }
+   } 
+   //dataset.getId() );
    if ( scalar != OSSIM_SCALAR_UNKNOWN)
    {
       out << prefix << "." << ossimKeywordNames::SCALAR_TYPE_KW << ": "
@@ -262,28 +287,93 @@ void ossim_hdf5::printIntType(H5::DataSet& dataset,
                               const std::string& prefix,
                               std::ostream& out)
 {
-   ossim_uint32 intSize = dataType.getSize();
+   ossim_uint32 dataTypeSize = dataType.getSize();
    ossimByteOrder order = getByteOrder(&dataType);
    ossimEndian endian;
-
-   if(intSize == 4)
+   bool isSigned = dataType.getSign() == H5T_SGN_NONE ? false : true;
+   ossimString valueStr;
+   ossimScalarType scalarType = getScalarType(dataType.getClass(), dataTypeSize, isSigned);
+   switch(scalarType)
    {
-      ossim_int32 value = *reinterpret_cast<const ossim_int32*>(dataPtr);
-      if(order!=ossim::byteOrder())
+      case OSSIM_UINT8:
       {
-         endian.swap(value);
+         ossim_uint8 value = *reinterpret_cast<const ossim_uint8*>(dataPtr);
+         valueStr = ossimString::toString(value);
+         break;
       }
-      out << prefix <<": "<<value<<"\n";
-   }
-   else if(intSize == 8)
-   {
-      ossim_int64 value = *reinterpret_cast<const ossim_int64*>(dataPtr);
-      if(order!=ossim::byteOrder())
+      case OSSIM_SINT8:
       {
-         endian.swap(value);
+         ossim_int8 value = *reinterpret_cast<const ossim_int8*>(dataPtr);
+         valueStr = ossimString::toString(value);
+         break;
       }
-      out << prefix<<": "<<value<<"\n";
+      case OSSIM_UINT16:
+      {
+         ossim_uint16 value = *reinterpret_cast<const ossim_uint16*>(dataPtr);
+         if(order!=ossim::byteOrder())
+         {
+            endian.swap(value);
+         }
+         valueStr = ossimString::toString(value);
+         break;
+      }
+      case OSSIM_SINT16:
+      {
+         ossim_int16 value = *reinterpret_cast<const ossim_int16*>(dataPtr);
+         if(order!=ossim::byteOrder())
+         {
+            endian.swap(value);
+         }
+         valueStr = ossimString::toString(value);
+         break;
+      }
+      case OSSIM_UINT32:
+      {
+         ossim_uint32 value = *reinterpret_cast<const ossim_uint32*>(dataPtr);
+         if(order!=ossim::byteOrder())
+         {
+            endian.swap(value);
+         }
+         valueStr = ossimString::toString(value);
+         break;
+      }
+      case OSSIM_SINT32:
+      {
+         ossim_int32 value = *reinterpret_cast<const ossim_int32*>(dataPtr);
+         if(order!=ossim::byteOrder())
+         {
+            endian.swap(value);
+         }
+         valueStr = ossimString::toString(value);
+         break;
+      }
+      case OSSIM_UINT64:
+      {
+         ossim_uint64 value = *reinterpret_cast<const ossim_uint64*>(dataPtr);
+         if(order!=ossim::byteOrder())
+         {
+            endian.swap(value);
+         }
+         valueStr = ossimString::toString(value);
+         break;
+      }
+      case OSSIM_SINT64:
+      {
+         ossim_int64 value = *reinterpret_cast<const ossim_int64*>(dataPtr);
+         if(order!=ossim::byteOrder())
+         {
+            endian.swap(value);
+         }
+         valueStr = ossimString::toString(value);
+         break;
+      }
+      default:
+      {
+         valueStr = "<UNHANDLED SCALAR TYPE>";
+         break;
+      }
    }
+   out << prefix<<": "<<valueStr<<"\n";
 }
 
 void ossim_hdf5::printFloatType(H5::DataSet& dataset, 
@@ -1318,15 +1408,18 @@ ossimScalarType ossim_hdf5::getScalarType( ossim_int32 typeClass,
    return scalar;
 }
 
-#if 1
+// commenting this out.  This is broke and we should use the one that takes the class_type, size, and isSigned 
+// arguments.
+#if 0
 ossimScalarType ossim_hdf5::getScalarType( ossim_int32 id )
 {
+   std::cout << "ossim_hdf5::getScalarType: entered...................\n";
    ossimScalarType scalar = OSSIM_SCALAR_UNKNOWN;
    
    H5T_class_t type_class = H5Tget_class(id);
    size_t      size       = H5Tget_size(id);
    H5T_sign_t  sign       = H5Tget_sign(id);
-   
+
    if ( type_class == H5T_INTEGER )
    {
       if ( size == 1 && sign == H5T_SGN_2)

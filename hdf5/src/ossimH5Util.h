@@ -220,7 +220,13 @@ namespace ossim_hdf5
                                   size_t size,
                                   bool isSigned );
 
-   ossimScalarType getScalarType( ossim_int32 id );
+   /* GP:
+   * I am commenting this one out and we should use the one above.  
+   * This gives us negative values for the class type and seems to be busted.
+   * if you have the typeclass then you can get the size and sign and it is safer to 
+   * use the call above.
+   */
+   //ossimScalarType getScalarType( ossim_int32 id );
    
    ossimByteOrder getByteOrder( const H5::AbstractDs* dataset );
 
