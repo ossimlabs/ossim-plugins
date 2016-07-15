@@ -13,6 +13,7 @@
 
 #include "ossimH5Reader.h"
 #include "ossimH5Util.h"
+#include "ossimH5Options.h"
 #include "ossimH5GridModel.h"
 
 #include <ossim/base/ossimConstants.h>
@@ -373,19 +374,17 @@ void ossimH5Reader::addImageDatasetEntries(const std::vector<std::string>& names
       std::vector<std::string>::const_iterator i = names.begin();
       while ( i != names.end() )
       {
-         if ( ossim_hdf5::isExcludedDataset( *i ) == false )
+         if ( ossimH5Options::instance()->isDatasetRenderable(*i))//ossim_hdf5::isExcludedDataset( *i ) == false )
          {
             H5::DataSet dataset = m_h5File->openDataSet( *i );
 
             // Get the class of the datatype that is used by the dataset.
             H5T_class_t type_class = dataset.getTypeClass();
-            
             if ( ( type_class == H5T_INTEGER ) || ( type_class == H5T_FLOAT ) )
             {
                // Get the extents:
                std::vector<ossim_uint32> extents;
                ossim_hdf5::getExtents( &dataset, extents ); 
-
                if ( extents.size() >= 2 )
                {
                   if ( ( extents[0] > 1 ) && ( extents[1] > 1 ) )
@@ -741,7 +740,7 @@ bool ossimH5Reader::getLatLonDatasetNames( H5::H5File* h5File,
       // Get the list of datasets.
       std::vector<std::string> datasetNames;
       ossim_hdf5::getDatasetNames( h5File, datasetNames );
-      
+
       if ( datasetNames.size() )
       {
          std::vector<std::string>::const_iterator i = datasetNames.begin();

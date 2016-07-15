@@ -196,7 +196,7 @@ namespace ossim_hdf5
    bool isLoadableAsImage( H5::H5File* file,
                            const std::string& datasetName );
 
-   bool isExcludedDataset( const std::string& datasetName );
+   //bool isExcludedDataset( const std::string& datasetName );
 
    void iterateGroupForDatasetNames( H5::H5File* file,
                                      const std::string& group,

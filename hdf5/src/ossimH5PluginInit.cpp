@@ -21,12 +21,22 @@
 
 #include <ossim/plugin/ossimPluginConstants.h>
 #include "ossimH5ReaderFactory.h"
+#include "ossimH5Options.h"
 #include "ossimH5InfoFactory.h"
 #include "ossimH5ProjectionFactory.h"
 
 static void setDescription(ossimString& description)
 {
    description = "HDF5 reader plugin\n\n";
+   const ossimH5Options::StringListType& renderableDatasets = ossimH5Options::instance()->getRenderableDataset();
+
+   description = description + "Datasets enabled for rendering:\n\n";
+   ossim_uint32 idx = 0;
+   for(idx = 0;idx < renderableDatasets.size();++idx)
+   {
+      description = description + renderableDatasets[idx] + "\n";
+   }
+
 }
 
 extern "C"
@@ -58,11 +68,13 @@ extern "C"
    OSSIM_PLUGINS_DLL void ossimSharedLibraryInitialize(
       ossimSharedObjectInfo** info)
    {    
+      ossimH5Options::instance();
       myInfo.getDescription = getDescription;
       myInfo.getNumberOfClassNames = getNumberOfClassNames;
       myInfo.getClassName = getClassName;
 
       *info = &myInfo;
+
 
       /* Register the readers... */
       ossimImageHandlerRegistry::instance()->

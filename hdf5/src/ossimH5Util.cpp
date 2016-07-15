@@ -11,7 +11,9 @@
 //----------------------------------------------------------------------------
 // $Id
 
-#include <ossimH5Util.h>
+#include "ossimH5Util.h"
+#include "ossimH5Options.h"
+
 #include <ossim/base/ossimCommon.h>
 #include <ossim/base/ossimEndian.h>
 #include <ossim/base/ossimIrect.h>
@@ -44,6 +46,30 @@ std::ostream& ossim_hdf5::print(H5::H5File* file, std::ostream& out)
       std::string prefix        = "hdf5";
       ossim_uint32 recurseCount = 0;
       
+      std::vector<std::string> datasetNames;
+
+
+      getDatasetNames(file, datasetNames );
+
+std::cout << "DATASET NAMES ======= " << datasetNames.size() << "\n";
+      ossim_uint32 datasetNameIdx = 0;
+      ossimString dataSetNamesStr;
+      for(;datasetNameIdx<datasetNames.size();++datasetNameIdx)
+      {
+         if(dataSetNamesStr.empty())
+         {
+            dataSetNamesStr = datasetNames[datasetNameIdx];
+         }
+         else
+         {
+            dataSetNamesStr = dataSetNamesStr + ", " + datasetNames[datasetNameIdx];
+         }
+      }
+      if(!dataSetNamesStr.empty())
+      {
+         out << prefix << ".datasetnames: " << dataSetNamesStr << "\n";
+      }
+
       ossim_hdf5::printIterative( file, groupName, prefix, recurseCount, out );
    }
 
@@ -98,7 +124,7 @@ void ossim_hdf5::printIterative( H5::H5File* file,
             if ( objType == H5G_GROUP )
             {
                // Recursive call:
-               if ( recursedCount < ossim_hdf5::MAX_RECURSION_LEVEL )
+               if ( recursedCount < ossimH5Options::instance()->getMaxRecursionLevel())//ossim_hdf5::MAX_RECURSION_LEVEL )
                {
                   ossim_hdf5::printIterative(
                      file, combinedName, combinedPrefix, recursedCount, out );
@@ -982,9 +1008,12 @@ void ossim_hdf5::printAttribute( const H5::Attribute& attr,
    }
    else
    {
-      ossimNotify(ossimNotifyLevel_DEBUG)
-         << "ossimH5Util::printAttribute WARN: Unhandled type class: " << typeClass
-         << std::endl;
+      if(traceDebug())
+      {
+         ossimNotify(ossimNotifyLevel_DEBUG)
+            << "ossimH5Util::printAttribute WARN: Unhandled type class: " << ossim_hdf5::getDatatypeClassType( typeClass ) << "\n"
+            << std::endl;
+      }
    }
    
    out << prefix << "." << name << ": " << value << std::endl;
@@ -1085,7 +1114,7 @@ bool ossim_hdf5::isLoadableAsImage( H5::H5File* file, const std::string& dataset
    // std::cout << "isLoadable entered..." << std::endl;
    if ( file && datasetName.size() )
    {
-      if ( isExcludedDataset( datasetName ) == false )
+      if ( ossimH5Options::instance()->isDatasetRenderable(datasetName)) //isExcludedDataset( datasetName ) == false )
       {
          H5::DataSet dataset = file->openDataSet( datasetName );
          
@@ -1123,6 +1152,7 @@ bool ossim_hdf5::isLoadableAsImage( H5::H5File* file, const std::string& dataset
    return result;
 }
 
+#if 0
 bool ossim_hdf5::isExcludedDataset( const std::string& datasetName )
 {
    bool result = false;
@@ -1149,6 +1179,7 @@ bool ossim_hdf5::isExcludedDataset( const std::string& datasetName )
    
    return result;
 }
+#endif
 
 void ossim_hdf5::iterateGroupForDatasetNames(  H5::H5File* file,
                                                const std::string& groupName,
@@ -1187,7 +1218,7 @@ void ossim_hdf5::iterateGroupForDatasetNames(  H5::H5File* file,
             if ( objType == H5G_GROUP )
             {
                // Recursive call:
-               if ( recursedCount < ossim_hdf5::MAX_RECURSION_LEVEL )
+               if ( recursedCount < ossimH5Options::instance()->getMaxRecursionLevel())
                {
                   ossim_hdf5::iterateGroupForDatasetNames(
                      file, combinedName, datasetNames, recursedCount );
