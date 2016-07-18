@@ -30,6 +30,15 @@ namespace H5
    class Attribute;
    class DataSet;
    class H5File;
+   class CompType;
+   class DataSpace;
+   class DataSet;
+   class DataType;
+   class EnumType;
+   class FloatType;
+   class IntType;
+   class StrType;
+   class ArrayType;
 }
 
 // Anonymous enums:
@@ -89,6 +98,41 @@ namespace ossim_hdf5
                       const std::string& prefix,
                       std::ostream& out );
 
+
+   void printEnumType(H5::DataSet& dataset, 
+                      H5::EnumType& dataType,
+                      const std::string& prefix,
+                      std::ostream& out);
+   void printIntType(H5::DataSet& dataset, 
+                      H5::IntType& dataType,
+                      const char* dataPtr,
+                      const std::string& prefix,
+                      std::ostream& out);
+   void printFloatType(H5::DataSet& dataset, 
+                      H5::FloatType& dataType,
+                      const char* dataPtr,
+                      const std::string& prefix,
+                      std::ostream& out);
+   void printArrayType(H5::DataSet& dataset, 
+                      H5::ArrayType& dataType,
+                      const char* dataPtr,
+                      const std::string& prefix,
+                      std::ostream& out);
+   void printStrType(H5::DataSet& dataset, 
+                      H5::StrType& dataType,
+                      const char* dataPtr,
+                      const std::string& prefix,
+                      std::ostream& out);
+   /**
+    * @brief Prints a compound object.
+    * @param dataset reference to a opened dataset.
+    * @param prefix keyword for the output prefix for each memeber of the compound.
+    * @param out Stream to print to.
+    */ 
+   void printCompound(H5::DataSet& dataset, 
+                      const std::string& prefix,
+                      std::ostream& out);
+
    /**
     * @brief Gets string value for attribute key.
     *
@@ -140,7 +184,6 @@ namespace ossim_hdf5
    void printAttribute( const H5::Attribute& attr,
                         const std::string& prefix,
                         std::ostream& out );
-   
    void combine( const std::string& left,
                  const std::string& right,
                  char separator,
@@ -153,7 +196,7 @@ namespace ossim_hdf5
    bool isLoadableAsImage( H5::H5File* file,
                            const std::string& datasetName );
 
-   bool isExcludedDataset( const std::string& datasetName );
+   //bool isExcludedDataset( const std::string& datasetName );
 
    void iterateGroupForDatasetNames( H5::H5File* file,
                                      const std::string& group,
@@ -177,9 +220,18 @@ namespace ossim_hdf5
                                   size_t size,
                                   bool isSigned );
 
-   ossimScalarType getScalarType( ossim_int32 id );
+   /* GP:
+   * I am commenting this one out and we should use the one above.  
+   * This gives us negative values for the class type and seems to be busted.
+   * if you have the typeclass then you can get the size and sign and it is safer to 
+   * use the call above.
+   */
+   //ossimScalarType getScalarType( ossim_int32 id );
    
    ossimByteOrder getByteOrder( const H5::AbstractDs* dataset );
+
+   ossimByteOrder getByteOrder( const H5::DataType* dataType );
+
 
    /**
     * @brief Gets the valid bounding rect of the dataset excluding nulls on front and back.

@@ -11,7 +11,9 @@
 //----------------------------------------------------------------------------
 // $Id
 
-#include <ossimH5Util.h>
+#include "ossimH5Util.h"
+#include "ossimH5Options.h"
+
 #include <ossim/base/ossimCommon.h>
 #include <ossim/base/ossimEndian.h>
 #include <ossim/base/ossimIrect.h>
@@ -31,6 +33,7 @@
 #include <iomanip> /* tmp */
 #include <iostream> /* tmp */
 #include <ostream>
+#include <iterator>
 using namespace std;
 
 static ossimTrace traceDebug("ossimH5Util:debug");
@@ -43,6 +46,30 @@ std::ostream& ossim_hdf5::print(H5::H5File* file, std::ostream& out)
       std::string prefix        = "hdf5";
       ossim_uint32 recurseCount = 0;
       
+      std::vector<std::string> datasetNames;
+
+
+      getDatasetNames(file, datasetNames );
+
+std::cout << "DATASET NAMES ======= " << datasetNames.size() << "\n";
+      ossim_uint32 datasetNameIdx = 0;
+      ossimString dataSetNamesStr;
+      for(;datasetNameIdx<datasetNames.size();++datasetNameIdx)
+      {
+         if(dataSetNamesStr.empty())
+         {
+            dataSetNamesStr = datasetNames[datasetNameIdx];
+         }
+         else
+         {
+            dataSetNamesStr = dataSetNamesStr + ", " + datasetNames[datasetNameIdx];
+         }
+      }
+      if(!dataSetNamesStr.empty())
+      {
+         out << prefix << ".datasetnames: " << dataSetNamesStr << "\n";
+      }
+
       ossim_hdf5::printIterative( file, groupName, prefix, recurseCount, out );
    }
 
@@ -58,7 +85,7 @@ void ossim_hdf5::printIterative( H5::H5File* file,
    if ( file && groupName.size() )
    {
       ++recursedCount;
-      
+
       H5::Group* group = new H5::Group( file->openGroup(groupName) );
 
       // Print attributes:
@@ -97,7 +124,7 @@ void ossim_hdf5::printIterative( H5::H5File* file,
             if ( objType == H5G_GROUP )
             {
                // Recursive call:
-               if ( recursedCount < ossim_hdf5::MAX_RECURSION_LEVEL )
+               if ( recursedCount < ossimH5Options::instance()->getMaxRecursionLevel())//ossim_hdf5::MAX_RECURSION_LEVEL )
                {
                   ossim_hdf5::printIterative(
                      file, combinedName, combinedPrefix, recursedCount, out );
@@ -144,7 +171,6 @@ void ossim_hdf5::printObject(  H5::H5File* file,
 #endif
    
    H5::DataSet dataset = file->openDataSet( objectName );
-   
    // Get the class of the datatype that is used by the dataset.
    H5T_class_t type_class = dataset.getTypeClass();
    out << prefix << ".class_type: "
@@ -157,6 +183,34 @@ void ossim_hdf5::printObject(  H5::H5File* file,
       ossim_hdf5::printAttribute( attr, prefix, out );
    }
 
+   switch(type_class)
+   {
+      case H5T_COMPOUND:
+      {
+         ossim_hdf5::printCompound(dataset, prefix, out);
+         break;
+      }
+      case H5T_ENUM:
+      {
+         H5::EnumType dataType = dataset.getEnumType();
+         ossim_hdf5::printEnumType(dataset, dataType,
+                                   prefix, out);
+         break;
+      }
+      case H5T_REFERENCE:
+      {
+        out << prefix << ".class_type: "
+            << ossim_hdf5::getDatatypeClassType( type_class ) << std::endl;
+
+         break;
+      }
+      default:
+      {
+         //std::cout << "TYPE CLASS NOT HANDLED ===== " << type_class << std::endl;
+         break;
+      }
+   }
+   //std::cout << "NPOINTS === "
    // Extents:
    std::vector<ossim_uint32> extents;
    ossim_hdf5::getExtents( &dataset, extents );
@@ -168,7 +222,32 @@ void ossim_hdf5::printObject(  H5::H5File* file,
       out << prefix << exStr << ": " << extents[i] << std::endl;
    }
 
-   ossimScalarType scalar = ossim_hdf5::getScalarType( dataset.getId() );
+   ossimScalarType scalar;
+   switch(type_class)
+   {
+      case H5T_INTEGER:
+      {
+         H5::IntType dataType = dataset.getIntType();
+         bool isSigned = dataType.getSign() == H5T_SGN_NONE ? false : true;
+
+         scalar = ossim_hdf5::getScalarType( type_class, dataType.getSize(), isSigned);
+
+         break;
+      }
+      case H5T_FLOAT:
+      {
+         H5::FloatType dataType = dataset.getFloatType();
+         bool isSigned = true;
+
+         scalar = ossim_hdf5::getScalarType( type_class, dataType.getSize(), isSigned);
+         break;
+      }
+      default:
+      {
+         scalar = OSSIM_SCALAR_UNKNOWN;
+      }
+   } 
+   //dataset.getId() );
    if ( scalar != OSSIM_SCALAR_UNKNOWN)
    {
       out << prefix << "." << ossimKeywordNames::SCALAR_TYPE_KW << ": "
@@ -200,6 +279,448 @@ void ossim_hdf5::printObject(  H5::H5File* file,
    dataset.close();
    
 } // End: printObject
+
+void ossim_hdf5::printEnumType(H5::DataSet& dataset, 
+                               H5::EnumType& dataType,
+                               const std::string& prefix,
+                               std::ostream& out)
+{
+   ossim_int32 nEnumMembers = dataType.getNmembers();
+   ossim_int32 enumMemberIdx = 0;
+   ossim_int32 enumTypeSize = dataType.getSize(); 
+   if(dataType.getSize() == 4)
+   {
+      out << prefix << ".class_type: H5T_ENUM\n";
+      for(;enumMemberIdx<nEnumMembers;++enumMemberIdx)
+      {
+         try{
+            ossim_int32 value = 0;
+
+            dataType.getMemberValue(enumMemberIdx, &value);
+            H5std_string name = dataType.nameOf(&value, 2048);
+            out << prefix << "." << name << ": " <<value <<"\n"; 
+         }
+         catch(H5::Exception& e)
+         {
+         }
+      }
+   }
+}
+
+void ossim_hdf5::printIntType(H5::DataSet& dataset, 
+                              H5::IntType& dataType,
+                              const char* dataPtr,
+                              const std::string& prefix,
+                              std::ostream& out)
+{
+   ossim_uint32 dataTypeSize = dataType.getSize();
+   ossimByteOrder order = getByteOrder(&dataType);
+   ossimEndian endian;
+   bool isSigned = dataType.getSign() == H5T_SGN_NONE ? false : true;
+   ossimString valueStr;
+   ossimScalarType scalarType = getScalarType(dataType.getClass(), dataTypeSize, isSigned);
+   switch(scalarType)
+   {
+      case OSSIM_UINT8:
+      {
+         ossim_uint8 value = *reinterpret_cast<const ossim_uint8*>(dataPtr);
+         valueStr = ossimString::toString(value);
+         break;
+      }
+      case OSSIM_SINT8:
+      {
+         ossim_int8 value = *reinterpret_cast<const ossim_int8*>(dataPtr);
+         valueStr = ossimString::toString(value);
+         break;
+      }
+      case OSSIM_UINT16:
+      {
+         ossim_uint16 value = *reinterpret_cast<const ossim_uint16*>(dataPtr);
+         if(order!=ossim::byteOrder())
+         {
+            endian.swap(value);
+         }
+         valueStr = ossimString::toString(value);
+         break;
+      }
+      case OSSIM_SINT16:
+      {
+         ossim_int16 value = *reinterpret_cast<const ossim_int16*>(dataPtr);
+         if(order!=ossim::byteOrder())
+         {
+            endian.swap(value);
+         }
+         valueStr = ossimString::toString(value);
+         break;
+      }
+      case OSSIM_UINT32:
+      {
+         ossim_uint32 value = *reinterpret_cast<const ossim_uint32*>(dataPtr);
+         if(order!=ossim::byteOrder())
+         {
+            endian.swap(value);
+         }
+         valueStr = ossimString::toString(value);
+         break;
+      }
+      case OSSIM_SINT32:
+      {
+         ossim_int32 value = *reinterpret_cast<const ossim_int32*>(dataPtr);
+         if(order!=ossim::byteOrder())
+         {
+            endian.swap(value);
+         }
+         valueStr = ossimString::toString(value);
+         break;
+      }
+      case OSSIM_UINT64:
+      {
+         ossim_uint64 value = *reinterpret_cast<const ossim_uint64*>(dataPtr);
+         if(order!=ossim::byteOrder())
+         {
+            endian.swap(value);
+         }
+         valueStr = ossimString::toString(value);
+         break;
+      }
+      case OSSIM_SINT64:
+      {
+         ossim_int64 value = *reinterpret_cast<const ossim_int64*>(dataPtr);
+         if(order!=ossim::byteOrder())
+         {
+            endian.swap(value);
+         }
+         valueStr = ossimString::toString(value);
+         break;
+      }
+      default:
+      {
+         valueStr = "<UNHANDLED SCALAR TYPE>";
+         break;
+      }
+   }
+   out << prefix<<": "<<valueStr<<"\n";
+}
+
+void ossim_hdf5::printFloatType(H5::DataSet& dataset, 
+                              H5::FloatType& dataType,
+                              const char* dataPtr,
+                              const std::string& prefix,
+                              std::ostream& out)
+{
+   ossim_uint32 floatSize = dataType.getSize();
+   ossimByteOrder order = getByteOrder(&dataType);
+   ossimEndian endian;
+
+   if(floatSize == 4)
+   {
+      ossim_float32 value = *reinterpret_cast<const ossim_float32*>(dataPtr);
+      if(order!=ossim::byteOrder())
+      {
+         endian.swap(value);
+      }
+      out << prefix<<": "<<ossimString::toString(value)<<"\n";
+   }
+   else if(floatSize == 8)
+   {
+      ossim_float64 value = *reinterpret_cast<const ossim_float64*>(dataPtr);
+      if(order!=ossim::byteOrder())
+      {
+         endian.swap(value);
+        // std::cout << "NOT THE SAME ORDER!!!!!!!!!!!!\n";
+      }
+      out << prefix<<": "<<ossimString::toString(value)<<"\n";
+   }
+}
+
+void ossim_hdf5::printStrType(H5::DataSet& dataset, 
+                                 H5::StrType& dataType,
+                                 const char* dataPtr,
+                                 const std::string& prefix,
+                                 std::ostream& out)
+{
+   const char* startPtr = dataPtr;
+   const char* endPtr   = dataPtr;
+   const char* maxPtr   = dataPtr + dataType.getSize();
+   while((endPtr != maxPtr)&&(*endPtr!='\0')) ++endPtr;
+   ossimString value(startPtr, endPtr);
+   out << prefix <<": "<<value<<"\n";
+}
+
+void ossim_hdf5::printArrayType(H5::DataSet& dataset, 
+                                 H5::ArrayType& dataType,
+                                 const char* dataPtr,
+                                 const std::string& prefix,
+                                 std::ostream& out)
+{
+   ossim_uint32 arrayNdims = dataType.getArrayNDims();
+   ossimByteOrder order = getByteOrder(&dataType);
+   ossimEndian endian;
+   H5::DataType superType = dataType.getSuper();
+   //out << prefix<<".class_type: " << ossim_hdf5::getDatatypeClassType( dataType.getClass() ) << "\n";
+   if(arrayNdims)
+   {
+      std::vector<hsize_t> dims(arrayNdims);
+      dataType.getArrayDims(&dims.front());
+      if(dims.size() > 0)
+      {
+         std::stringstream dimOut;
+         ossimString dimString;
+         ossim_uint32 idx = 1;
+         ossim_uint32 nArrayElements = dims[0];
+         std::copy(dims.begin(), --dims.end(),
+            std::ostream_iterator<hsize_t>(dimOut,","));
+         for(;idx<dims.size();++idx)
+         {
+          nArrayElements*=dims[idx]; 
+         }
+         dimString = ossimString("(") + dimOut.str() + ossimString::toString(dims[dims.size()-1])+")";  
+         out << prefix << ".dimensions: " << dimString << "\n";
+         ossim_uint32 typeSize = superType.getSize();
+         switch(superType.getClass())
+         {
+            case H5T_STRING:
+            {
+               out<<prefix<<".values: (";
+               const char* startPtr = 0;
+               const char* endPtr = 0;
+               const char* mem = 0;
+               H5T_str_t       pad;
+               ossim_int32 strSize = 0;
+               for(idx=0;idx<nArrayElements;++idx)
+               {
+                  mem = ((const char*)dataPtr) + (idx * typeSize);
+                  if(superType.isVariableStr())
+                  {
+                     startPtr = *(char**) mem;
+                     if(startPtr) strSize = std::strlen(startPtr);
+                     else strSize = 0;
+                  }
+                  else
+                  {
+                     startPtr = mem;
+                  }
+                  if(startPtr)
+                  {
+                    ossim_uint32 charIdx = 0;
+                    endPtr = startPtr;
+                    for (; ((charIdx < strSize) && (*endPtr)); ++charIdx,++endPtr);
+
+                    //std::cout << "WHAT????? " << ossimString(startPtr, endPtr)<<std::endl;
+                  }
+                  ossimString value = ossimString(startPtr, endPtr);
+                  if(idx == 0)
+                  {
+                     out << "\""<<value<< "\"";
+                  }
+                  else 
+                  {
+                     out << ", \""<<value<< "\"";
+                  }
+               }
+               //out<<prefix<<".array_type: H5T_STRING\n";
+//               out<<prefix<<".values: <NOT SUPPORTED>";
+               break;
+            }
+            case H5T_INTEGER:
+            {
+               //out<<prefix<<".array_type: H5T_INTEGER\n";
+               out<<prefix<<".values: (";
+               for(idx=0;idx<nArrayElements;++idx)
+               {
+                  if(typeSize == 2)
+                  {
+                     ossim_int16 value = *reinterpret_cast<const ossim_int16*>(dataPtr);
+                     if(order!=ossim::byteOrder())
+                     {
+                        endian.swap(value);
+                     }
+                     if((idx + 1) <nArrayElements)
+                     {
+                        out << ossimString::toString(value) << ", ";
+                     }
+                     else
+                     {
+                        out << ossimString::toString(value);
+                     }
+                  }
+                  else if(typeSize == 4)
+                  {
+                     ossim_int32 value = *reinterpret_cast<const ossim_int32*>(dataPtr);
+                     if(order!=ossim::byteOrder())
+                     {
+                        endian.swap(value);
+                     }
+                     if((idx + 1) <nArrayElements)
+                     {
+                        out << ossimString::toString(value) << ", ";
+                     }
+                     else
+                     {
+                        out << ossimString::toString(value);
+                     }
+                  }
+                  dataPtr+=typeSize;
+               }
+               break;
+            }
+            case H5T_FLOAT:
+            {
+               //out<<prefix<<".array_type: H5T_FLOAT\n";
+               out<<prefix<<".values: (";
+               for(idx=0;idx<nArrayElements;++idx)
+               {
+                  if(typeSize == 4)
+                  {
+                     ossim_float32 value = *reinterpret_cast<const ossim_float32*>(dataPtr);
+                     if(order!=ossim::byteOrder())
+                     {
+                        endian.swap(value);
+                     }
+                     if((idx + 1) <nArrayElements)
+                     {
+                        out << ossimString::toString(value) << ", ";
+                     }
+                     else
+                     {
+                        out << ossimString::toString(value);
+                     }
+                  }
+                  else if(typeSize == 8)
+                  {
+                     ossim_float64 value = *reinterpret_cast<const ossim_float64*>(dataPtr);
+                     if(order!=ossim::byteOrder())
+                     {
+                        endian.swap(value);
+                     }
+                     if((idx + 1) <nArrayElements)
+                     {
+                        out << ossimString::toString(value) << ", ";
+                     }
+                     else
+                     {
+                        out << ossimString::toString(value);
+                     }
+                  }
+                  dataPtr+=typeSize;
+               }
+               break;
+            }
+            default:
+            {
+               break;
+            }
+         }
+         out<<")\n";
+
+      }
+   }
+}
+
+void ossim_hdf5::printCompound(H5::DataSet& dataset, 
+                               const std::string& prefix,
+                               std::ostream& out)
+{
+   H5::CompType compound(dataset);
+   H5::DataSpace dataspace = dataset.getSpace();
+   ossim_uint32 dimensions = dataspace.getSimpleExtentNdims();
+   ossim_uint32 nElements   = dataspace.getSimpleExtentNpoints();
+   ossim_int32 nMembers    = compound.getNmembers();
+   ossim_uint64 size       = compound.getSize();
+   ossim_int32 memberIdx   = 0;
+   ossim_int32 elementIdx   = 0;
+   H5::DataType compType = dataset.getDataType();
+   std::vector<char> compData(size*nElements);
+   dataset.read((void*)&compData.front(),compType);
+   char* compDataPtr = &compData.front();
+
+   if(dimensions!=1)
+   {
+      return;
+   }
+
+   for(;elementIdx<nElements;++elementIdx)
+   {
+      std::string elementPrefix = prefix;//+"."+"element"+ossimString::toString(elementIdx);
+      //std::cout << "ELEMENTS: " << elements << std::endl;
+      for(memberIdx=0;memberIdx < nMembers;++memberIdx)
+      {
+         H5::DataType dataType = compound.getMemberDataType(memberIdx);
+         H5std_string memberName = compound.getMemberName(memberIdx);
+         ossim_uint32 memberOffset = compound.getMemberOffset(memberIdx) ;
+         std::string newPrefix = elementPrefix + "."+ memberName;
+         switch(dataType.getClass())
+         {
+            case H5T_COMPOUND:
+            {
+              ossim_hdf5::printCompound(dataset, newPrefix, out);
+              break;            
+            }
+            case H5T_INTEGER:
+            {
+               H5::IntType dataType = compound.getMemberIntType(memberIdx);
+               ossim_hdf5::printIntType(dataset, dataType, &compDataPtr[memberOffset], newPrefix, out);
+               break;            
+            }
+            case H5T_FLOAT:
+            {
+               H5::FloatType dataType = compound.getMemberFloatType(memberIdx);
+               ossim_hdf5::printFloatType(dataset, dataType, &compDataPtr[memberOffset], newPrefix, out);
+               break;            
+            }
+            case H5T_TIME:
+            case H5T_STRING:
+            {
+               H5::StrType dataType = compound.getMemberStrType(memberIdx);
+               ossim_hdf5::printStrType(dataset, dataType, &compDataPtr[memberOffset], newPrefix, out);
+               break;            
+            }
+            case H5T_BITFIELD:
+            {
+               out << newPrefix << ": <H5T_BITFIELD NOT HANDLED>\n"; 
+               break;            
+            }
+            case H5T_OPAQUE:
+            {
+               out << newPrefix << ": <H5T_OPAQUE NOT HANDLED>\n"; 
+               break;            
+            }
+            case H5T_REFERENCE:
+            {
+               out << newPrefix << ": <H5T_REFERENCE NOT HANDLED>\n"; 
+               break;            
+            }
+            case H5T_ENUM:
+            {
+               H5::EnumType dataType = compound.getMemberEnumType(memberIdx);
+               ossim_hdf5::printEnumType(dataset, dataType, newPrefix, out);
+               break;            
+            }
+            case H5T_VLEN:
+            {
+               out << newPrefix << ": <H5T_VLEN NOT HANDLED>\n"; 
+               break;            
+            }
+            case H5T_ARRAY:
+            {
+                H5::ArrayType dataType = compound.getMemberArrayType(memberIdx);
+                ossim_hdf5::printArrayType(dataset, dataType, &compDataPtr[memberOffset], newPrefix, out);
+               break;            
+            }
+            case H5T_NO_CLASS:
+            default:
+            {
+               out<< newPrefix << ".class_type: " 
+                  << ossim_hdf5::getDatatypeClassType( dataType.getClass() ) << "\n";
+               out << newPrefix << ": <NOT HANDLED>\n"; 
+               break;            
+            }
+         }
+      }
+      compDataPtr+=size;
+   }
+}
+
 
 bool ossim_hdf5::getGroupAttributeValue( H5::H5File* file,
                                          const std::string& group,
@@ -487,9 +1008,12 @@ void ossim_hdf5::printAttribute( const H5::Attribute& attr,
    }
    else
    {
-      ossimNotify(ossimNotifyLevel_DEBUG)
-         << "ossimH5Util::printAttribute WARN: Unhandled type class: " << typeClass
-         << std::endl;
+      if(traceDebug())
+      {
+         ossimNotify(ossimNotifyLevel_DEBUG)
+            << "ossimH5Util::printAttribute WARN: Unhandled type class: " << ossim_hdf5::getDatatypeClassType( typeClass ) << "\n"
+            << std::endl;
+      }
    }
    
    out << prefix << "." << name << ": " << value << std::endl;
@@ -577,7 +1101,7 @@ std::string ossim_hdf5::getDatatypeClassType( ossim_int32 type )
          break;
       case H5T_NO_CLASS:
       default:
-         result = "H5T_ARRAY";
+         result = "H5T_NO_CLASS";
          break;
    }
    return result;
@@ -590,7 +1114,7 @@ bool ossim_hdf5::isLoadableAsImage( H5::H5File* file, const std::string& dataset
    // std::cout << "isLoadable entered..." << std::endl;
    if ( file && datasetName.size() )
    {
-      if ( isExcludedDataset( datasetName ) == false )
+      if ( ossimH5Options::instance()->isDatasetRenderable(datasetName)) //isExcludedDataset( datasetName ) == false )
       {
          H5::DataSet dataset = file->openDataSet( datasetName );
          
@@ -628,6 +1152,7 @@ bool ossim_hdf5::isLoadableAsImage( H5::H5File* file, const std::string& dataset
    return result;
 }
 
+#if 0
 bool ossim_hdf5::isExcludedDataset( const std::string& datasetName )
 {
    bool result = false;
@@ -654,6 +1179,7 @@ bool ossim_hdf5::isExcludedDataset( const std::string& datasetName )
    
    return result;
 }
+#endif
 
 void ossim_hdf5::iterateGroupForDatasetNames(  H5::H5File* file,
                                                const std::string& groupName,
@@ -692,7 +1218,7 @@ void ossim_hdf5::iterateGroupForDatasetNames(  H5::H5File* file,
             if ( objType == H5G_GROUP )
             {
                // Recursive call:
-               if ( recursedCount < ossim_hdf5::MAX_RECURSION_LEVEL )
+               if ( recursedCount < ossimH5Options::instance()->getMaxRecursionLevel())
                {
                   ossim_hdf5::iterateGroupForDatasetNames(
                      file, combinedName, datasetNames, recursedCount );
@@ -913,15 +1439,18 @@ ossimScalarType ossim_hdf5::getScalarType( ossim_int32 typeClass,
    return scalar;
 }
 
-#if 1
+// commenting this out.  This is broke and we should use the one that takes the class_type, size, and isSigned 
+// arguments.
+#if 0
 ossimScalarType ossim_hdf5::getScalarType( ossim_int32 id )
 {
+   std::cout << "ossim_hdf5::getScalarType: entered...................\n";
    ossimScalarType scalar = OSSIM_SCALAR_UNKNOWN;
    
    H5T_class_t type_class = H5Tget_class(id);
    size_t      size       = H5Tget_size(id);
    H5T_sign_t  sign       = H5Tget_sign(id);
-   
+
    if ( type_class == H5T_INTEGER )
    {
       if ( size == 1 && sign == H5T_SGN_2)
@@ -972,6 +1501,32 @@ ossimScalarType ossim_hdf5::getScalarType( ossim_int32 id )
    return scalar;
 }
 #endif
+
+ossimByteOrder ossim_hdf5::getByteOrder( const H5::DataType* dataType )
+{
+   ossimByteOrder byteOrder = ossim::byteOrder();
+
+   if(dataType)
+   {
+      const H5::AtomType* atomType = dynamic_cast<const H5::AtomType*>(dataType);
+
+      if(atomType)
+      {
+         H5T_order_t h5order = atomType->getOrder();
+         
+         if(h5order == H5T_ORDER_LE)
+         {
+            byteOrder = OSSIM_LITTLE_ENDIAN;
+         }  
+         else if(h5order == H5T_ORDER_BE)
+         {
+            byteOrder = OSSIM_BIG_ENDIAN;
+         }
+      }
+   }   
+
+   return byteOrder;
+}
 
 ossimByteOrder ossim_hdf5::getByteOrder( const H5::AbstractDs* obj )
 {
