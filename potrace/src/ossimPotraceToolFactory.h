@@ -8,32 +8,32 @@
 #ifndef ossimPotraceUtilFactory_HEADER
 #define ossimPotraceUtilFactory_HEADER 1
 
-#include <ossim/util/ossimUtilityFactoryBase.h>
 #include <ossim/plugin/ossimPluginConstants.h>
-#include "ossimPotraceUtil.h"
+#include <ossim/util/ossimToolFactoryBase.h>
+#include <potrace/src/ossimPotraceTool.h>
 
 class ossimString;
 class ossimFilename;
 class ossimKeywordlist;
 
-class OSSIM_PLUGINS_DLL ossimPotraceUtilFactory: public ossimUtilityFactoryBase
+class OSSIM_PLUGINS_DLL ossimPotraceToolFactory: public ossimToolFactoryBase
 {
 public:
-   static ossimPotraceUtilFactory* instance();
+   static ossimPotraceToolFactory* instance();
 
-   virtual ~ossimPotraceUtilFactory();
-   virtual ossimUtility* createUtility(const std::string& typeName) const;
+   virtual ~ossimPotraceToolFactory();
+   virtual ossimTool* createUtility(const std::string& typeName) const;
    virtual void getTypeNameList(std::vector<ossimString>& typeList) const;
    virtual void getCapabilities(std::map<std::string, std::string>& capabilities) const;
    virtual std::map<std::string, std::string> getCapabilities() const;
 
 protected:
-   ossimPotraceUtilFactory();
-   ossimPotraceUtilFactory(const ossimPotraceUtilFactory&);
-   void operator=(const ossimPotraceUtilFactory&);
+   ossimPotraceToolFactory();
+   ossimPotraceToolFactory(const ossimPotraceToolFactory&);
+   void operator=(const ossimPotraceToolFactory&);
 
    /** static instance of this class */
-   static ossimPotraceUtilFactory* s_instance;
+   static ossimPotraceToolFactory* s_instance;
 
 };
 

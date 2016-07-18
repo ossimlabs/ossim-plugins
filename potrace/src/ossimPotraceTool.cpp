@@ -5,7 +5,6 @@
 //
 //**************************************************************************************************
 
-#include "ossimPotraceUtil.h"
 #include <ossim/base/ossimArgumentParser.h>
 #include <ossim/base/ossimApplicationUsage.h>
 #include <ossim/imaging/ossimImageHandlerRegistry.h>
@@ -13,18 +12,19 @@
 #include <ossim/imaging/ossimCacheTileSource.h>
 #include <ossim/base/ossimKeywordNames.h>
 #include <ossim/base/ossimException.h>
+#include <potrace/src/ossimPotraceTool.h>
 #include <sstream>
 
 using namespace std;
 
-const char* ossimPotraceUtil::DESCRIPTION =
+const char* ossimPotraceTool::DESCRIPTION =
       "Computes vector representation of input raster image.";
 
 static const string MODE_KW = "mode";
 static const string ALPHAMAX_KW = "alphamax";
 static const string TURDSIZE_KW = "turdsize";
 
-ossimPotraceUtil::ossimPotraceUtil()
+ossimPotraceTool::ossimPotraceTool()
 :  m_mode (LINESTRING),
    m_alphamax (1.0),
    m_turdSize (4),
@@ -34,17 +34,17 @@ ossimPotraceUtil::ossimPotraceUtil()
 {
 }
 
-ossimPotraceUtil::~ossimPotraceUtil()
+ossimPotraceTool::~ossimPotraceTool()
 {
    delete m_productBitmap;
    if (m_maskBitmap)
       delete m_maskBitmap;
 }
 
-void ossimPotraceUtil::setUsage(ossimArgumentParser& ap)
+void ossimPotraceTool::setUsage(ossimArgumentParser& ap)
 {
    // Add global usage options. Don't include ossimChipProcUtil options as not appropriate.
-   ossimUtility::setUsage(ap);
+   ossimTool::setUsage(ap);
 
    // Set the general usage:
    ossimApplicationUsage* au = ap.getApplicationUsage();
@@ -70,12 +70,12 @@ void ossimPotraceUtil::setUsage(ossimArgumentParser& ap)
    au->addCommandLineOption("--turdsize <int>", "suppress speckles of up to this many pixels.");
 }
 
-bool ossimPotraceUtil::initialize(ossimArgumentParser& ap)
+bool ossimPotraceTool::initialize(ossimArgumentParser& ap)
 {
    string ts1;
    ossimArgumentParser::ossimParameter sp1(ts1);
 
-   if (!ossimUtility::initialize(ap))
+   if (!ossimTool::initialize(ap))
       return false;
 
    if ( ap.read("--alphamax", sp1))
@@ -99,7 +99,7 @@ bool ossimPotraceUtil::initialize(ossimArgumentParser& ap)
    return true;
 }
 
-void ossimPotraceUtil::initialize(const ossimKeywordlist& kwl)
+void ossimPotraceTool::initialize(const ossimKeywordlist& kwl)
 {
    ossimString value;
    ostringstream xmsg;
@@ -132,20 +132,20 @@ void ossimPotraceUtil::initialize(const ossimKeywordlist& kwl)
       throw ossimException(xmsg.str());
    }
 
-   ossimChipProcUtil::initialize(kwl);
+   ossimChipProcTool::initialize(kwl);
 }
 
-void ossimPotraceUtil::initProcessingChain()
+void ossimPotraceTool::initProcessingChain()
 {
    // Nothing to do.
 }
 
-void ossimPotraceUtil::finalizeChain()
+void ossimPotraceTool::finalizeChain()
 {
    // Do nothing and avoid ossimChipProcUtil from doing its standard stuff.
 }
 
-bool ossimPotraceUtil::execute()
+bool ossimPotraceTool::execute()
 {
    ostringstream xmsg;
 
@@ -194,7 +194,7 @@ bool ossimPotraceUtil::execute()
    return true;
 }
 
-void ossimPotraceUtil::transformLineStrings(potrace_state_t* potraceOutput)
+void ossimPotraceTool::transformLineStrings(potrace_state_t* potraceOutput)
 {
    // This is a fairly complex process because potrace assumes all paths are closed, i.e., the
    // last vertex of a path is the same as the first. For linestring mode, this is not always
@@ -356,7 +356,7 @@ void ossimPotraceUtil::transformLineStrings(potrace_state_t* potraceOutput)
    }
 }
 
-void ossimPotraceUtil::transformPolygons(potrace_state_t* potraceOutput)
+void ossimPotraceTool::transformPolygons(potrace_state_t* potraceOutput)
 {
    // Vector coordinates are in image space. Need geom to convert to geographic lat/lon:
    potrace_path_t* path = potraceOutput->plist;
@@ -390,7 +390,7 @@ void ossimPotraceUtil::transformPolygons(potrace_state_t* potraceOutput)
    }
 }
 
-void ossimPotraceUtil::getKwlTemplate(ossimKeywordlist& kwl)
+void ossimPotraceTool::getKwlTemplate(ossimKeywordlist& kwl)
 {
    ostringstream value;
    value << "polygon|linestring (optional, defaults to polygon)";
@@ -409,7 +409,7 @@ void ossimPotraceUtil::getKwlTemplate(ossimKeywordlist& kwl)
    kwl.add(ossimKeywordNames::OUTPUT_FILE_KW, "<output-vector-file>");
 }
 
-potrace_bitmap_t* ossimPotraceUtil::convertToBitmap(ossimImageSource* raster)
+potrace_bitmap_t* ossimPotraceTool::convertToBitmap(ossimImageSource* raster)
 {
    potrace_bitmap_t* potraceBitmap = new potrace_bitmap_t;
 
@@ -474,7 +474,7 @@ potrace_bitmap_t* ossimPotraceUtil::convertToBitmap(ossimImageSource* raster)
    return potraceBitmap;
 }
 
-bool ossimPotraceUtil::pixelIsMasked(const ossimIpt& image_pt, potrace_bitmap_t* bitmap) const
+bool ossimPotraceTool::pixelIsMasked(const ossimIpt& image_pt, potrace_bitmap_t* bitmap) const
 {
    if (bitmap == 0)
       return false;
@@ -490,7 +490,7 @@ bool ossimPotraceUtil::pixelIsMasked(const ossimIpt& image_pt, potrace_bitmap_t*
    return false;
 }
 
-bool ossimPotraceUtil::writeGeoJSON(potrace_path_t* vectorList)
+bool ossimPotraceTool::writeGeoJSON(potrace_path_t* vectorList)
 {
    ostringstream xmsg;
 
@@ -522,13 +522,13 @@ bool ossimPotraceUtil::writeGeoJSON(potrace_path_t* vectorList)
    return true;
 }
 
-ossimPotraceUtil::Path::~Path()
+ossimPotraceTool::Path::~Path()
 {
    vertices.clear();
 }
 
 
-void ossimPotraceUtil::Path::addPotraceCurve(potrace_curve_t& curve, int segment)
+void ossimPotraceTool::Path::addPotraceCurve(potrace_curve_t& curve, int segment)
 {
    potrace_dpoint_t *c = curve.c[segment];
    if (curve.tag[segment] == POTRACE_CORNER)

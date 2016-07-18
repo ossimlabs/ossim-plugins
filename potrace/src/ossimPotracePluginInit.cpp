@@ -8,9 +8,9 @@
 #include <ossim/plugin/ossimSharedObjectBridge.h>
 #include <ossim/plugin/ossimPluginConstants.h>
 #include <ossim/base/ossimString.h>
-#include <ossim/util/ossimUtilityRegistry.h>
-#include "ossimPotraceUtilFactory.h"
-#include "ossimPotraceUtil.h"
+#include <ossim/util/ossimToolRegistry.h>
+#include <potrace/src/ossimPotraceTool.h>
+#include <potrace/src/ossimPotraceToolFactory.h>
 
 extern "C"
 {
@@ -45,15 +45,15 @@ extern "C"
       *info = &myInfo;
       
       /* Register the utility... */
-      ossimUtilityRegistry::instance()->
-         registerFactory(ossimPotraceUtilFactory::instance());
+      ossimToolRegistry::instance()->
+         registerFactory(ossimPotraceToolFactory::instance());
       
    }
 
    /* Note symbols need to be exported on windoze... */ 
    OSSIM_PLUGINS_DLL void ossimSharedLibraryFinalize()
    {
-      ossimUtilityRegistry::instance()->
-         unregisterFactory(ossimPotraceUtilFactory::instance());
+      ossimToolRegistry::instance()->
+         unregisterFactory(ossimPotraceToolFactory::instance());
    }
 }

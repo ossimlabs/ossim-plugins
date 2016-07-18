@@ -8,23 +8,23 @@
 #ifndef ossimPotraceUtility_HEADER
 #define ossimPotraceUtility_HEADER 1
 
-#include <ossim/util/ossimChipProcUtil.h>
 #include <ossim/plugin/ossimPluginConstants.h>
 #include <ossim/imaging/ossimImageHandler.h>
+#include <ossim/util/ossimChipProcTool.h>
 
 extern "C" {
 #include "potracelib.h"
 }
 
-class OSSIM_DLL ossimPotraceUtil : public ossimChipProcUtil
+class OSSIM_DLL ossimPotraceTool : public ossimChipProcTool
 {
 public:
    static const char* DESCRIPTION;
    enum OutputMode { POLYGON, LINESTRING };
 
-   ossimPotraceUtil();
+   ossimPotraceTool();
 
-   virtual ~ossimPotraceUtil();
+   virtual ~ossimPotraceTool();
 
    virtual void setUsage(ossimArgumentParser& ap);
 
