@@ -51,7 +51,7 @@ std::ostream& ossim_hdf5::print(H5::H5File* file, std::ostream& out)
 
       getDatasetNames(file, datasetNames );
 
-std::cout << "DATASET NAMES ======= " << datasetNames.size() << "\n";
+//std::cout << "DATASET NAMES ======= " << datasetNames.size() << "\n";
       ossim_uint32 datasetNameIdx = 0;
       ossimString dataSetNamesStr;
       for(;datasetNameIdx<datasetNames.size();++datasetNameIdx)
