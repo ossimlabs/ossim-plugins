@@ -39,15 +39,15 @@ namespace H5
  * CLASS:  ossimH5GridModel
  *
  *****************************************************************************/
-class OSSIM_PLUGINS_DLL ossimH5GridModel : public ossimCoarseGridModel
+class OSSIM_PLUGINS_DLL ossimHdf5GridModel : public ossimCoarseGridModel
 {
 public:
 
    /** @brief default constructor. */
-   ossimH5GridModel();
+   ossimHdf5GridModel();
    
    /** @brief virtual destructor */
-   virtual ~ossimH5GridModel();
+   virtual ~ossimHdf5GridModel();
 
    /**
     * @brief Initializes the latitude and longitude ossimDblGrids from file.

@@ -86,7 +86,7 @@ extern "C"
 
       /* Register hdf projection factoy... */
       ossimProjectionFactoryRegistry::instance()->
-         registerFactoryToFront(ossimH5ProjectionFactory::instance());
+         registerFactoryToFront(ossimHdf5ProjectionFactory::instance());
 
       setDescription(theDescription);
    }
@@ -101,6 +101,6 @@ extern "C"
          unregisterFactory(ossimH5InfoFactory::instance());
 
       ossimProjectionFactoryRegistry::instance()->
-         unregisterFactory(ossimH5ProjectionFactory::instance());
+         unregisterFactory(ossimHdf5ProjectionFactory::instance());
    }
 }

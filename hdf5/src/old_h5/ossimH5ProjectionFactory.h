@@ -11,11 +11,11 @@
 #include <ossim/plugin/ossimPluginConstants.h>
 #include <ossim/projection/ossimProjectionFactoryBase.h>
 
-class OSSIM_PLUGINS_DLL ossimH5ProjectionFactory : public ossimProjectionFactoryBase
+class OSSIM_PLUGINS_DLL ossimHdf5ProjectionFactory : public ossimProjectionFactoryBase
 {
 public:
 
-   static ossimH5ProjectionFactory* instance();
+   static ossimHdf5ProjectionFactory* instance();
 
    /**
     * @bief Takes a filename. This filename can be an image file or
@@ -46,7 +46,7 @@ public:
 
 protected:
    
-   ossimH5ProjectionFactory();
+   ossimHdf5ProjectionFactory();
    
 }; // End: class ossimH5ProjectionFactory{ ... }
 

@@ -60,7 +60,7 @@ ossimImageHandler* ossimH5ReaderFactory::open(const ossimFilename& fileName,
       if (reader == 0) //try hdf5 reader
       {
          // cout << "Calling ossimH5Reader ***********************" << endl;
-         reader = new ossimH5Reader;
+         reader = new ossimHdf5ImageHandler;
          reader->setOpenOverviewFlag(openOverview);
          if(reader->open(fileName) == false)
          {
@@ -90,7 +90,7 @@ ossimImageHandler* ossimH5ReaderFactory::open(const ossimKeywordlist& kwl,
          << std::endl;
    }
 
-   ossimRefPtr<ossimImageHandler> reader = new ossimH5Reader;
+   ossimRefPtr<ossimImageHandler> reader = new ossimHdf5ImageHandler;
    if(reader->loadState(kwl, prefix) == false)
    {
       reader = 0;
@@ -112,7 +112,7 @@ ossimObject* ossimH5ReaderFactory::createObject(
    ossimRefPtr<ossimObject> result = 0;
    if(typeName == "ossimH5Reader")
    {
-      result = new ossimH5Reader;
+      result = new ossimHdf5ImageHandler;
    }
 
    return result.release();

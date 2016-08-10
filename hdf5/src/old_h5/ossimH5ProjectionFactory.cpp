@@ -18,15 +18,15 @@
 static ossimTrace traceExec  = ossimTrace("ossimH5ProjectionFactory:exec");
 static ossimTrace traceDebug = ossimTrace("ossimH5ProjectionFactory:debug");
 
-ossimH5ProjectionFactory* ossimH5ProjectionFactory::instance()
+ossimHdf5ProjectionFactory* ossimHdf5ProjectionFactory::instance()
 {
-   static ossimH5ProjectionFactory* factoryInstance =
-      new ossimH5ProjectionFactory();
+   static ossimHdf5ProjectionFactory* factoryInstance =
+      new ossimHdf5ProjectionFactory();
 
    return factoryInstance;
 }
    
-ossimProjection* ossimH5ProjectionFactory::createProjection(
+ossimProjection* ossimHdf5ProjectionFactory::createProjection(
    const ossimFilename& filename, ossim_uint32 /*entryIdx*/)const
 {
    static const char MODULE[] = "ossimH5ProjectionFactory::createProjection(ossimFilename& filename)";
@@ -63,7 +63,7 @@ ossimProjection* ossimH5ProjectionFactory::createProjection(
                kwl.add("grid_file_name",
                        coarseGrid.c_str(),
                        true);
-               projection = new ossimH5GridModel();
+               projection = new ossimHdf5GridModel();
                if ( projection->loadState( kwl ) == false )
                {
                   projection = 0;
@@ -77,7 +77,7 @@ ossimProjection* ossimH5ProjectionFactory::createProjection(
    return projection.release();
 }
 
-ossimProjection* ossimH5ProjectionFactory::createProjection(
+ossimProjection* ossimHdf5ProjectionFactory::createProjection(
    const ossimString& name)const
 {
    static const char MODULE[] = "ossimH5ProjectionFactory::createProjection(ossimString& name)";
@@ -91,7 +91,7 @@ ossimProjection* ossimH5ProjectionFactory::createProjection(
    // ossimHdfGridModel included for backward compatibility.
    if ( ( name == "ossimH5GridModel" ) || ( name == "ossimHdfGridModel" ) )
    {
-      return new ossimH5GridModel();
+      return new ossimHdf5GridModel();
    }
 
    if(traceDebug())
@@ -103,7 +103,7 @@ ossimProjection* ossimH5ProjectionFactory::createProjection(
    return 0;
 }
 
-ossimProjection* ossimH5ProjectionFactory::createProjection(
+ossimProjection* ossimHdf5ProjectionFactory::createProjection(
    const ossimKeywordlist& kwl, const char* prefix)const
 {
    ossimRefPtr<ossimProjection> result = 0;
@@ -119,10 +119,10 @@ ossimProjection* ossimH5ProjectionFactory::createProjection(
    if (lookup)
    {
       ossimString type = lookup;
-      
+
       if ( (type == "ossimH5GridModel") || ( type == "ossimHdfGridModel" ) )
       {
-         result = new ossimH5GridModel();
+         result = new ossimHdf5GridModel();
          if ( !result->loadState(kwl, prefix) )
          {
             result = 0;
@@ -139,24 +139,24 @@ ossimProjection* ossimH5ProjectionFactory::createProjection(
    return result.release();
 }
 
-ossimObject* ossimH5ProjectionFactory::createObject(
+ossimObject* ossimHdf5ProjectionFactory::createObject(
    const ossimString& typeName)const
 {
    return createProjection(typeName);
 }
 
-ossimObject* ossimH5ProjectionFactory::createObject(
+ossimObject* ossimHdf5ProjectionFactory::createObject(
    const ossimKeywordlist& kwl, const char* prefix)const
 {
    return createProjection(kwl, prefix);
 }
 
 
-void ossimH5ProjectionFactory::getTypeNameList(std::vector<ossimString>& typeList)const
+void ossimHdf5ProjectionFactory::getTypeNameList(std::vector<ossimString>& typeList)const
 {
    typeList.push_back(ossimString("ossimH5GridModel"));
 }
 
-ossimH5ProjectionFactory::ossimH5ProjectionFactory()
+ossimHdf5ProjectionFactory::ossimHdf5ProjectionFactory()
 {
 }
