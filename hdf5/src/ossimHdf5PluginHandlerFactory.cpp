@@ -40,7 +40,7 @@ ossimHdf5PluginHandlerFactory* ossimHdf5PluginHandlerFactory::instance()
 ossimImageHandler* ossimHdf5PluginHandlerFactory::open(const ossimFilename& fileName,
                                                  bool openOverview)const
 {
-   ossimImageHandlerFactoryBase::UniqueStringList& extensionList;
+   ossimImageHandlerFactoryBase::UniqueStringList extensionList;
    getSupportedExtensions(extensionList);
 
    ossimString ext = fileName.ext().downcase();
@@ -51,7 +51,7 @@ ossimImageHandler* ossimHdf5PluginHandlerFactory::open(const ossimFilename& file
          ext_handled = true;
    }
    if (!ext_handled)
-       return false;
+       return NULL;
 
    // Now try each of the represented concrete types in this plugin:
    ossimRefPtr<ossimImageHandler> reader = 0;
@@ -64,6 +64,8 @@ ossimImageHandler* ossimHdf5PluginHandlerFactory::open(const ossimFilename& file
          break;
 
       // Add other sensors here:
+
+      reader = 0;
       break;
    }
 
@@ -71,7 +73,7 @@ ossimImageHandler* ossimHdf5PluginHandlerFactory::open(const ossimFilename& file
 }
 
 ossimImageHandler* ossimHdf5PluginHandlerFactory::open(const ossimKeywordlist& kwl,
-                                                 const char* prefix) const
+                                                       const char* prefix) const
 {
    ossimRefPtr<ossimImageHandler> reader = 0;
    while (1)
@@ -82,6 +84,7 @@ ossimImageHandler* ossimHdf5PluginHandlerFactory::open(const ossimKeywordlist& k
          break;
 
       // Add other sensors here:
+      reader = 0;
       break;
    }
    return reader.release();
@@ -126,7 +129,7 @@ void ossimHdf5PluginHandlerFactory::getSupportedRenderableNames(std::vector<ossi
 
    // Fetch all sensors represented by this plugin. Start with VIIRS:
    ossimViirsHandler viirs;
-   vector<ossimString>& viirsRenderables = viirs.getRenderableSetNames();
+   const vector<ossimString>& viirsRenderables = viirs.getRenderableSetNames();
    names.insert(names.end(), viirsRenderables.begin(), viirsRenderables.end());
 
    // Add other sensors here:

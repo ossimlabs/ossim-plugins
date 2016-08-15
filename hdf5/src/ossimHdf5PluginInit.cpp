@@ -68,7 +68,6 @@ extern "C"
    /* Note symbols need to be exported on windoze... */ 
    OSSIM_PLUGINS_DLL void ossimSharedLibraryInitialize(ossimSharedObjectInfo** info)
    {    
-      ossimH5Options::instance();
       myInfo.getDescription = getDescription;
       myInfo.getNumberOfClassNames = getNumberOfClassNames;
       myInfo.getClassName = getClassName;
@@ -80,13 +79,9 @@ extern "C"
       ossimImageHandlerRegistry::instance()->
          registerFactory(ossimHdf5PluginHandlerFactory::instance());
 
-      /* Register hdf info factoy... */
-      ossimInfoFactoryRegistry::instance()->
-         registerFactory(ossimH5InfoFactory::instance());
-
-      /* Register hdf projection factoy... */
-      ossimProjectionFactoryRegistry::instance()->
-         registerFactoryToFront(ossimHdf5ProjectionFactory::instance());
+      /* Register hdf projection factory... */
+//      ossimProjectionFactoryRegistry::instance()->
+//         registerFactoryToFront(ossimHdf5ProjectionFactory::instance());
 
       setDescription(theDescription);
    }
@@ -95,12 +90,9 @@ extern "C"
    OSSIM_PLUGINS_DLL void ossimSharedLibraryFinalize()
    {
       ossimImageHandlerRegistry::instance()->
-         unregisterFactory(ossimH5ReaderFactory::instance());
+         unregisterFactory(ossimHdf5PluginHandlerFactory::instance());
 
-      ossimInfoFactoryRegistry::instance()->
-         unregisterFactory(ossimH5InfoFactory::instance());
-
-      ossimProjectionFactoryRegistry::instance()->
-         unregisterFactory(ossimHdf5ProjectionFactory::instance());
+//      ossimProjectionFactoryRegistry::instance()->
+//         unregisterFactory(ossimHdf5ProjectionFactory::instance());
    }
 }
