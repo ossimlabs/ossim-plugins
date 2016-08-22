@@ -22,6 +22,8 @@ class OSSIM_PLUGINS_DLL ossimViirsHandler : public ossimHdf5ImageHandler
 {
 public:
    ossimViirsHandler();
+   virtual ossimRefPtr<ossimImageGeometry> getImageGeometry();
+   virtual double getNullPixelValue(ossim_uint32 band=0)const;
 
 };
 
