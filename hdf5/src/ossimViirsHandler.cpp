@@ -29,7 +29,7 @@ ossimRefPtr<ossimImageGeometry> ossimViirsHandler::getImageGeometry()
 
       // Attempt to create an OSSIM coarse grid model from HDF5 lat lon grids:
       ossimRefPtr<ossimHdf5GridModel> hdf5GridModel = new ossimHdf5GridModel;
-      if ( hdf5GridModel->initialize(m_hdf5.get(), this) )
+      if ( hdf5GridModel->initialize(m_hdf5.get()) )
       {
          theGeometry->setProjection(hdf5GridModel.get());
          initImageParameters( theGeometry.get() );
