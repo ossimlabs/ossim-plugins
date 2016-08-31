@@ -48,7 +48,7 @@
 #include <hdf5.h>
 #include <H5Cpp.h>
 
-RTTI_DEF1(ossimH5Reader, "ossimH5Reader", ossimImageHandler)
+RTTI_DEF1(ossimH5ImageHandler, "ossimH5Reader", ossimImageHandler)
 
 #ifdef OSSIM_ID_ENABLED
    static const char OSSIM_ID[] = "$Id$";
@@ -58,7 +58,7 @@ static ossimTrace traceDebug("ossimH5Reader:debug");
 
 static const std::string LAYER_KW = "layer";
 
-ossimH5Reader::ossimH5Reader()
+ossimH5ImageHandler::ossimH5ImageHandler()
    :
       ossimImageHandler(),
       m_h5File(0),
@@ -81,7 +81,7 @@ ossimH5Reader::ossimH5Reader()
    }
 }
 
-ossimH5Reader::~ossimH5Reader()
+ossimH5ImageHandler::~ossimH5ImageHandler()
 {
    if (isOpen())
    {
@@ -89,7 +89,7 @@ ossimH5Reader::~ossimH5Reader()
    }
 }
 
-void ossimH5Reader::allocate()
+void ossimH5ImageHandler::allocate()
 {
    m_mutex.lock();
    m_tile = ossimImageDataFactory::instance()->create(this, this);
@@ -97,7 +97,7 @@ void ossimH5Reader::allocate()
    m_mutex.unlock();
 }
 
-ossimRefPtr<ossimImageData> ossimH5Reader::getTile(
+ossimRefPtr<ossimImageData> ossimH5ImageHandler::getTile(
    const ossimIrect& rect, ossim_uint32 resLevel)
 {
    if ( m_tile.valid() == false ) // First time through.
@@ -126,7 +126,7 @@ ossimRefPtr<ossimImageData> ossimH5Reader::getTile(
    return m_tile;
 }
 
-bool ossimH5Reader::getTile(ossimImageData* result, ossim_uint32 resLevel)
+bool ossimH5ImageHandler::getTile(ossimImageData* result, ossim_uint32 resLevel)
 {
    bool status = false;
 
@@ -219,7 +219,7 @@ bool ossimH5Reader::getTile(ossimImageData* result, ossim_uint32 resLevel)
 }
 
 ossimIrect
-ossimH5Reader::getImageRectangle(ossim_uint32 reduced_res_level) const
+ossimH5ImageHandler::getImageRectangle(ossim_uint32 reduced_res_level) const
 {
    return ossimIrect(0,
                      0,
@@ -227,13 +227,13 @@ ossimH5Reader::getImageRectangle(ossim_uint32 reduced_res_level) const
                      getNumberOfLines(reduced_res_level)   - 1);
 }
 
-bool ossimH5Reader::saveState(ossimKeywordlist& kwl,
+bool ossimH5ImageHandler::saveState(ossimKeywordlist& kwl,
                                const char* prefix) const
 {
    return ossimImageHandler::saveState(kwl, prefix);
 }
 
-bool ossimH5Reader::loadState(const ossimKeywordlist& kwl,
+bool ossimH5ImageHandler::loadState(const ossimKeywordlist& kwl,
                                const char* prefix)
 {
    if (ossimImageHandler::loadState(kwl, prefix))
@@ -244,7 +244,7 @@ bool ossimH5Reader::loadState(const ossimKeywordlist& kwl,
    return false;
 }
 
-bool ossimH5Reader::open()
+bool ossimH5ImageHandler::open()
 {
    static const char MODULE[] = "ossimH5Reader::open";
 
@@ -367,7 +367,7 @@ bool ossimH5Reader::open()
    return status;
 }
 
-void ossimH5Reader::addImageDatasetEntries(const std::vector<std::string>& names)
+void ossimH5ImageHandler::addImageDatasetEntries(const std::vector<std::string>& names)
 {
    if ( m_h5File && names.size() )
    {
@@ -414,7 +414,7 @@ void ossimH5Reader::addImageDatasetEntries(const std::vector<std::string>& names
       
 } // End: ossimH5Reader::addImageDatasetEntries
 
-ossim_uint32 ossimH5Reader::getNumberOfLines(ossim_uint32 reduced_res_level) const
+ossim_uint32 ossimH5ImageHandler::getNumberOfLines(ossim_uint32 reduced_res_level) const
 {
    ossim_uint32 result = 0;
    
@@ -430,7 +430,7 @@ ossim_uint32 ossimH5Reader::getNumberOfLines(ossim_uint32 reduced_res_level) con
    return result;
 }
 
-ossim_uint32 ossimH5Reader::getNumberOfSamples(ossim_uint32 reduced_res_level) const
+ossim_uint32 ossimH5ImageHandler::getNumberOfSamples(ossim_uint32 reduced_res_level) const
 {
    ossim_uint32 result = 0;
    
@@ -446,32 +446,32 @@ ossim_uint32 ossimH5Reader::getNumberOfSamples(ossim_uint32 reduced_res_level) c
    return result; 
 }
 
-ossim_uint32 ossimH5Reader::getImageTileWidth() const
+ossim_uint32 ossimH5ImageHandler::getImageTileWidth() const
 {
    return 0; // Not tiled format.
 }
 
-ossim_uint32 ossimH5Reader::getImageTileHeight() const
+ossim_uint32 ossimH5ImageHandler::getImageTileHeight() const
 {
    return 0; // Not tiled format.
 }
 
-ossimString ossimH5Reader::getShortName()const
+ossimString ossimH5ImageHandler::getShortName()const
 {
    return ossimString("ossim_hdf5_reader");
 }
    
-ossimString ossimH5Reader::getLongName()const
+ossimString ossimH5ImageHandler::getLongName()const
 {
    return ossimString("ossim hdf5 reader");
 }
 
-ossimString  ossimH5Reader::getClassName()const
+ossimString  ossimH5ImageHandler::getClassName()const
 {
    return ossimString("ossimH5Reader");
 }
 
-ossim_uint32 ossimH5Reader::getNumberOfInputBands() const
+ossim_uint32 ossimH5ImageHandler::getNumberOfInputBands() const
 {
    ossim_uint32 result = 1;
 
@@ -483,13 +483,13 @@ ossim_uint32 ossimH5Reader::getNumberOfInputBands() const
    return result;
 }
 
-ossim_uint32 ossimH5Reader::getNumberOfOutputBands()const
+ossim_uint32 ossimH5ImageHandler::getNumberOfOutputBands()const
 {
    // Currently not band selectable.
    return getNumberOfInputBands();
 }
 
-ossimScalarType ossimH5Reader::getOutputScalarType() const
+ossimScalarType ossimH5ImageHandler::getOutputScalarType() const
 {
    ossimScalarType result = OSSIM_SCALAR_UNKNOWN;
    
@@ -501,14 +501,14 @@ ossimScalarType ossimH5Reader::getOutputScalarType() const
    return result;
 }
 
-bool ossimH5Reader::isOpen()const
+bool ossimH5ImageHandler::isOpen()const
 {
    return ( ( m_h5File != 0 ) &&
             m_entries.size() &&
             ( m_currentEntry < m_entries.size() ) ) ? true : false ;
 }
 
-void ossimH5Reader::close()
+void ossimH5ImageHandler::close()
 {
    // Close the datasets.
    m_entries.clear();
@@ -528,12 +528,12 @@ void ossimH5Reader::close()
    ossimImageHandler::close();
 }
 
-ossim_uint32 ossimH5Reader::getNumberOfEntries() const
+ossim_uint32 ossimH5ImageHandler::getNumberOfEntries() const
 {
    return (ossim_uint32)m_entries.size();
 }
 
-void ossimH5Reader::getEntryNames(std::vector<ossimString>& entryNames) const
+void ossimH5ImageHandler::getEntryNames(std::vector<ossimString>& entryNames) const
 {
    entryNames.clear();
    for (ossim_uint32 i=0; i<m_entries.size(); ++i )
@@ -542,7 +542,7 @@ void ossimH5Reader::getEntryNames(std::vector<ossimString>& entryNames) const
    }
 }
 
-void ossimH5Reader::getEntryList(std::vector<ossim_uint32>& entryList) const
+void ossimH5ImageHandler::getEntryList(std::vector<ossim_uint32>& entryList) const
 {
    const ossim_uint32 SIZE = m_entries.size();
    entryList.resize( SIZE );
@@ -552,7 +552,7 @@ void ossimH5Reader::getEntryList(std::vector<ossim_uint32>& entryList) const
    }
 }
 
-bool ossimH5Reader::setCurrentEntry( ossim_uint32 entryIdx )
+bool ossimH5ImageHandler::setCurrentEntry( ossim_uint32 entryIdx )
 {
    bool result = true;
    if (m_currentEntry != entryIdx)
@@ -599,12 +599,12 @@ bool ossimH5Reader::setCurrentEntry( ossim_uint32 entryIdx )
    return result;
 }
 
-ossim_uint32 ossimH5Reader::getCurrentEntry() const
+ossim_uint32 ossimH5ImageHandler::getCurrentEntry() const
 {
    return m_currentEntry;
 }
 
-ossimRefPtr<ossimImageGeometry> ossimH5Reader::getImageGeometry()
+ossimRefPtr<ossimImageGeometry> ossimH5ImageHandler::getImageGeometry()
 {
    if ( !theGeometry )
    {
@@ -644,7 +644,7 @@ ossimRefPtr<ossimImageGeometry> ossimH5Reader::getImageGeometry()
    return theGeometry;
 }
 
-ossimRefPtr<ossimImageGeometry> ossimH5Reader::getInternalImageGeometry()
+ossimRefPtr<ossimImageGeometry> ossimH5ImageHandler::getInternalImageGeometry()
 {
    ossimRefPtr<ossimImageGeometry> geom = new ossimImageGeometry();
 
@@ -695,14 +695,14 @@ ossimRefPtr<ossimImageGeometry> ossimH5Reader::getInternalImageGeometry()
    return geom;
 }
 
-ossimRefPtr<ossimProjection> ossimH5Reader::processCoarseGridProjection(
+ossimRefPtr<ossimProjection> ossimH5ImageHandler::processCoarseGridProjection(
    H5::DataSet& latDataSet,
    H5::DataSet& lonDataSet,
    const ossimIrect& validRect ) const
 {
    ossimRefPtr<ossimProjection> proj = 0;
 
-   ossimRefPtr<ossimH5GridModel> model = new ossimH5GridModel();
+   ossimRefPtr<ossimHdf5GridModel> model = new ossimHdf5GridModel();
    
    try
    {
@@ -726,7 +726,7 @@ ossimRefPtr<ossimProjection> ossimH5Reader::processCoarseGridProjection(
    return proj;
 }
 
-bool ossimH5Reader::getLatLonDatasetNames( H5::H5File* h5File,
+bool ossimH5ImageHandler::getLatLonDatasetNames( H5::H5File* h5File,
                                            std::string& latName,
                                            std::string& lonName ) const
 {
@@ -771,7 +771,7 @@ bool ossimH5Reader::getLatLonDatasetNames( H5::H5File* h5File,
 
 } // End: ossimH5Reader::getLatLonDatasetNames
 
-bool ossimH5Reader::getLatLonDatasets( H5::H5File* h5File,
+bool ossimH5ImageHandler::getLatLonDatasets( H5::H5File* h5File,
                                        H5::DataSet& latDataSet,
                                        H5::DataSet& lonDataSet ) const
 {
@@ -830,7 +830,7 @@ bool ossimH5Reader::getLatLonDatasets( H5::H5File* h5File,
    
 } // End: ossimH5Reader::getLatLonDatasets( ... )
 
-bool ossimH5Reader::isNppMission( H5::H5File* h5File ) const
+bool ossimH5ImageHandler::isNppMission( H5::H5File* h5File ) const
 {
    bool result = false;
    
@@ -850,7 +850,7 @@ bool ossimH5Reader::isNppMission( H5::H5File* h5File ) const
    return result;
 }
 
-double ossimH5Reader::getNullPixelValue( ossim_uint32 band ) const
+double ossimH5ImageHandler::getNullPixelValue( ossim_uint32 band ) const
 {
    return ossimImageHandler::getNullPixelValue( band );
 #if 0
@@ -868,7 +868,7 @@ double ossimH5Reader::getNullPixelValue( ossim_uint32 band ) const
 #endif
 }
 
-void ossimH5Reader::setProperty(ossimRefPtr<ossimProperty> property)
+void ossimH5ImageHandler::setProperty(ossimRefPtr<ossimProperty> property)
 {
    if ( property.valid() )
    {
@@ -892,7 +892,7 @@ void ossimH5Reader::setProperty(ossimRefPtr<ossimProperty> property)
    }
 }
 
-ossimRefPtr<ossimProperty> ossimH5Reader::getProperty(const ossimString& name)const
+ossimRefPtr<ossimProperty> ossimH5ImageHandler::getProperty(const ossimString& name)const
 {
    ossimRefPtr<ossimProperty> prop = 0;
    if ( name.string() == LAYER_KW )
@@ -910,14 +910,14 @@ ossimRefPtr<ossimProperty> ossimH5Reader::getProperty(const ossimString& name)co
    return prop;
 }
 
-void ossimH5Reader::getPropertyNames(std::vector<ossimString>& propertyNames)const
+void ossimH5ImageHandler::getPropertyNames(std::vector<ossimString>& propertyNames)const
 {
    propertyNames.push_back( ossimString("layer") );
    ossimImageHandler::getPropertyNames(propertyNames);
 }
 
 
-void ossimH5Reader::addMetadata( ossimKeywordlist* kwl, const std::string& prefix ) const
+void ossimH5ImageHandler::addMetadata( ossimKeywordlist* kwl, const std::string& prefix ) const
 {
    // Note: hdf5 library throws exception if groupd is not found:
    

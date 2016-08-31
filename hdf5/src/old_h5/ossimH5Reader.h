@@ -33,15 +33,15 @@ namespace H5
    class H5File;
 }
 
-class OSSIM_PLUGINS_DLL ossimH5Reader : public ossimImageHandler, public ossimMetadataInterface
+class OSSIM_PLUGINS_DLL ossimH5ImageHandler : public ossimImageHandler, public ossimMetadataInterface
 {
 public:
 
    /** default constructor */
-   ossimH5Reader();
+   ossimH5ImageHandler();
 
    /** virtual destructor */
-   virtual ~ossimH5Reader();
+   virtual ~ossimH5ImageHandler();
 
    /** @return "hdf5" */
    virtual ossimString getShortName() const;
