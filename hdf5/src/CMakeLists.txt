@@ -15,7 +15,7 @@ SET(requiredLibs)
 
 set(HDF5_USE_STATIC_LIBRARIES FALSE)
 
-find_package(HDF5)
+find_package(HDF5A)
 IF(HDF5_FOUND)
     INCLUDE_DIRECTORIES( ${HDF5_INCLUDE_DIR} )
     SET(requiredLibs ${requiredLibs} ${HDF5_LIBRARIES} )
