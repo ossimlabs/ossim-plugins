@@ -46,7 +46,7 @@ ossimGdalProjectionFactory* ossimGdalProjectionFactory::instance()
 }
 
 ossimProjection* ossimGdalProjectionFactory::createProjection(const ossimFilename& filename,
-                                                             ossim_uint32 entryIdx)const
+                                                              ossim_uint32 entryIdx)const
 {
    ossimKeywordlist kwl;
 //    ossimRefPtr<ossimImageHandler> h = new ossimGdalTileSource;
@@ -167,6 +167,45 @@ ossimProjection* ossimGdalProjectionFactory::createProjection(const ossimFilenam
             }
          }
 
+         //---
+         // Pixel type, "area", tie upper left corner of pixel, or "point", tie
+         // center of pixel.
+         //---
+         bool pixelTypeIsArea = true; // Assume area unless point is detected.
+
+         // Look for AREA_OR_POINT:
+         const char* areaOrPoint =  GDALGetMetadataItem(h, "AREA_OR_POINT", "");
+         if (areaOrPoint)
+         {
+            if ( ossimString( areaOrPoint ).downcase().contains("point") )
+            {
+               cout << "a..." << endl;
+               pixelTypeIsArea = false;
+            }
+         }
+         else
+         {
+            // Look for 
+            const char* rasterTypeStr = GDALGetMetadataItem(
+               h, "GEOTIFF_CHAR__GTRasterTypeGeoKey", "");
+            if ( rasterTypeStr )
+            {
+               if ( ossimString( rasterTypeStr ).downcase().contains("point") )
+               {
+                  cout << "b..." << endl;
+                  pixelTypeIsArea = false;
+               }
+            }
+         }
+
+         if ( pixelTypeIsArea == true )
+         {
+            geoTransform[0] += fabs(geoTransform[1]) / 2.0;
+            geoTransform[3] -= fabs(geoTransform[5]) / 2.0;
+         }
+
+ /* removed replaced to fix world wrap issues with vrt bmng scene. 20160928 drb */         
+#if 0
          // Pixel-is-point of pixel-is area affects the location of the tiepoint since OSSIM is
          // always pixel-is-point so 1/2 pixel shift may be necessary:
          if( (driverName == "MrSID") || (driverName == "JP2MrSID") ||
@@ -212,7 +251,8 @@ ossimProjection* ossimGdalProjectionFactory::createProjection(const ossimFilenam
                }
             }
          }
-
+#endif
+         
          kwl.remove(ossimKeywordNames::UNITS_KW);
          ossimDpt gsd(fabs(geoTransform[1]), fabs(geoTransform[5]));
          ossimDpt tie(geoTransform[0], geoTransform[3]);
@@ -222,13 +262,76 @@ ossimProjection* ossimGdalProjectionFactory::createProjection(const ossimFilenam
          ossimUnitType unitType = savedUnitType;
          if(unitType == OSSIM_UNIT_UNKNOWN)
             unitType = OSSIM_METERS;
-
+         
          if((proj_type == "ossimLlxyProjection") || (proj_type == "ossimEquDistCylProjection"))
          {
+            ossimDpt halfGsd = gsd/2.0;
+
+            //---
+            // Sanity check the tie and scale for world scenes that can cause
+            // a wrap issue.
+            //---
+            if ( (tie.x-halfGsd.x) < -180.0 )
+            {
+               tie.x = -180.0 + halfGsd.x;
+               geoTransform[0] = tie.x;
+            }
+            if ( (tie.y+halfGsd.y) > 90.0 )
+            {
+               tie.y = 90.0 - halfGsd.y;
+               geoTransform[3] = tie.y;
+            }
+
+            int samples = GDALGetRasterXSize(h);
+            ossim_float64 degrees = samples * gsd.x;
+            if ( degrees > 360.0 )
+            {
+               //---
+               // If within one pixel of 360 degrees adjust it. Assume every
+               // thing else is what they want.
+               //---
+               if ( fabs(degrees - 360.0) <= gsd.x )
+               {
+                  gsd.x = 360.0 / samples;
+                  geoTransform[1] = gsd.x;
+                  
+                  // If we adjusted scale, fix the tie if it was on the edge.
+                  if ( ossim::almostEqual( (tie.x-halfGsd.x), -180.0 ) == true )
+                  {
+                     tie.x = -180 + gsd.x / 2.0;
+                     geoTransform[0] = tie.x;
+                  }
+               }
+            }
+            int lines = GDALGetRasterYSize(h);
+            degrees = lines * gsd.y;
+            if ( degrees > 180.0 )
+            {
+               //---
+               // If within one pixel of 180 degrees adjust it. Assume every
+               // thing else is what they want.
+               //---
+               if ( fabs(degrees - 180.0) <= gsd.y )
+               {
+                  gsd.y = 180.0 / lines;
+                  geoTransform[5] = gsd.y;
+                  
+                  // If we adjusted scale, fix the tie if it was on the edge.
+                  if ( ossim::almostEqual( (tie.y+halfGsd.y), 90.0 ) == true )
+                  {
+                     tie.y = 90.0 - gsd.y / 2.0;
+                     geoTransform[3] = tie.y;
+                  }
+               }
+            }
+            
             // ESH 09/2008 -- Add the orig_lat and central_lon if the image
             // is using geographic coordsys.  This is used to convert the
             // gsd to linear units.
 
+            // gsd could of changed above:
+            halfGsd = gsd / 2.0;
+            
             // Half the number of pixels in lon/lat directions
             int nPixelsLon = GDALGetRasterXSize(h)/2.0;
             int nPixelsLat = GDALGetRasterYSize(h)/2.0;
@@ -238,8 +341,8 @@ ossimProjection* ossimGdalProjectionFactory::createProjection(const ossimFilenam
             double shiftLat = -nPixelsLat * fabs(gsd.y);
 
             // lon/lat of center pixel of the image
-            double centerLon = tie.x + shiftLon;
-            double centerLat = tie.y + shiftLat;
+            double centerLon = (tie.x - halfGsd.x) + shiftLon;
+            double centerLat = (tie.y + halfGsd.y) + shiftLat;
 
             kwl.add(ossimKeywordNames::ORIGIN_LATITUDE_KW,
                     centerLat,
@@ -248,31 +351,20 @@ ossimProjection* ossimGdalProjectionFactory::createProjection(const ossimFilenam
                     centerLon,
                     true);
 
-            kwl.add(ossimKeywordNames::TIE_POINT_LAT_KW,
-                    tie.y,
-                    true);
-            kwl.add(ossimKeywordNames::TIE_POINT_LON_KW,
-                    tie.x,
-                    true);
-
-            kwl.add(ossimKeywordNames::DECIMAL_DEGREES_PER_PIXEL_LAT,
-                    gsd.y,
-                    true);
-            kwl.add(ossimKeywordNames::DECIMAL_DEGREES_PER_PIXEL_LON,
-                    gsd.x,
-                    true);
-
             if(savedUnitType == OSSIM_UNIT_UNKNOWN)
             {
                unitType = OSSIM_DEGREES;
             }
          }
-
+         
          kwl.add(ossimKeywordNames::PIXEL_SCALE_XY_KW,
                  gsd.toString(),
                  true);
          kwl.add(ossimKeywordNames::PIXEL_SCALE_UNITS_KW,
                  units,
+                 true);
+         kwl.add(ossimKeywordNames::PIXEL_TYPE_KW,
+                 (pixelTypeIsArea?"area":"point"),
                  true);
          kwl.add(ossimKeywordNames::TIE_POINT_XY_KW,
                  tie.toString(),
