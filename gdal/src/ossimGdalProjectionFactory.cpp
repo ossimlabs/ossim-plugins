@@ -54,9 +54,9 @@ ossimProjection* ossimGdalProjectionFactory::createProjection(const ossimFilenam
    GDALDatasetH  h; 
    GDALDriverH   driverH = 0;
    ossimProjection* proj = 0;
-
+   
    if(ossimString(filename).trim().empty()) return 0;
-
+   
    h = GDALOpen(filename.c_str(), GA_ReadOnly);
    if(h)
    {
@@ -169,14 +169,17 @@ ossimProjection* ossimGdalProjectionFactory::createProjection(const ossimFilenam
 
          // Pixel-is-point of pixel-is area affects the location of the tiepoint since OSSIM is
          // always pixel-is-point so 1/2 pixel shift may be necessary:
-         if((driverName == "MrSID") || (driverName == "JP2MrSID") || (driverName == "AIG"))
+         if( (driverName == "MrSID") || (driverName == "JP2MrSID") ||
+             (driverName == "AIG") || (driverName == "VRT") )
          {
             const char* rasterTypeStr = GDALGetMetadataItem( h, "GEOTIFF_CHAR__GTRasterTypeGeoKey", "" );
             ossimString rasterTypeTag( rasterTypeStr );
 
             // If the raster type is pixel_is_area, shift the tie point by
             // half a pixel to locate it at the pixel center.
-            if ((driverName == "AIG") || (rasterTypeTag.contains("RasterPixelIsArea")))
+            if ( (driverName == "AIG") ||
+                 (driverName == "VRT") || 
+                 (rasterTypeTag.contains("RasterPixelIsArea")) )
             {
                geoTransform[0] += fabs(geoTransform[1]) / 2.0;
                geoTransform[3] -= fabs(geoTransform[5]) / 2.0;
@@ -341,14 +344,16 @@ ossimProjection* ossimGdalProjectionFactory::createProjection(const ossimFilenam
                }
             }
          }
-     }
-	 if(traceDebug())
-	 {
-		 ossimNotify(ossimNotifyLevel_DEBUG) << "ossimGdalProjectionFactory: createProjection KWL = \n " << kwl << std::endl;
-	 }
+      }
+      
+      if(traceDebug())
+      {
+         ossimNotify(ossimNotifyLevel_DEBUG) << "ossimGdalProjectionFactory: createProjection KWL = \n " << kwl << std::endl;
+      }
+      
       GDALClose(h);
       proj = ossimProjectionFactoryRegistry::instance()->createProjection(kwl);
-  }
+   }
 
    return proj;
 }
