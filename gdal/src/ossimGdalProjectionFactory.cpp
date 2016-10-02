@@ -179,7 +179,6 @@ ossimProjection* ossimGdalProjectionFactory::createProjection(const ossimFilenam
          {
             if ( ossimString( areaOrPoint ).downcase().contains("point") )
             {
-               cout << "a..." << endl;
                pixelTypeIsArea = false;
             }
          }
@@ -192,7 +191,6 @@ ossimProjection* ossimGdalProjectionFactory::createProjection(const ossimFilenam
             {
                if ( ossimString( rasterTypeStr ).downcase().contains("point") )
                {
-                  cout << "b..." << endl;
                   pixelTypeIsArea = false;
                }
             }
