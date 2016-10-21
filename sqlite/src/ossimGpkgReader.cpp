@@ -369,12 +369,26 @@ bool ossimGpkgReader::open()
 
 ossim_uint32 ossimGpkgReader::getTileWidth() const
 {
-   return ( m_tile.valid() ? m_tile->getWidth() : 0 );
+   ossim_uint32 result = getImageTileWidth();
+   if (!result)
+   {
+      ossimIpt tileSize;
+      ossim::defaultTileSize(tileSize);
+      result = tileSize.x;
+   }
+   return result;
 }
 
 ossim_uint32 ossimGpkgReader::getTileHeight() const
 {
-   return ( m_tile.valid() ? m_tile->getHeight() : 0 );
+   ossim_uint32 result = getImageTileHeight();
+   if (!result)
+   {
+      ossimIpt tileSize;
+      ossim::defaultTileSize(tileSize);
+      result = tileSize.y;
+   }
+   return result;
 }
 
 ossim_uint32 ossimGpkgReader::getNumberOfLines(ossim_uint32 resLevel) const
