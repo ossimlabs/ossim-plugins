@@ -170,10 +170,22 @@ ossimProjection* ossimGdalProjectionFactory::createProjection(const ossimFilenam
          //---
          // Pixel type, "area", tie upper left corner of pixel, or "point", tie
          // center of pixel.
+         //
+         // Making an assumption that gdal normalize the geoTransform to area.
+         // Geotiffs tagged with raster type of "pixel_is_point" are 
+         // shifted.
+         // (drb - 26 Oct. 2016)
          //---
          bool pixelTypeIsArea = true; // Assume area unless point is detected.
 
+         /* removed replaced to fix world wrap issues with vrt bmng scene. 20160928 drb */         
+#if 0
+
+         //---
          // Look for AREA_OR_POINT:
+         // This controls PIXEL_TYPE_KW value downstream which will do the half
+         // pixel shift for us downstream.
+         //---
          const char* areaOrPoint =  GDALGetMetadataItem(h, "AREA_OR_POINT", "");
          if (areaOrPoint)
          {
@@ -195,15 +207,7 @@ ossimProjection* ossimGdalProjectionFactory::createProjection(const ossimFilenam
                }
             }
          }
-
-         if ( pixelTypeIsArea == true )
-         {
-            geoTransform[0] += fabs(geoTransform[1]) / 2.0;
-            geoTransform[3] -= fabs(geoTransform[5]) / 2.0;
-         }
-
- /* removed replaced to fix world wrap issues with vrt bmng scene. 20160928 drb */         
-#if 0
+         
          // Pixel-is-point of pixel-is area affects the location of the tiepoint since OSSIM is
          // always pixel-is-point so 1/2 pixel shift may be necessary:
          if( (driverName == "MrSID") || (driverName == "JP2MrSID") ||
@@ -250,7 +254,7 @@ ossimProjection* ossimGdalProjectionFactory::createProjection(const ossimFilenam
             }
          }
 #endif
-         
+
          kwl.remove(ossimKeywordNames::UNITS_KW);
          ossimDpt gsd(fabs(geoTransform[1]), fabs(geoTransform[5]));
          ossimDpt tie(geoTransform[0], geoTransform[3]);
@@ -371,24 +375,48 @@ ossimProjection* ossimGdalProjectionFactory::createProjection(const ossimFilenam
                  units,
                  true);
 
-         std::stringstream matrixString;
-         // store as a 4x4 matrix
-         matrixString
-            << ossimString::toString(geoTransform[1], 20)
-            << " " << ossimString::toString(geoTransform[2], 20)
-            << " " << 0 << " "
-            << ossimString::toString(geoTransform[0], 20)
-            << " " << ossimString::toString(geoTransform[4], 20)
-            << " " << ossimString::toString(geoTransform[5], 20)
-            << " " << 0 << " "
-            << ossimString::toString(geoTransform[3], 20)
-            << " " << 0 << " " << 0 << " " << 1 << " " << 0
-            << " " << 0 << " " << 0 << " " << 0 << " " << 1;
+         //---
+         // Image Model Transform:
+         // 
+         // Only output this if there is a rotation. There are two issues with
+         // this:
+         //
+         // 1) When the image model tranform is set calls to
+         // ossimMapProjection::setMetersPerPixel(gsd) have no effect.
+         //
+         // 2) Picking up the famous half pixel shift on output products.
+         //
+         // (drb 26 Oct. 2016)
+         //---
+         if ( (geoTransform[2] != 0.0) || (geoTransform[4] != 0.0) )
+         {
+            
+            if ( pixelTypeIsArea == true )
+            {
+               // Not handled in ossimMapProjection::loadState so shift it here.
+               geoTransform[0] += fabs(geoTransform[1]) / 2.0;
+               geoTransform[3] -= fabs(geoTransform[5]) / 2.0;
+            }
          
-         kwl.add(ossimKeywordNames::IMAGE_MODEL_TRANSFORM_MATRIX_KW,
-                 matrixString.str().c_str(), true);
-         kwl.add(ossimKeywordNames::IMAGE_MODEL_TRANSFORM_UNIT_KW,
-                 units.string().c_str(), true);
+            std::stringstream matrixString;
+            // store as a 4x4 matrix
+            matrixString
+               << ossimString::toString(geoTransform[1], 20)
+               << " " << ossimString::toString(geoTransform[2], 20)
+               << " " << 0 << " "
+               << ossimString::toString(geoTransform[0], 20)
+               << " " << ossimString::toString(geoTransform[4], 20)
+               << " " << ossimString::toString(geoTransform[5], 20)
+               << " " << 0 << " "
+               << ossimString::toString(geoTransform[3], 20)
+               << " " << 0 << " " << 0 << " " << 1 << " " << 0
+               << " " << 0 << " " << 0 << " " << 0 << " " << 1;
+
+            kwl.add(ossimKeywordNames::IMAGE_MODEL_TRANSFORM_MATRIX_KW,
+                    matrixString.str().c_str(), true);
+            kwl.add(ossimKeywordNames::IMAGE_MODEL_TRANSFORM_UNIT_KW,
+                    units.string().c_str(), true);
+         }
 
          //---
          // SPECIAL CASE:  ArcGrid in British National Grid
