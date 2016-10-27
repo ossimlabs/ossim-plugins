@@ -294,13 +294,12 @@ ossimString ossimOgcWktTranslator::fromOssimKwl(const ossimKeywordlist &kwl,
             // Use a projection code that does not imply a datum.
             // See section "6.3.3.2 Projection Codes" for definition.
             //***
-            if (mapZone > 0) // Northern hemisphere.
+            if  (hemisphere == "N") // Northern hemisphere.
             {
                pcsCodeVal = 16000 + mapZone;
             }
-            else if (mapZone < 0) // Southern hemisphere.
+            else // Southern hemisphere.
             {
-               hemisphere = "S";
                pcsCodeVal = 16100 + abs(mapZone);
             }
             break;
