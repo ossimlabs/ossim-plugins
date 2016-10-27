@@ -1721,6 +1721,12 @@ void ossimGdalTileSource::computeMinMax()
             theMinPixValues[band] = ossim::defaultMin(getOutputScalarType());
             theMaxPixValues[band] = ossim::defaultMax(getOutputScalarType());
          }
+
+         // Sanity check for bad null:
+         if ( theNullPixValues[band] > ossim::defaultMax(getOutputScalarType() ) )
+         {
+            theNullPixValues[band] = ossim::defaultNull(getOutputScalarType());
+         }
       }
    }
 }
