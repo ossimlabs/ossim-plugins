@@ -8,9 +8,11 @@
 //---
 // $Id$
 
+#include "ossimAwsStreamFactory.h"
 #include <ossim/plugin/ossimSharedObjectBridge.h>
 #include <ossim/plugin/ossimPluginConstants.h>
 #include <ossim/base/ossimStreamFactoryRegistry.h>
+
 
 static void setDescription(ossimString& description)
 {
@@ -54,14 +56,16 @@ extern "C"
       *info = &myInfo;
       
       /* Register our stream factory... */
-      // ossimStreamFactoryRegistry::instance()->
-      //   registerFactory(ossimAwsStreamFactory::instance());
+      ossim::StreamFactoryRegistry::instance()->
+         registerFactory( ossim::AwsStreamFactory::instance() );
+
+      setDescription(theDescription);
   }
 
    /* Note symbols need to be exported on windoze... */ 
   OSSIM_PLUGINS_DLL void ossimSharedLibraryFinalize()
   {
-     // ossimStreamFactoryRegistry::instance()->
-     //   unregisterFactory(ossimAwsStreamFactory::instance());
+     ossim::StreamFactoryRegistry::instance()->
+        unregisterFactory( ossim::AwsStreamFactory::instance() );
   }
 }
