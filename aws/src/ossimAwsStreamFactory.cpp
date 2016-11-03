@@ -14,6 +14,8 @@
 
 ossim::AwsStreamFactory* ossim::AwsStreamFactory::m_instance = 0;
 
+static bool trace = true; // tmp drb...
+
 ossim::AwsStreamFactory::~AwsStreamFactory()
 {
 }
@@ -23,7 +25,6 @@ ossim::AwsStreamFactory* ossim::AwsStreamFactory::instance()
    if(!m_instance)
    {
       m_instance = new ossim::AwsStreamFactory();
-      // m_instance->registerFactory(ossimStreamFactory::instance());
    }
 
    return m_instance;
@@ -32,14 +33,20 @@ ossim::AwsStreamFactory* ossim::AwsStreamFactory::instance()
 std::shared_ptr<ossim::istream> ossim::AwsStreamFactory::createIstream(
    const ossimString& connectionString, std::ios_base::openmode /*openMode*/) const
 {
-  std::shared_ptr<ossimS3IStream> result = std::make_shared<ossimS3IStream>();
+   // tmp drb
+   if ( trace ) std::cout << "ossim::AwsStreamFactory::createIstream entered..." << std::endl;
+   
+   std::shared_ptr<ossimS3IStream> result = std::make_shared<ossimS3IStream>();
 
-  if(!result->open(connectionString))
-  {
-    result.reset();
-  }
+   if( result->open(connectionString) == false )
+   {
+      result.reset();
+   }
 
-  return result;
+   // tmp drb
+   if ( trace )std::cout << "ossim::AwsStreamFactory::createIstream exited..." << std::endl;  
+   
+   return result;
 }
       
 std::shared_ptr<ossim::ostream> ossim::AwsStreamFactory::createOstream(
