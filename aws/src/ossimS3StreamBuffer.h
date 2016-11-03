@@ -41,8 +41,8 @@ protected:
   std::string m_key;
   std::vector<char> m_buffer;
   ossim_uint64 m_bufferActualDataSize;
-  char* m_bufStart;
-  char* m_bufEnd;
+  char* m_bufferPtr;
+  char* m_currentPtr;
   ossim_uint64 m_fileSize;
 };
 #endif

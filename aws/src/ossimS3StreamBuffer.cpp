@@ -28,13 +28,13 @@ ossimS3StreamBuffer::ossimS3StreamBuffer()
   m_key(""),
   m_buffer(2048),
   m_bufferActualDataSize(0),
-  m_bufStart(0),
-  m_bufEnd(0),
+  m_bufferPtr(0),
+  m_currentPtr(0),
   m_fileSize(0)
 {
-    std::cout << "CONSTRUCTED!!!!!" << std::endl;
+//    std::cout << "CONSTRUCTED!!!!!" << std::endl;
 //  setp(0);
-  setg(m_bufStart, m_bufStart, m_bufEnd);
+  setg(m_currentPtr, m_currentPtr, m_currentPtr);
 }
 
 ossim_int64 ossimS3StreamBuffer::getBlockIndex(ossim_uint64 byteOffset)const
@@ -86,6 +86,8 @@ bool ossimS3StreamBuffer::getBlockRangeInBytes(ossim_int64 blockIndex,
 bool ossimS3StreamBuffer::loadBlock(ossim_int64 byteOffset)
 {
     bool result = false;
+    m_bufferPtr = 0;
+    m_currentPtr = 0;
     GetObjectRequest getObjectRequest;
     std::stringstream stringStream;
     ossim_uint64 startRange, endRange;
@@ -99,12 +101,15 @@ bool ossimS3StreamBuffer::loadBlock(ossim_int64 byteOffset)
 
       if(getObjectOutcome.IsSuccess())
       {
-        std::cout << "GOOD CALL!!!!!!!!!!!!\n";
+//        std::cout << "GOOD CALL!!!!!!!!!!!!\n";
         Aws::IOStream& bodyStream = getObjectOutcome.GetResult().GetBody();
         ossim_uint64 bufSize = getObjectOutcome.GetResult().GetContentLength();
-        std::cout << "SIZE OF RESULT ======== " << bufSize << std::endl;
+//        std::cout << "SIZE OF RESULT ======== " << bufSize << std::endl;
         m_bufferActualDataSize = bufSize;
         bodyStream.read(&m_buffer.front(), bufSize);
+        m_bufferPtr = &m_buffer.front();
+        m_currentPtr = m_bufferPtr;
+        setg(m_bufferPtr, m_bufferPtr, m_bufferPtr + m_bufferActualDataSize);
           //std::cout << "Successfully retrieved object from s3 with value: " << std::endl;
           //std::cout << getObjectOutcome.GetResult().GetBody().rdbuf() << std::endl << std::endl;;  
       }
@@ -119,7 +124,7 @@ bool ossimS3StreamBuffer::open(const std::string& connectionString)
   ossimUrl url(connectionString);
   clearAll();
 
-  std::cout << connectionString << "\n";
+  std::cout << "ossimS3StreamBuffer::open: " << connectionString << "\n";
   if(url.getProtocol() == "s3")
   {
     m_bucket = url.getIp().c_str();
@@ -134,10 +139,8 @@ bool ossimS3StreamBuffer::open(const std::string& connectionString)
       if(headObject.IsSuccess())
       {
         m_fileSize = headObject.GetResult().GetContentLength();
-        std::cout << "CONTENT LENGTH ==== " << m_fileSize << "\n";
+        std::cout << "ossimS3StreamBuffer::open: CONTENT LENGTH ==== " << m_fileSize << "\n";
         result = true;
-
-        loadBlock(0);
       }
     }
   }
@@ -150,39 +153,15 @@ void ossimS3StreamBuffer::clearAll()
 {
   m_bucket = "";
   m_key    = "";
-  m_bufStart = 0;
-  m_bufEnd   = 0,
+  m_currentPtr = 0;
   m_fileSize = 0;
 
 }
 
-// added so we can set a buffer and make it shared
-// std::streambuf* ossimByteStreamBuffer::setBuf(char* buf, std::streamsize bufSize, bool shared)
-// {
-   
-   // setp(0,0);
-   // setg(0,0,0);
-   // char_type* tempBuf = buf;
-   // if(!shared&&bufSize&&buf)
-   // {
-   //    tempBuf = new char_type[bufSize];
-   //    memcpy(tempBuf, buf, bufSize);
-   // }
-   // m_buffer = tempBuf;
-   // m_sharedBuffer = shared;
-   // m_bufferSize = bufSize;
-   // setp(m_buffer, m_buffer+bufSize);
-   // if(m_buffer)
-   // {
-   //    setg(m_buffer, m_buffer, m_buffer+bufSize);
-   // }
-    
-//    return this;
-// }
 
  int ossimS3StreamBuffer::underflow()
  {
-    std::cout << "ossimS3StreamBuffer::underflow.........................\n";
+    std::cout << "ossimS3StreamBuffer::underflow:  ossimS3StreamBuffer::underflow.........................\n";
     return EOF;
    // if(m_sharedBuffer)
    // {
@@ -222,12 +201,12 @@ void ossimS3StreamBuffer::clearAll()
 ossimS3StreamBuffer::pos_type ossimS3StreamBuffer::seekoff(off_type offset, std::ios_base::seekdir dir,
                                                                std::ios_base::openmode __mode)
 { 
-  std::cout << "ossimS3StreamBuffer::seekoff.........................\n";
+  std::cout << "ossimS3StreamBuffer::seekoff: ossimS3StreamBuffer::seekoff.........................\n";
     pos_type result = pos_type(off_type(-1));
    if((__mode & std::ios_base::in)&&
       (__mode & std::ios_base::out))
    {
-    std::cout << "WHY ARE WE BOTH IN AND OUT\n";
+    std::cout << "ossimS3StreamBuffer::seekoff: WHY ARE WE BOTH IN AND OUT\n";
       // we currently will not support both input and output stream at the same time
       //
       return result;
@@ -236,7 +215,7 @@ ossimS3StreamBuffer::pos_type ossimS3StreamBuffer::seekoff(off_type offset, std:
    {
       case std::ios_base::beg:
       {
-        std::cout << "SEEKING FROM BEG\n";
+        std::cout << "ossimS3StreamBuffer::seekoff: SEEKING FROM BEG\n";
          // if we are determing an absolute position from the beginning then 
          // just make sure the offset is within range of the current buffer size
          //
@@ -253,7 +232,7 @@ ossimS3StreamBuffer::pos_type ossimS3StreamBuffer::seekoff(off_type offset, std:
       }
       case std::ios_base::cur:
       {
-         std::cout << "SEEKING FROM CURRENT\n";
+         std::cout << "ossimS3StreamBuffer::seekoff: SEEKING FROM CURRENT\n";
          // if we are determing an absolute position from the current pointer then 
          // add the offset as a relative displacment
          //
@@ -284,7 +263,7 @@ ossimS3StreamBuffer::pos_type ossimS3StreamBuffer::seekoff(off_type offset, std:
       }
       case std::ios_base::end:
       {
-         std::cout << "SEEKING FROM END\n";
+         std::cout << "ossimS3StreamBuffer::seekoff: SEEKING FROM END\n";
          // pos_type newPosition = result;
          // long int delta = 0;
          // if(__mode & std::ios_base::in)
@@ -379,73 +358,4 @@ std::streamsize ossimS3StreamBuffer::xsgetn(char_type* __s, std::streamsize __n)
    // }
    return std::streamsize(bytesToRead);
 }
-/*
-std::streamsize ossimS3StreamBuffer::xsputn(const char_type* __s, std::streamsize __n)
-{
-   long int bytesLeftToWrite = epptr()-pptr();
-   long int bytesToWrite = __n;
-   if(__n > bytesLeftToWrite)
-   {
-      if(!m_sharedBuffer)
-      {
-         extendBuffer(__n-bytesLeftToWrite);
-      }
-      else
-      {
-         bytesToWrite = bytesLeftToWrite;
-      }
-   }
-   if(bytesToWrite)
-   {
-      std::memcpy(pptr(), __s, bytesToWrite);
-      pbump(bytesToWrite);
-   }
-   return bytesToWrite;
-}
-*/    
-/*
-void ossimS3StreamBuffer::deleteBuffer()
-{
-   if(!m_sharedBuffer&&m_buffer)
-   {
-      delete [] m_buffer;
-   }
-   m_buffer = 0;
-   m_bufferSize=0;
-}
-*/
- /*
-void ossimS3StreamBuffer::extendBuffer(unsigned long int bytes)
-{
-   // ossim_uint32 oldSize = m_bufferSize;
-   char* inBegin = eback();
-   char* inCur   = gptr();
-   unsigned long int pbumpOffset = pptr()-pbase();
-    
-   long int relativeInCur = inCur-inBegin;
-    
-    
-   if(!m_buffer)
-   {
-      if(bytes>0)
-      {
-         m_buffer = new char[m_bufferSize + bytes];
-      }
-   }
-   else 
-   {
-      if(bytes>0)
-      {
-         char* newBuf = new char[m_bufferSize + bytes];
-         std::memcpy(newBuf, m_buffer, m_bufferSize);
-         delete [] m_buffer;
-         m_buffer = newBuf;
-      }
-   }
-   m_bufferSize += bytes;
-    
-   setp(m_buffer, m_buffer+m_bufferSize);
-   setg(m_buffer, m_buffer+relativeInCur, m_buffer + m_bufferSize);
-   pbump(pbumpOffset); // reallign to the current location
-}
-*/
+
