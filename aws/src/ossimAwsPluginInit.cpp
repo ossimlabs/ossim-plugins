@@ -12,6 +12,7 @@
 #include <ossim/plugin/ossimSharedObjectBridge.h>
 #include <ossim/plugin/ossimPluginConstants.h>
 #include <ossim/base/ossimStreamFactoryRegistry.h>
+#include <aws/core/Aws.h>
 
 
 static void setDescription(ossimString& description)
@@ -49,6 +50,9 @@ extern "C"
    OSSIM_PLUGINS_DLL void ossimSharedLibraryInitialize(
       ossimSharedObjectInfo** info, const char* /*options*/)
    {    
+      Aws::SDKOptions options;
+      Aws::InitAPI(options);
+
       myInfo.getDescription = getDescription;
       myInfo.getNumberOfClassNames = getNumberOfClassNames;
       myInfo.getClassName = getClassName;

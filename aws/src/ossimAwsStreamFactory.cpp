@@ -10,6 +10,7 @@
 
 #include "ossimAwsStreamFactory.h"
 
+#include "ossimS3IStream.h"
 
 ossim::AwsStreamFactory* ossim::AwsStreamFactory::m_instance = 0;
 
@@ -29,10 +30,16 @@ ossim::AwsStreamFactory* ossim::AwsStreamFactory::instance()
 }
 
 std::shared_ptr<ossim::istream> ossim::AwsStreamFactory::createIstream(
-   const ossimString& /*connectionString*/, std::ios_base::openmode /*openMode*/) const
+   const ossimString& connectionString, std::ios_base::openmode /*openMode*/) const
 {
-   std::shared_ptr<ossim::istream> result(0);
-   return result;
+  std::shared_ptr<ossimS3IStream> result = std::make_shared<ossimS3IStream>();
+
+  if(!result->open(connectionString))
+  {
+    result.reset();
+  }
+
+  return result;
 }
       
 std::shared_ptr<ossim::ostream> ossim::AwsStreamFactory::createOstream(
