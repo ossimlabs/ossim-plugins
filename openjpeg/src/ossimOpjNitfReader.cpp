@@ -127,19 +127,19 @@ bool ossimOpjNitfReader::scanForJpegBlockOffsets()
    char c;
 
    // Seek to the first block.
-   theFileStr.seekg(hdr->getDataLocation(), ios::beg);
-   if (theFileStr.fail())
+   theFileStr->seekg(hdr->getDataLocation(), ios::beg);
+   if (theFileStr->fail())
    {
       return false;
    }
    
    // Read the first two bytes and verify it is SOC; if not, get out.
-   theFileStr.get( c );
+   theFileStr->get( c );
    if (static_cast<ossim_uint8>(c) != 0xff)
    {
       return false;
    }
-   theFileStr.get(c);
+   theFileStr->get(c);
    if (static_cast<ossim_uint8>(c) != 0x4f)
    {
       return false;
@@ -151,18 +151,18 @@ bool ossimOpjNitfReader::scanForJpegBlockOffsets()
    // theNitfBlockOffset.push_back(hdr->getDataLocation());
 
    // Find all the SOC markers.
-   while ( theFileStr.get(c) ) 
+   while ( theFileStr->get(c) ) 
    {
       ++blockSize;
       if (static_cast<ossim_uint8>(c) == 0xff)
       {
-         if ( theFileStr.get(c) )
+         if ( theFileStr->get(c) )
          {
             ++blockSize;
 
             if (static_cast<ossim_uint8>(c) == 0x90) // At SOC marker...
             {
-               std::streamoff pos = theFileStr.tellg();
+               std::streamoff pos = theFileStr->tellg();
                theNitfBlockOffset.push_back(pos-2);
             }
             else if (static_cast<ossim_uint8>(c) == 0x93) // At EOC marker...
@@ -175,8 +175,8 @@ bool ossimOpjNitfReader::scanForJpegBlockOffsets()
       }
    }
 
-   theFileStr.seekg(0, ios::beg);
-   theFileStr.clear();
+   theFileStr->seekg(0, ios::beg);
+   theFileStr->clear();
 
    // We should have the same amount of offsets as we do blocks...
    ossim_uint32 total_blocks =
@@ -230,7 +230,7 @@ bool ossimOpjNitfReader::uncompressJpegBlock(ossim_uint32 x,
    }
    
    // Seek to the block.
-   theFileStr.seekg(theNitfBlockOffset[blockNumber], ios::beg);
+   theFileStr->seekg(theNitfBlockOffset[blockNumber], ios::beg);
 
    //---
    // Get a buffer to read the compressed block into.  If all the blocks are
@@ -244,9 +244,9 @@ bool ossimOpjNitfReader::uncompressJpegBlock(ossim_uint32 x,
 
 
    // Read the block into memory.  We could store this
-   if (!theFileStr.read((char*)compressedBuf, theNitfBlockSize[blockNumber]))
+   if (!theFileStr->read((char*)compressedBuf, theNitfBlockSize[blockNumber]))
    {
-      theFileStr.clear();
+      theFileStr->clear();
       ossimNotify(ossimNotifyLevel_FATAL)
          << "ossimNitfTileSource::loadBlock Read Error!"
          << "\nReturning error..." << endl;

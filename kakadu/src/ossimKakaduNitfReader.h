@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// License:  LGPL
+// License: MIT
 // 
 // See LICENSE.txt file in the top level directory for more details.
 //
@@ -10,7 +10,7 @@
 // blocks using kakadu library for decompression.
 //
 //----------------------------------------------------------------------------
-// $Id: ossimKakaduNitfReader.h 22884 2014-09-12 13:14:35Z dburken $
+// $Id$
 
 #ifndef ossimKakaduNitfReader_HEADER
 #define ossimKakaduNitfReader_HEADER 1
@@ -373,23 +373,23 @@ inline ossim_int32 ossimKakaduNitfReader::get_capabilities()
 
 inline ossim_int32 ossimKakaduNitfReader::read(kdu_core::kdu_byte *buf, ossim_int32 num_bytes)
 {
-   theFileStr.read((char*)buf, num_bytes);
-   return theFileStr.gcount();
+   theFileStr->read((char*)buf, num_bytes);
+   return theFileStr->gcount();
 }
 
 inline bool ossimKakaduNitfReader::seek(kdu_core::kdu_long offset)
 {
    // If the last byte is read, the eofbit must be reset. 
-   if ( theFileStr.eof() )
+   if ( theFileStr->eof() )
    {
-      theFileStr.clear();
+      theFileStr->clear();
    }
 
    //---
    // All seeks are relative to the start of code stream.
    //---
-   theFileStr.seekg(offset+m_startOfCodestreamOffset, ios_base::beg);
-   return theFileStr.good();
+   theFileStr->seekg(offset+m_startOfCodestreamOffset, ios_base::beg);
+   return theFileStr->good();
 }
 
 inline kdu_core::kdu_long ossimKakaduNitfReader::get_pos()
@@ -398,7 +398,7 @@ inline kdu_core::kdu_long ossimKakaduNitfReader::get_pos()
    // Must subtract the SOC(start of code stream) from the real file position
    // since positions are relative to SOC.
    //---
-   return static_cast<kdu_core::kdu_long>(theFileStr.tellg() - m_startOfCodestreamOffset );
+   return static_cast<kdu_core::kdu_long>(theFileStr->tellg() - m_startOfCodestreamOffset );
 }
 
 #endif /* #ifndef ossimKakaduNitfReader_HEADER */
