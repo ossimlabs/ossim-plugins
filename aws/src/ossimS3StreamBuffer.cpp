@@ -22,7 +22,7 @@
 using namespace Aws::S3;
 using namespace Aws::S3::Model;
 
-ossimS3StreamBuffer::ossimS3StreamBuffer()
+ossim::S3StreamBuffer::S3StreamBuffer()
 :
   m_bucket(""),
   m_key(""),
@@ -37,7 +37,7 @@ ossimS3StreamBuffer::ossimS3StreamBuffer()
   setg(m_currentPtr, m_currentPtr, m_currentPtr);
 }
 
-ossim_int64 ossimS3StreamBuffer::getBlockIndex(ossim_uint64 byteOffset)const
+ossim_int64 ossim::S3StreamBuffer::getBlockIndex(ossim_uint64 byteOffset)const
 {
   ossim_int64 blockNumber = -1;
   
@@ -54,7 +54,7 @@ ossim_int64 ossimS3StreamBuffer::getBlockIndex(ossim_uint64 byteOffset)const
   return blockNumber;
 }
 
-ossim_int64 ossimS3StreamBuffer::getBlockOffset(ossim_uint64 byteOffset)const
+ossim_int64 ossim::S3StreamBuffer::getBlockOffset(ossim_uint64 byteOffset)const
 {
   ossim_int64 blockOffset = -1;
   
@@ -66,7 +66,7 @@ ossim_int64 ossimS3StreamBuffer::getBlockOffset(ossim_uint64 byteOffset)const
   return blockOffset;
 }
 
-bool ossimS3StreamBuffer::getBlockRangeInBytes(ossim_int64 blockIndex, 
+bool ossim::S3StreamBuffer::getBlockRangeInBytes(ossim_int64 blockIndex, 
   ossim_uint64& startRange, 
   ossim_uint64& endRange)const
 {
@@ -83,7 +83,7 @@ bool ossimS3StreamBuffer::getBlockRangeInBytes(ossim_int64 blockIndex,
   return result;
 }
 
-bool ossimS3StreamBuffer::loadBlock(ossim_int64 byteOffset)
+bool ossim::S3StreamBuffer::loadBlock(ossim_int64 byteOffset)
 {
     bool result = false;
     m_bufferPtr = 0;
@@ -118,13 +118,22 @@ bool ossimS3StreamBuffer::loadBlock(ossim_int64 byteOffset)
     return result;
 }
 
-bool ossimS3StreamBuffer::open(const std::string& connectionString)   
+ossim::S3StreamBuffer* ossim::S3StreamBuffer::open (const char* connectionString,  
+                                                    std::ios_base::openmode mode)
+{
+  std::string temp(connectionString);
+  return open(temp, mode);
+}
+
+ossim::S3StreamBuffer* ossim::S3StreamBuffer::open (const std::string& connectionString, 
+                                                    std::ios_base::openmode mode)
 {
   bool result = false;
   ossimUrl url(connectionString);
   clearAll();
+  //__mode = mode;
 
-  std::cout << "ossimS3StreamBuffer::open: " << connectionString << "\n";
+  std::cout << "ossim::S3StreamBuffer::open: " << connectionString << "\n";
   if(url.getProtocol() == "s3")
   {
     m_bucket = url.getIp().c_str();
@@ -139,17 +148,20 @@ bool ossimS3StreamBuffer::open(const std::string& connectionString)
       if(headObject.IsSuccess())
       {
         m_fileSize = headObject.GetResult().GetContentLength();
-        std::cout << "ossimS3StreamBuffer::open: CONTENT LENGTH ==== " << m_fileSize << "\n";
+        std::cout << "ossim::S3StreamBuffer::open: CONTENT LENGTH ==== " << m_fileSize << "\n";
         result = true;
       }
     }
   }
 
-  return result;
+  if(result) return this;
+
+  return 0;
 }
 
 
-void ossimS3StreamBuffer::clearAll()
+
+void ossim::S3StreamBuffer::clearAll()
 {
   m_bucket = "";
   m_key    = "";
@@ -159,7 +171,7 @@ void ossimS3StreamBuffer::clearAll()
 }
 
 
- int ossimS3StreamBuffer::underflow()
+ int ossim::S3StreamBuffer::underflow()
  {
     std::cout << "ossimS3StreamBuffer::underflow:  ossimS3StreamBuffer::underflow.........................\n";
     return EOF;
@@ -198,15 +210,15 @@ void ossimS3StreamBuffer::clearAll()
 //    }
 //    return result;
 // }
-ossimS3StreamBuffer::pos_type ossimS3StreamBuffer::seekoff(off_type offset, std::ios_base::seekdir dir,
-                                                               std::ios_base::openmode __mode)
+ossim::S3StreamBuffer::pos_type ossim::S3StreamBuffer::seekoff(off_type offset, std::ios_base::seekdir dir,
+                                                        std::ios_base::openmode __mode)
 { 
-  std::cout << "ossimS3StreamBuffer::seekoff: ossimS3StreamBuffer::seekoff.........................\n";
+  std::cout << "ossim::S3StreamBuffer::seekoff: ossimS3StreamBuffer::seekoff.........................\n";
     pos_type result = pos_type(off_type(-1));
    if((__mode & std::ios_base::in)&&
       (__mode & std::ios_base::out))
    {
-    std::cout << "ossimS3StreamBuffer::seekoff: WHY ARE WE BOTH IN AND OUT\n";
+    std::cout << "ossim::S3StreamBuffer::seekoff: WHY ARE WE BOTH IN AND OUT\n";
       // we currently will not support both input and output stream at the same time
       //
       return result;
@@ -215,7 +227,7 @@ ossimS3StreamBuffer::pos_type ossimS3StreamBuffer::seekoff(off_type offset, std:
    {
       case std::ios_base::beg:
       {
-        std::cout << "ossimS3StreamBuffer::seekoff: SEEKING FROM BEG\n";
+        std::cout << "ossim::S3StreamBuffer::seekoff: SEEKING FROM BEG\n";
          // if we are determing an absolute position from the beginning then 
          // just make sure the offset is within range of the current buffer size
          //
@@ -232,7 +244,7 @@ ossimS3StreamBuffer::pos_type ossimS3StreamBuffer::seekoff(off_type offset, std:
       }
       case std::ios_base::cur:
       {
-         std::cout << "ossimS3StreamBuffer::seekoff: SEEKING FROM CURRENT\n";
+         std::cout << "ossim::S3StreamBuffer::seekoff: SEEKING FROM CURRENT\n";
          // if we are determing an absolute position from the current pointer then 
          // add the offset as a relative displacment
          //
@@ -263,7 +275,7 @@ ossimS3StreamBuffer::pos_type ossimS3StreamBuffer::seekoff(off_type offset, std:
       }
       case std::ios_base::end:
       {
-         std::cout << "ossimS3StreamBuffer::seekoff: SEEKING FROM END\n";
+         std::cout << "ossim::S3StreamBuffer::seekoff: SEEKING FROM END\n";
          // pos_type newPosition = result;
          // long int delta = 0;
          // if(__mode & std::ios_base::in)
@@ -298,9 +310,9 @@ ossimS3StreamBuffer::pos_type ossimS3StreamBuffer::seekoff(off_type offset, std:
    return result; 
 } 
 
-ossimS3StreamBuffer::pos_type ossimS3StreamBuffer::seekpos(pos_type pos, std::ios_base::openmode __mode)
+ossim::S3StreamBuffer::pos_type ossim::S3StreamBuffer::seekpos(pos_type pos, std::ios_base::openmode __mode)
 {
-  std::cout << "ossimS3StreamBuffer::seekpos.........................\n";
+  std::cout << "ossim::S3StreamBuffer::seekpos.........................\n";
 
    pos_type result = pos_type(off_type(-1));
     
@@ -341,9 +353,9 @@ ossimS3StreamBuffer::pos_type ossimS3StreamBuffer::seekpos(pos_type pos, std::io
    return result;
 }
 
-std::streamsize ossimS3StreamBuffer::xsgetn(char_type* __s, std::streamsize __n)
+std::streamsize ossim::S3StreamBuffer::xsgetn(char_type* __s, std::streamsize __n)
 {
-  std::cout << "ossimS3StreamBuffer::xsgetn.........................\n";
+  std::cout << "ossim::S3StreamBuffer::xsgetn.........................\n";
    // unsigned long int bytesLeftToRead = egptr()-gptr();
     unsigned long int bytesToRead = __n;
     
@@ -358,4 +370,3 @@ std::streamsize ossimS3StreamBuffer::xsgetn(char_type* __s, std::streamsize __n)
    // }
    return std::streamsize(bytesToRead);
 }
-

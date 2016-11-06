@@ -4,17 +4,19 @@
 #include <ossim/base/ossimConstants.h>
 #include <aws/s3/S3Client.h>
 
-class  ossimS3StreamBuffer : public std::streambuf
+namespace ossim{
+class  S3StreamBuffer : public std::streambuf
 {
 public:
-   ossimS3StreamBuffer();
+  S3StreamBuffer();
 
-   bool open(const std::string& connectionString);    
-    
-   virtual ~ossimS3StreamBuffer()
-   {
+  S3StreamBuffer* open (const char* connectionString,  std::ios_base::openmode mode);
+  S3StreamBuffer* open (const std::string& connectionString, std::ios_base::openmode mode);
 
-   }
+  virtual ~S3StreamBuffer()
+  {
+
+  }
     
 protected:
   //virtual int_type pbackfail(int_type __c  = traits_type::eof());
@@ -45,5 +47,8 @@ protected:
   char* m_currentPtr;
   ossim_uint64 m_fileSize;
 };
+
+}
+
 #endif
 
