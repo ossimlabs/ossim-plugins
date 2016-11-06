@@ -14,6 +14,8 @@
 
 ossim::AwsStreamFactory* ossim::AwsStreamFactory::m_instance = 0;
 
+static bool trace = true; // tmp drb...
+
 ossim::AwsStreamFactory::~AwsStreamFactory()
 {
 }
@@ -23,7 +25,6 @@ ossim::AwsStreamFactory* ossim::AwsStreamFactory::instance()
    if(!m_instance)
    {
       m_instance = new ossim::AwsStreamFactory();
-      // m_instance->registerFactory(ossimStreamFactory::instance());
    }
 
    return m_instance;

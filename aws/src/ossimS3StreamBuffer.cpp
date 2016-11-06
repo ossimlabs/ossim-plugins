@@ -6,7 +6,7 @@
 #include <aws/s3/model/HeadObjectRequest.h>
 
 #include <aws/core/Aws.h>
-#include <aws/core/utils/memory/stl/AwsStringStream.h> 
+#include <aws/core/utils/memory/stl/AWSStringStream.h> 
 #include <iostream>
 #include <ossim/base/ossimUrl.h>
 //static const char* KEY = "test-file.txt";
