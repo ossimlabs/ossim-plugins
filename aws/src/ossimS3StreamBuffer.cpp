@@ -401,28 +401,6 @@ std::streamsize ossim::S3StreamBuffer::xsgetn(char_type* s, std::streamsize n)
   {
     bytesNeedToRead = (m_fileSize - m_currentPosition);
   }
-  // first read any partial block
-  if(m_currentPosition>=0)
-  {
-    getBlockRangeInBytes(getBlockIndex(m_currentPosition), startOffset, endOffset);      
-    ossim_int64 delta = (endOffset-m_currentPosition)+1;
-    if(delta <= bytesNeedToRead)
-    {
-      std::memcpy(s+bytesRead, gptr(), delta);
-      m_currentPosition += delta;
-      setg(eback(), gptr()+delta, egptr());
-      bytesRead+=delta;
-      bytesNeedToRead-=delta;
-    }
-    else
-    {
-      std::memcpy(s+bytesRead, gptr(), delta);
-      m_currentPosition += bytesNeedToRead;
-      setg(eback(), gptr()+bytesNeedToRead, egptr());
-      bytesRead+=bytesNeedToRead;
-      return delta;
-    }
-  }
 
   while(bytesNeedToRead > 0)
   {
@@ -463,7 +441,7 @@ std::streamsize ossim::S3StreamBuffer::xsgetn(char_type* s, std::streamsize n)
         m_currentPosition += bytesNeedToRead;
         setg(eback(), gptr()+bytesNeedToRead, egptr());
         bytesRead+=bytesNeedToRead;
-        return std::streamsize(bytesRead);
+        bytesNeedToRead=0;
       }
     }
     else
