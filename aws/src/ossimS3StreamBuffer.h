@@ -30,18 +30,18 @@ protected:
                            std::ios_base::openmode mode = std::ios_base::in | std::ios_base::out);
   virtual std::streamsize xsgetn(char_type* s, std::streamsize n);
   virtual int underflow();
-  // virtual std::streamsize xsputn(const char_type* __s, std::streamsize __n);
 
-  
   void clearAll();
   
   ossim_int64 getBlockIndex(ossim_int64 byteOffset)const;
   ossim_int64 getBlockOffset(ossim_int64 byteOffset)const;
   bool getBlockRangeInBytes(ossim_int64 blockIndex, 
-    ossim_uint64& startRange, 
-    ossim_uint64& endRange)const;
+                            ossim_int64& startRange, 
+                            ossim_int64& endRange)const;
 
   bool loadBlock(ossim_int64 blockIndex);
+
+  void adjustForSeekgPosition(ossim_int64 seekPosition);
 
   Aws::S3::S3Client m_client;
   std::string m_bucket;
