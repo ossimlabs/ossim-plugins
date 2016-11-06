@@ -370,9 +370,10 @@ std::streamsize ossim::S3StreamBuffer::xsgetn(char_type* s, std::streamsize n)
 {      
 //  std::cout << "ossim::S3StreamBuffer::xsgetn" << std::endl;
 
+  if(!is_open()) return EOF;
    // unsigned long int bytesLeftToRead = egptr()-gptr();
   // initialize if we need to to load the block at current position
-  if((!gptr())&&is_open())
+  if((egptr()==gptr())&&is_open())
   {
     if(m_currentPosition >= 0)
     {
@@ -383,12 +384,6 @@ std::streamsize ossim::S3StreamBuffer::xsgetn(char_type* s, std::streamsize n)
       loadBlock(0);
     }
   }
-  else if(!is_open())
-  {
-    return EOF;
-  }
-  bool needMore = true;
-
   ossim_int64 bytesNeedToRead = n;
   ossim_int64 bytesToRead = 0;
   ossim_int64 bytesRead = 0;
@@ -423,21 +418,21 @@ std::streamsize ossim::S3StreamBuffer::xsgetn(char_type* s, std::streamsize n)
     // get each bloc  
     if(m_currentPosition>=0)
     {
-      getBlockRangeInBytes(getBlockIndex(m_currentPosition), startOffset, endOffset);      
+      //getBlockRangeInBytes(getBlockIndex(m_currentPosition), startOffset, endOffset);      
     
-      ossim_int64 delta = (endOffset - m_currentPosition)+1;
+      ossim_int64 delta = (egptr()-gptr());//(endOffset - m_currentPosition)+1;
 
       if(delta <= bytesNeedToRead)
       {
         std::memcpy(s+bytesRead, gptr(), delta);
         m_currentPosition += delta;
-        setg(eback(), gptr()+delta, egptr());
+        setg(eback(), egptr(), egptr());
         bytesRead+=delta;
         bytesNeedToRead-=delta;
       }
       else
       {
-        std::memcpy(s+bytesRead, gptr(), delta);
+        std::memcpy(s+bytesRead, gptr(), bytesNeedToRead);
         m_currentPosition += bytesNeedToRead;
         setg(eback(), gptr()+bytesNeedToRead, egptr());
         bytesRead+=bytesNeedToRead;
