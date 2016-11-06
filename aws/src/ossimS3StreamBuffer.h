@@ -13,6 +13,10 @@ public:
   S3StreamBuffer* open (const char* connectionString,  std::ios_base::openmode mode);
   S3StreamBuffer* open (const std::string& connectionString, std::ios_base::openmode mode);
 
+  bool is_open() const
+  {
+    return m_opened;
+  }
   virtual ~S3StreamBuffer()
   {
 
@@ -22,16 +26,17 @@ protected:
   //virtual int_type pbackfail(int_type __c  = traits_type::eof());
   virtual pos_type seekoff(off_type offset, std::ios_base::seekdir dir,
                           std::ios_base::openmode __mode = std::ios_base::in | std::ios_base::out);
-  virtual pos_type seekpos(pos_type pos, std::ios_base::openmode __mode = std::ios_base::in | std::ios_base::out);
-  virtual std::streamsize xsgetn(char_type* __s, std::streamsize __n);
+  virtual pos_type seekpos(pos_type pos, 
+                           std::ios_base::openmode mode = std::ios_base::in | std::ios_base::out);
+  virtual std::streamsize xsgetn(char_type* s, std::streamsize n);
   virtual int underflow();
   // virtual std::streamsize xsputn(const char_type* __s, std::streamsize __n);
 
   
   void clearAll();
   
-  ossim_int64 getBlockIndex(ossim_uint64 byteOffset)const;
-  ossim_int64 getBlockOffset(ossim_uint64 byteOffset)const;
+  ossim_int64 getBlockIndex(ossim_int64 byteOffset)const;
+  ossim_int64 getBlockOffset(ossim_int64 byteOffset)const;
   bool getBlockRangeInBytes(ossim_int64 blockIndex, 
     ossim_uint64& startRange, 
     ossim_uint64& endRange)const;
@@ -43,9 +48,12 @@ protected:
   std::string m_key;
   std::vector<char> m_buffer;
   ossim_uint64 m_bufferActualDataSize;
+  ossim_int64 m_currentPosition;
   char* m_bufferPtr;
   char* m_currentPtr;
   ossim_uint64 m_fileSize;
+  bool m_opened;
+  std::ios_base::openmode m_mode;
 };
 
 }
