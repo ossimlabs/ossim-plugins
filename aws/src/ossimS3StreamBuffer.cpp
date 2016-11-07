@@ -26,7 +26,7 @@ ossim::S3StreamBuffer::S3StreamBuffer()
 :
   m_bucket(""),
   m_key(""),
-  m_buffer(1024*1024),
+  m_buffer(4096),
   m_bufferActualDataSize(0),
   m_currentPosition(-1),
   m_bufferPtr(0),
