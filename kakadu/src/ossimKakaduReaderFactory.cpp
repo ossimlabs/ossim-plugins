@@ -140,6 +140,38 @@ ossimImageHandler* ossimKakaduReaderFactory::open(const ossimKeywordlist& kwl,
    return reader.release();
 }
 
+ossimRefPtr<ossimImageHandler> ossimKakaduReaderFactory::open(
+   std::shared_ptr<ossim::istream>& str,
+   const ossimString& connectionString,
+   bool openOverview ) const
+{
+   ossimRefPtr<ossimImageHandler> result(0);
+
+   while ( 1 )
+   {
+      // NITF:
+      ossimRefPtr<ossimKakaduNitfReader> ih = new ossimKakaduNitfReader();
+      ih->setOpenOverviewFlag(openOverview);
+      if ( ih->open( str, connectionString ) )
+      {
+         result = ih.get();
+         break;
+      }
+      else
+      {
+         // Reset the stream for downstream code.
+         str->seekg(0, std::ios_base::beg);
+         str->clear();
+      }
+      
+      result = 0;
+      break; 
+   }
+
+   return result;
+}
+
+
 ossimRefPtr<ossimImageHandler> ossimKakaduReaderFactory::openOverview(
    const ossimFilename& file ) const
 {
