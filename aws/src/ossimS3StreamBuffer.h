@@ -22,7 +22,7 @@ namespace ossim{
 class  S3StreamBuffer : public std::streambuf
 {
 public:
-   S3StreamBuffer();
+   S3StreamBuffer(ossim_int64 blockSize=4096);
 
    S3StreamBuffer* open (const char* connectionString,  std::ios_base::openmode mode);
    S3StreamBuffer* open (const std::string& connectionString, std::ios_base::openmode mode);
@@ -53,18 +53,19 @@ protected:
                              ossim_int64& startRange, 
                              ossim_int64& endRange)const;
    
-   bool loadBlock(ossim_int64 blockIndex);
+   bool loadBlock(ossim_int64 absolutePosition);
    
-   void adjustForSeekgPosition(ossim_int64 seekPosition);
-   
+   //void adjustForSeekgPosition(ossim_int64 seekPosition);
+   ossim_int64 getAbsoluteByteOffset()const;
+   bool withinWindow()const;
+
    Aws::S3::S3Client m_client;
    std::string m_bucket;
    std::string m_key;
    std::vector<char> m_buffer;
    ossim_uint64 m_bufferActualDataSize;
-   ossim_int64 m_currentPosition;
+   ossim_int64 m_currentBlockPosition;
    char* m_bufferPtr;
-   char* m_currentPtr;
    ossim_uint64 m_fileSize;
    bool m_opened;
    //std::ios_base::openmode m_mode;
