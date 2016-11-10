@@ -147,25 +147,18 @@ ossimRefPtr<ossimImageHandler> ossimKakaduReaderFactory::open(
 {
    ossimRefPtr<ossimImageHandler> result(0);
 
-   while ( 1 )
+   // J2K NITF:
+   ossimRefPtr<ossimKakaduNitfReader> ih = new ossimKakaduNitfReader();
+   ih->setOpenOverviewFlag(openOverview);
+   if ( ih->open( str, connectionString ) )
    {
-      // NITF:
-      ossimRefPtr<ossimKakaduNitfReader> ih = new ossimKakaduNitfReader();
-      ih->setOpenOverviewFlag(openOverview);
-      if ( ih->open( str, connectionString ) )
-      {
-         result = ih.get();
-         break;
-      }
-      else
-      {
-         // Reset the stream for downstream code.
-         str->seekg(0, std::ios_base::beg);
-         str->clear();
-      }
-      
-      result = 0;
-      break; 
+      result = ih.get();
+   }
+   else
+   {
+      // Reset the stream for downstream code.
+      str->seekg(0, std::ios_base::beg);
+      str->clear();
    }
 
    return result;
@@ -190,8 +183,29 @@ ossimRefPtr<ossimImageHandler> ossimKakaduReaderFactory::openOverview(
    return result;
 }
 
-ossimObject* ossimKakaduReaderFactory::createObject(
-   const ossimString& typeName)const
+ossimRefPtr<ossimImageHandler> ossimKakaduReaderFactory::openOverview(
+   std::shared_ptr<ossim::istream>& str, const ossimString& connectionString ) const
+{
+   ossimRefPtr<ossimImageHandler> result(0);
+
+   // J2K NITF:
+   ossimRefPtr<ossimKakaduNitfReader> ih = new ossimKakaduNitfReader();
+   ih->setOpenOverviewFlag(false);
+   if ( ih->open( str, connectionString ) )
+   {
+      result = ih.get();
+   }
+   else
+   {
+      // Reset the stream for downstream code.
+      str->seekg(0, std::ios_base::beg);
+      str->clear();
+   }
+
+   return result;
+}
+
+ossimObject* ossimKakaduReaderFactory::createObject( const ossimString& typeName)const
 {
    ossimRefPtr<ossimObject> result = 0;
    if(typeName == "ossimKakaduNitfReader")
