@@ -328,10 +328,11 @@ ossim::S3StreamBuffer::pos_type ossim::S3StreamBuffer::seekpos(pos_type pos, std
 {
   // std::cout << "ossim::S3StreamBuffer::seekpos: " << pos << std::endl;
    pos_type result = pos_type(off_type(-1));
+   ossim_int64 tempPos = static_cast<ossim_int64>(pos);
    // Currently we must initialize to a block
    if(!gptr())
    {
-      if(!loadBlock(pos))
+      if(!loadBlock(tempPos))
       {
          return result;
       }
@@ -342,7 +343,7 @@ ossim::S3StreamBuffer::pos_type ossim::S3StreamBuffer::seekpos(pos_type pos, std
    {
       if((pos >= 0)&&(pos < m_fileSize))
       {
-         ossim_int64 delta = pos-absoluteLocation;
+         ossim_int64 delta = tempPos-absoluteLocation;
          // std::cout << "DELTA ============= " << delta << std::endl;
          if(delta)
          {

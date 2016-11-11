@@ -17,7 +17,7 @@
 
 namespace ossim
 {
-   class OSSIM_DLL AwsStreamFactory : public StreamFactoryBase
+   class AwsStreamFactory : public StreamFactoryBase
    {
    public:
       static AwsStreamFactory* instance();
