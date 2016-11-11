@@ -29,11 +29,22 @@ ossim::AwsStreamFactory* ossim::AwsStreamFactory::instance()
 }
 
 std::shared_ptr<ossim::istream> ossim::AwsStreamFactory::createIstream(
-   const ossimString& connectionString, std::ios_base::openmode openMode) const
+   const std::string& connectionString, std::ios_base::openmode openMode) const
 {
-  std::shared_ptr<ossim::S3IStream> result = std::make_shared<ossim::S3IStream>();
+   std::shared_ptr<ossim::S3IStream> result = std::make_shared<ossim::S3IStream>();
 
-  result->open(connectionString.c_str(), openMode);
+   //---
+   // Hack for upstream code calling ossimFilename::convertToNative()
+   // wrecking s3 url.
+   //---
+#if defined(_WIN32)
+   ossimFilename f = onnectionString;
+   f.convertBackToForwardSlashes();
+   result->open( f.string(), openMode) ;
+#else
+   result->open( connectionString, openMode );
+#endif
+  
   if(!result->good())
   {
     result.reset();
@@ -43,17 +54,15 @@ std::shared_ptr<ossim::istream> ossim::AwsStreamFactory::createIstream(
 }
       
 std::shared_ptr<ossim::ostream> ossim::AwsStreamFactory::createOstream(
-   const ossimString& /*connectionString*/, std::ios_base::openmode /*openMode*/) const
+   const std::string& /*connectionString*/, std::ios_base::openmode /*openMode*/) const
 {
-   std::shared_ptr<ossim::ostream> result(0);
-   return result;
+   return std::shared_ptr<ossim::ostream>(0);
 }
 
 std::shared_ptr<ossim::iostream> ossim::AwsStreamFactory::createIOstream(
-   const ossimString& /*connectionString*/, std::ios_base::openmode /*openMode*/) const
+   const std::string& /*connectionString*/, std::ios_base::openmode /*openMode*/) const
 {
-   std::shared_ptr<ossim::iostream> result(0);
-   return result;
+   return std::shared_ptr<ossim::iostream>(0);
 }
 
 // Hidden from use:
