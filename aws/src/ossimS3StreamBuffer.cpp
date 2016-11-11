@@ -104,7 +104,7 @@ bool ossim::S3StreamBuffer::loadBlock(ossim_int64 absolutePosition)
    std::stringstream stringStream;
    ossim_int64 startRange, endRange;
    ossim_int64 blockIndex = getBlockIndex(absolutePosition);
-   if((absolutePosition < 0) || (absolutePosition > m_fileSize)) return false;
+   if((absolutePosition < 0) || (absolutePosition > (ossim_int64)m_fileSize)) return false;
    //std::cout << "CURRENT BYTE LOCATION = " << absoluteLocation << std::endl;
    if(getBlockRangeInBytes(blockIndex, startRange, endRange))
    {
@@ -243,7 +243,7 @@ ossim::S3StreamBuffer::pos_type ossim::S3StreamBuffer::seekoff(off_type offset,
                return result;
             }
          }
-         if((offset <= m_fileSize)&&
+         if((offset <= (ossim_int64)m_fileSize)&&
             (offset >=0))
          {
             result = pos_type(offset);
@@ -341,7 +341,7 @@ ossim::S3StreamBuffer::pos_type ossim::S3StreamBuffer::seekpos(pos_type pos, std
    ossim_int64 absoluteLocation = getAbsoluteByteOffset();
    if(mode & std::ios_base::in)
    {
-      if((pos >= 0)&&(pos < m_fileSize))
+      if((pos >= 0)&&(pos < (ossim_int64)m_fileSize))
       {
          ossim_int64 delta = tempPos-absoluteLocation;
          // std::cout << "DELTA ============= " << delta << std::endl;
