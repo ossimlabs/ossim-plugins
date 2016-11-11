@@ -9,8 +9,8 @@
 // $Id$
 
 #include "ossimAwsStreamFactory.h"
-
 #include "ossimS3IStream.h"
+#include <ossim/base/ossimFilename.h>
 
 ossim::AwsStreamFactory* ossim::AwsStreamFactory::m_instance = 0;
 
@@ -38,7 +38,7 @@ std::shared_ptr<ossim::istream> ossim::AwsStreamFactory::createIstream(
    // wrecking s3 url.
    //---
 #if defined(_WIN32)
-   ossimFilename f = onnectionString;
+   ossimFilename f = connectionString;
    f.convertBackToForwardSlashes();
    result->open( f.string(), openMode) ;
 #else
