@@ -16,11 +16,13 @@
 #include <ossim/base/ossimBooleanProperty.h>
 #include <ossim/base/ossimConstants.h>
 #include <ossim/base/ossimEndian.h>
+#include <ossim/base/ossimIoStream.h>
 #include <ossim/base/ossimIpt.h>
 #include <ossim/base/ossimIrect.h>
 #include <ossim/base/ossimKeywordlist.h>
 #include <ossim/base/ossimNotifyContext.h>
 #include <ossim/base/ossimProperty.h>
+#include <ossim/base/ossimStreamFactoryRegistry.h>
 #include <ossim/base/ossimTrace.h>
 #include <ossim/imaging/ossimImageDataFactory.h>
 
@@ -49,8 +51,6 @@ ossimPngReader::ossimPngReader()
    m_lineBuffer(0),
    m_lineBufferSizeInBytes(0),
    m_str(0),
-   m_restartPosition(0),
-   m_ownsStream( true ),
    m_bufferRect(0, 0, 0, 0),
    m_imageRect(0, 0, 0, 0),
    m_numberOfInputBands(0),
@@ -117,11 +117,8 @@ void ossimPngReader::destroy()
       m_pngReadInfoPtr = 0;
    }
 
-   if ( m_str && m_ownsStream )
-   {
-      delete m_str;
-      m_str = 0;
-   }
+   // Stream data member m_str is share pointer now:
+   m_str = 0;
 }
 
 void ossimPngReader::allocate()
@@ -463,14 +460,12 @@ void ossimPngReader::getPropertyNames(std::vector<ossimString>& propertyNames)co
 
 bool ossimPngReader::open()
 {
-   static const char MODULE[] = "ossimPngReader::open";
-
+   static const char MODULE[] = "ossimPngReader::open()";
    if (traceDebug())
    {
       ossimNotify(ossimNotifyLevel_DEBUG)
-         << "ossimPngReader::open entered..."
-         << "File:  " << theImageFile.c_str()
-         << std::endl;
+         << MODULE << " entered...\n" << "File:  " << theImageFile.c_str()
+         << "\n";
    }
 
    bool result = false;
@@ -484,50 +479,53 @@ bool ossimPngReader::open()
    // Check for empty filename.
    if ( theImageFile.size() )
    {
-      // Open the file:
-      std::ifstream* str = new std::ifstream();
-      str->open(theImageFile.c_str(), std::ios_base::in | std::ios_base::binary);
-
-      // Pass to our open:
-      result = open( str, 0, true );
-
-      if (traceDebug())
+      // Open up a stream to the file.
+      std::shared_ptr<ossim::istream> str = ossim::StreamFactoryRegistry::instance()->
+         createIstream( theImageFile.string(), ios::in | ios::binary);
+      if ( str )
       {
-         ossimNotify(ossimNotifyLevel_DEBUG)
-            << MODULE << " DEBUG:\n";
-         if ( result )
-         {
-            ossimNotify(ossimNotifyLevel_DEBUG) << "opened ";
-         }
-         else
-         {
-            ossimNotify(ossimNotifyLevel_DEBUG) << "could not open ";
-         }
-         ossimNotify(ossimNotifyLevel_DEBUG)
-            << theImageFile.c_str() << std::endl;
-      }  
+         // Pass to our open that takes a stream:
+         result = open( str );
+      }
+   }
+
+   if (traceDebug())
+   {
+      ossimNotify(ossimNotifyLevel_DEBUG)
+         << "ossimPngReader::open() exit status: " << (result?"true":"false") << "\n";
+   }
+   
+   return result;
+}
+
+bool ossimPngReader::open( std::shared_ptr<ossim::istream>& str,
+                           const std::string& connectionString )
+{
+   bool result = open( str );
+   if ( result )
+   {
+      theImageFile = connectionString;
    }
    return result;
 }
 
-bool ossimPngReader::open( std::istream* str, std::streamoff restartPosition, bool youOwnIt )
+bool ossimPngReader::open( std::shared_ptr<ossim::istream>& str )
 {
    bool result = false;
+
    if (isOpen())
    {
       close();
    }
-
+   
    if ( str )
    {
-      str->seekg( m_restartPosition, std::ios_base::beg );
-
-      if ( checkSignature( str ) )
+      str->seekg( 0, std::ios_base::beg );
+      
+      if ( checkSignature( *str ) )
       {
          // Store the pointer:
          m_str = str;
-         m_restartPosition = restartPosition;
-         m_ownsStream = youOwnIt;
          
          result = readPngInit();
          if ( result )
@@ -545,18 +543,11 @@ bool ossimPngReader::open( std::istream* str, std::streamoff restartPosition, bo
       }
       else
       {
-         if ( youOwnIt )
-         {
-            delete str;
-            str = 0;
-         }         
-         
          if (traceDebug())
          {
             ossimNotify(ossimNotifyLevel_DEBUG)
                << "ossimPngReader::open NOTICE:\n"
-               << "Could not open:  " << theImageFile.c_str()
-               << endl;
+               << "Could not open stream!\n";
          }
       }
    }
@@ -649,7 +640,9 @@ ossimScalarType ossimPngReader::getOutputScalarType() const
 
 bool ossimPngReader::isOpen()const
 {
-   return ( m_str );
+   if ( m_str ) return m_str->good();
+
+   return false;
 }
 
 double ossimPngReader::getMaxPixelValue(ossim_uint32 band)const
@@ -692,7 +685,7 @@ void ossimPngReader::restart()
       }
 
       // Reset the file pointer.
-      m_str->seekg( m_restartPosition, std::ios_base::beg );
+      m_str->seekg( 0, std::ios_base::beg );
    
       //---
       // Pass the static read method to libpng to allow us to use our
@@ -700,7 +693,7 @@ void ossimPngReader::restart()
       // c stream.
       //---
       png_set_read_fn( m_pngReadPtr,
-                       (png_voidp)m_str,
+                       (png_voidp)m_str.get(),
                        (png_rw_ptr)&ossimPngReader::pngReadData );
 
       //---
@@ -772,25 +765,24 @@ void ossimPngReader::restart()
    }
 }
 
-bool ossimPngReader::checkSignature( std::istream* str )
+bool ossimPngReader::checkSignature( std::istream& str )
 {
    bool result = false;
-   if ( str )
+
+   //---
+   // Verify the file is a png by checking the first eight bytes:
+   // 0x 89 50 4e 47 0d 0a 1a 0a
+   //---
+   ossim_uint8 sig[8];
+   str.read( (char*)sig, 8);
+   if ( str.good() )
    {
-      //---
-      // Verify the file is a png by checking the first eight bytes:
-      // 0x 89 50 4e 47 0d 0a 1a 0a
-      //---
-      ossim_uint8 sig[8];
-      str->read( (char*)sig, 8);
-      if ( str->good() )
+      if ( png_sig_cmp(sig, 0, 8) == 0 )
       {
-         if ( png_sig_cmp(sig, 0, 8) == 0 )
-         {
-            result = true;
-         }
+         result = true;
       }
    }
+
    return result;
 }
 
@@ -844,7 +836,7 @@ bool ossimPngReader::readPngInit()
                   // c stream.
                   //---
                   png_set_read_fn( m_pngReadPtr,
-                                   (png_voidp)m_str,
+                                   (png_voidp)m_str.get(),
                                    (png_rw_ptr)&ossimPngReader::pngReadData );
                   png_set_sig_bytes(m_pngReadPtr, 8);
                   png_read_info(m_pngReadPtr, m_pngReadInfoPtr);
@@ -1341,7 +1333,7 @@ template <class T> void ossimPngReader::copyLinesWithAlpha(
 // Static function to read from c++ stream.
 void ossimPngReader::pngReadData( png_structp png_ptr, png_bytep data, png_size_t length )
 {
-   std::istream* str = (std::istream*)png_get_io_ptr(png_ptr);
+   ossim::istream* str = (ossim::istream*)png_get_io_ptr(png_ptr);
    if ( str )
    {
       str->read( (char*)data, length );

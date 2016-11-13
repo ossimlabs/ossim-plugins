@@ -22,7 +22,8 @@ namespace ossim{
 class  S3StreamBuffer : public std::streambuf
 {
 public:
-   S3StreamBuffer(ossim_int64 blockSize=4096);
+   // S3StreamBuffer(ossim_int64 blockSize=4096);
+   S3StreamBuffer(ossim_int64 blockSize=1048576); // 1024*1024);
 
    S3StreamBuffer* open (const char* connectionString,  std::ios_base::openmode mode);
    S3StreamBuffer* open (const std::string& connectionString, std::ios_base::openmode mode);

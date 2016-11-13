@@ -1,13 +1,14 @@
-//----------------------------------------------------------------------------
+//---
 //
-// License:  See top level LICENSE.txt file
+// License: MIT
 //
 // Author:  David Burken
 //
 // Description: Factory for OSSIM Portable Network Graphics plugin (PNG)
 // reader.
-//----------------------------------------------------------------------------
-// $Id: ossimPngReaderFactory.h 22633 2014-02-20 00:57:42Z dburken $
+//---
+// $Id$
+
 #ifndef ossimPngReaderFactory_HEADER
 #define ossimPngReaderFactory_HEADER 1
 
@@ -51,6 +52,19 @@ public:
                                    const char* prefix=0)const;
 
    /**
+    * @brief Open method that takes a stream.
+    * @param str Open stream to image.
+    * @param connectionString
+    * @param openOverview If true attempt to open overview file. 
+    * @return ossimImageHandler
+    */
+   virtual ossimRefPtr<ossimImageHandler> open(
+      std::shared_ptr<ossim::istream>& str,
+      const ossimString& connectionString,
+      bool openOverview ) const;
+   
+#if 0
+   /**
     *  @brief Open method.
     *
     *  This open takes a stream, position and a flag.
@@ -68,7 +82,8 @@ public:
    virtual ossimRefPtr<ossimImageHandler> open( std::istream* str,
                                                 std::streamoff restartPosition,
                                                 bool youOwnit ) const;   
-
+#endif
+   
    /**
     * @brief createObject that takes a class name (ossimPngReader)
     * @param typeName Should be "ossimPngReader".

@@ -22,11 +22,13 @@
 #include <ossim/base/ossimDpt.h>
 #include <ossim/base/ossimEndian.h>
 #include <ossim/base/ossimGpt.h>
+#include <ossim/base/ossimIoStream.h>
 #include <ossim/base/ossimIpt.h>
 #include <ossim/base/ossimIrect.h>
 #include <ossim/base/ossimKeywordlist.h>
 #include <ossim/base/ossimNotify.h>
 #include <ossim/base/ossimProperty.h>
+#include <ossim/base/ossimStreamFactoryRegistry.h>
 #include <ossim/base/ossimTrace.h>
 
 #include <ossim/imaging/ossimCodecFactoryRegistry.h>
@@ -941,7 +943,10 @@ ossimRefPtr<ossimImageData> ossimGpkgReader::uncompressPngTile( const ossimGpkgT
    {
       std::string data( (char*)&tile.m_tile_data.front(),
                         tile.m_tile_data.size() );
-      std::istringstream is(data);
+
+      // ossim::istringstream is(data);
+      std::shared_ptr<ossim::istream> is =
+         std::make_shared<ossim::istringstream>( ossim::istringstream(data) );          
                            
       if ( m_ih.valid() )
       {
@@ -950,7 +955,8 @@ ossimRefPtr<ossimImageData> ossimGpkgReader::uncompressPngTile( const ossimGpkgT
             dynamic_cast<ossimStreamReaderInterface*>( m_ih.get() );
          if ( sri )
          {
-            if ( sri->open( &is, 0, false ) == false )
+            // if ( sri->open( &is, 0, false ) == false )
+            if ( sri->open( is, std::string("gpkg_tile")) == false )
             {
                // Per the spec tile mime types can be mixed.
                m_ih = 0;
@@ -964,7 +970,8 @@ ossimRefPtr<ossimImageData> ossimGpkgReader::uncompressPngTile( const ossimGpkgT
                            
       if ( !m_ih )
       {
-         m_ih = ossimImageHandlerRegistry::instance()->open( &is, 0, false );
+         // m_ih = ossimImageHandlerRegistry::instance()->open( &is, 0, false );
+         m_ih = ossimImageHandlerRegistry::instance()->open( is, std::string("gpkg_tile"), false );
       }
       
       if ( m_ih.valid() )
