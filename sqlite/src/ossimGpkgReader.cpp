@@ -946,7 +946,8 @@ ossimRefPtr<ossimImageData> ossimGpkgReader::uncompressPngTile( const ossimGpkgT
 
       // ossim::istringstream is(data);
       std::shared_ptr<ossim::istream> is =
-         std::make_shared<ossim::istringstream>( ossim::istringstream(data) );          
+         std::make_shared<ossim::istringstream>();
+      is->rdbuf()->setbuf( data );          
                            
       if ( m_ih.valid() )
       {
