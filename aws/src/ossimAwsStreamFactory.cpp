@@ -11,6 +11,9 @@
 #include "ossimAwsStreamFactory.h"
 #include "ossimS3IStream.h"
 #include <ossim/base/ossimFilename.h>
+#include <ossim/base/ossimTrace.h>
+
+static ossimTrace traceDebug("ossimAwsStreamFactory:debug");
 
 ossim::AwsStreamFactory* ossim::AwsStreamFactory::m_instance = 0;
 
@@ -32,7 +35,10 @@ std::shared_ptr<ossim::istream> ossim::AwsStreamFactory::createIstream(
    const std::string& connectionString, std::ios_base::openmode openMode) const
 {
    std::shared_ptr<ossim::S3IStream> result = std::make_shared<ossim::S3IStream>();
-
+   if(traceDebug())
+   {
+     ossimNotify(ossimNotifyLevel_WARN) << "ossim::AwsStreamFactory::createIstream: Entered...............\n";
+   }
    //---
    // Hack for upstream code calling ossimFilename::convertToNative()
    // wrecking s3 url.
@@ -49,6 +55,10 @@ std::shared_ptr<ossim::istream> ossim::AwsStreamFactory::createIstream(
   {
     result.reset();
   }
+   if(traceDebug())
+   {
+     ossimNotify(ossimNotifyLevel_WARN) << "ossim::AwsStreamFactory::createIstream: Leaving...............\n";
+   }
 
   return result;
 }
