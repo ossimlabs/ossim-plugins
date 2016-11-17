@@ -49,7 +49,8 @@ extern "C"
    /* Note symbols need to be exported on windoze... */ 
    OSSIM_PLUGINS_DLL void ossimSharedLibraryInitialize(
       ossimSharedObjectInfo** info, const char* /*options*/)
-   {    
+   {
+      std::cout << "AWS Plugin ossimSharedLibraryInitialize INITIALIZING THE API\n";    
       Aws::SDKOptions options;
       Aws::InitAPI(options);
 
@@ -64,6 +65,7 @@ extern "C"
          registerFactory( ossim::AwsStreamFactory::instance() );
 
       setDescription(theDescription);
+      std::cout << "AWS Plugin ossimSharedLibraryInitialize FINISHED INITIALIZING THE API\n";    
   }
 
    /* Note symbols need to be exported on windoze... */ 
