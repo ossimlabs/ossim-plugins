@@ -13,7 +13,7 @@
 #include <ossim/plugin/ossimPluginConstants.h>
 #include <ossim/base/ossimStreamFactoryRegistry.h>
 #include <aws/core/Aws.h>
-
+#include "S3StreamDefaults.h"
 
 static void setDescription(ossimString& description)
 {
@@ -50,7 +50,6 @@ extern "C"
    OSSIM_PLUGINS_DLL void ossimSharedLibraryInitialize(
       ossimSharedObjectInfo** info, const char* /*options*/)
    {
-      std::cout << "AWS Plugin ossimSharedLibraryInitialize INITIALIZING THE API\n";    
       Aws::SDKOptions options;
       Aws::InitAPI(options);
 
@@ -60,12 +59,13 @@ extern "C"
       
       *info = &myInfo;
       
+      ossim::S3StreamDefaults::loadDefaults();
+ 
       /* Register our stream factory... */
       ossim::StreamFactoryRegistry::instance()->
          registerFactory( ossim::AwsStreamFactory::instance() );
 
       setDescription(theDescription);
-      std::cout << "AWS Plugin ossimSharedLibraryInitialize FINISHED INITIALIZING THE API\n";    
   }
 
    /* Note symbols need to be exported on windoze... */ 
