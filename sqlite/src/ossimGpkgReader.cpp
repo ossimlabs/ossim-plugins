@@ -945,10 +945,12 @@ ossimRefPtr<ossimImageData> ossimGpkgReader::uncompressPngTile( const ossimGpkgT
                         tile.m_tile_data.size() );
 
       // ossim::istringstream is(data);
-      std::shared_ptr<ossim::istream> is =
+      std::shared_ptr<ossim::istream> is;
+
+      std::shared_ptr<ossim::istringstream> testIs =
          std::make_shared<ossim::istringstream>();
-      is->rdbuf()->setbuf( data );          
-                           
+      testIs->str( data );          
+      is = testIs;                     
       if ( m_ih.valid() )
       {
          // Have an image handler from previous open:
