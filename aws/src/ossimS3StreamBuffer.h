@@ -65,10 +65,10 @@ protected:
    std::string m_bucket;
    std::string m_key;
    std::vector<char> m_buffer;
-   ossim_uint64 m_bufferActualDataSize;
+   ossim_int64 m_bufferActualDataSize;
    ossim_int64 m_currentBlockPosition;
    char* m_bufferPtr;
-   ossim_uint64 m_fileSize;
+   ossim_int64 m_fileSize;
    bool m_opened;
    //std::ios_base::openmode m_mode;
 };
