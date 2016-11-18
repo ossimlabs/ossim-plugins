@@ -219,8 +219,8 @@ ossim::S3StreamBuffer::pos_type ossim::S3StreamBuffer::seekoff(off_type offset,
                                                                std::ios_base::seekdir dir,
                                                                std::ios_base::openmode mode)
 { 
-   std::cout <<"ossim::S3StreamBuffer::seekoff type size === " << sizeof(off_type) << std::endl;
-   std::cout <<"ossim::S3StreamBuffer::seekoff offset ====== " << offset << std::endl;
+   // std::cout <<"ossim::S3StreamBuffer::seekoff type size === " << sizeof(off_type) << std::endl;
+   // std::cout <<"ossim::S3StreamBuffer::seekoff offset ====== " << offset << std::endl;
   // std::cout << "ossim::S3StreamBuffer::seekoff\n";
    pos_type result = pos_type(off_type(-1));
    // bool withinBlock = true;
@@ -340,7 +340,7 @@ ossim::S3StreamBuffer::pos_type ossim::S3StreamBuffer::seekoff(off_type offset,
 
 ossim::S3StreamBuffer::pos_type ossim::S3StreamBuffer::seekpos(pos_type pos, std::ios_base::openmode mode)
 {
-   std::cout << "ossim::S3StreamBuffer::seekpos: " << pos << std::endl;
+   // std::cout << "ossim::S3StreamBuffer::seekpos: " << pos << std::endl;
    pos_type result = pos_type(off_type(-1));
    ossim_int64 tempPos = static_cast<ossim_int64>(pos);
    // Currently we must initialize to a block
