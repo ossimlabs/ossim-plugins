@@ -63,7 +63,7 @@ public:
     */
    virtual ossimRefPtr<ossimImageHandler> open(
       std::shared_ptr<ossim::istream>& str,
-      const ossimString& connectionString,
+      const std::string& connectionString,
       bool openOverview ) const;
    
    /**
