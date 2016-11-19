@@ -29,7 +29,6 @@ void ossim::S3StreamDefaults::loadDefaults()
          {
             m_readBlocksize *=static_cast<ossim_int64>(1073741824);
          }
-         std::cout << "SET TO " << m_readBlocksize << " bytes\n";
      }
    }
 
