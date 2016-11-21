@@ -22,6 +22,10 @@
 #include <aws/core/utils/memory/stl/AWSStringStream.h> 
 #include <iostream>
 #include <ossim/base/ossimUrl.h>
+#include <ossim/base/ossimTrace.h>
+#include <ossim/base/ossimTimer.h>
+#include <ctime>
+
 //static const char* KEY = "test-file.txt";
 //static const char* BUCKET = "ossimlabs";
 #include <cstdio> /* for EOF */
@@ -31,9 +35,11 @@
 #include <ios>
 #include <vector>
 #include <cstring> /* for memcpy */
+#include "S3HeaderCache.h"
 
 using namespace Aws::S3;
 using namespace Aws::S3::Model;
+static ossimTrace traceDebug("ossimS3StreamBuffer:debug");
 
 ossim::S3StreamBuffer::S3StreamBuffer(ossim_int64 blockSize)
    :
@@ -149,31 +155,60 @@ ossim::S3StreamBuffer* ossim::S3StreamBuffer::open (const char* connectionString
 ossim::S3StreamBuffer* ossim::S3StreamBuffer::open (const std::string& connectionString, 
                                                     std::ios_base::openmode /* mode */)
 {
+   if(traceDebug())
+   {
+      ossimNotify(ossimNotifyLevel_DEBUG)
+         << "ossim::S3StreamBuffer::open DEBUG: entered..... with connection " << connectionString << std::endl;
+   }
    // bool result = false;
    ossimUrl url(connectionString);
    clearAll();
    // m_mode = mode;
+   ossimTimer::Timer_t startTimer = ossimTimer::instance()->tick();
 
    if(url.getProtocol() == "s3")
    {
+      ossim_int64 filesize;
       m_bucket = url.getIp().c_str();
       m_key = url.getPath().c_str();
-
-      if(!m_bucket.empty() && !m_key.empty())
+      if(ossim::S3HeaderCache::instance()->getCachedFilesize(connectionString, filesize))
       {
-         HeadObjectRequest headObjectRequest;
-         headObjectRequest.WithBucket(m_bucket.c_str())
-            .WithKey(m_key.c_str());
-         auto headObject = m_client.HeadObject(headObjectRequest);
-         if(headObject.IsSuccess())
+         m_fileSize = filesize;
+         m_opened = true;
+         m_currentBlockPosition = 0;
+      }
+      else
+      {
+
+         if(!m_bucket.empty() && !m_key.empty())
          {
-            m_fileSize = headObject.GetResult().GetContentLength();
-            m_opened = true;
-            m_currentBlockPosition = 0;
+            HeadObjectRequest headObjectRequest;
+            headObjectRequest.WithBucket(m_bucket.c_str())
+               .WithKey(m_key.c_str());
+            auto headObject = m_client.HeadObject(headObjectRequest);
+            if(headObject.IsSuccess())
+            {
+               m_fileSize = headObject.GetResult().GetContentLength();
+               m_opened = true;
+               m_currentBlockPosition = 0;
+               ossim::S3HeaderCache::Node_t nodePtr = std::make_shared<ossim::S3HeaderCacheNode>(m_fileSize);
+               ossim::S3HeaderCache::instance()->addHeader(connectionString, nodePtr);
+            }
          }
       }
    }
+  ossimTimer::Timer_t endTimer = ossimTimer::instance()->tick();
 
+   if(traceDebug())
+   {
+      ossim_float64 delta = ossimTimer::instance()->delta_s(startTimer, endTimer);
+
+      ossimNotify(ossimNotifyLevel_DEBUG)
+         << "ossim::S3StreamBuffer::open DEBUG: Took " << delta << " seconds to open" << std::endl;
+      ossimNotify(ossimNotifyLevel_DEBUG)
+         << "ossim::S3StreamBuffer::open DEBUG: leaving....." << std::endl;
+
+   }
    if(m_opened) return this;
 
    return 0;
