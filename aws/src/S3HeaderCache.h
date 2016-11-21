@@ -6,7 +6,6 @@
 #include <string>
 #include <utility>
 #include <mutex>  // For std::unique_lock
-#include <shared_mutex>
 #include <thread>
 
 namespace ossim
