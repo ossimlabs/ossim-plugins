@@ -1,11 +1,11 @@
 #include "S3HeaderCache.h"
-
+#include "S3StreamDefaults.h"
 
 std::shared_ptr<ossim::S3HeaderCache> ossim::S3HeaderCache::m_instance;
 
 
 ossim::S3HeaderCache::S3HeaderCache()
-:m_maxCacheEntries(10000)
+:m_maxCacheEntries(ossim::S3StreamDefaults::m_nReadCacheHeaders)
 {
 
 }
@@ -29,6 +29,7 @@ bool ossim::S3HeaderCache::getCachedFilesize(const Key_t& key, ossim_int64& file
 {
    std::unique_lock<std::mutex> lock(m_mutex);
    bool result = false;
+   if(m_maxCacheEntries<=0) return result;
    CacheType::const_iterator iter = m_cache.find(key);
 
    if(iter != m_cache.end())
@@ -43,6 +44,7 @@ bool ossim::S3HeaderCache::getCachedFilesize(const Key_t& key, ossim_int64& file
 void ossim::S3HeaderCache::addHeader(const Key_t& key, Node_t& node)
 {
    std::unique_lock<std::mutex> lock(m_mutex);
+   if(m_maxCacheEntries<=0) return;
    CacheType::const_iterator iter = m_cache.find(key);
 
    if(iter != m_cache.end())

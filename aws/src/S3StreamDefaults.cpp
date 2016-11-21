@@ -4,10 +4,12 @@
 // defaults to a 1 megabyte block size
 //
 ossim_int64 ossim::S3StreamDefaults::m_readBlocksize = 1048576;
+ossim_int64 ossim::S3StreamDefaults::m_nReadCacheHeaders = 10000;
 
 void ossim::S3StreamDefaults::loadDefaults()
 {
    ossimString s3ReadBlocksize = ossimPreferences::instance()->findPreference("ossim.plugins.aws.s3.readBlocksize");
+   ossimString nReadCacheHeaders = ossimPreferences::instance()->findPreference("ossim.plugins.aws.s3.nReadCacheHeaders");
 
    if(!s3ReadBlocksize.empty())
    {
@@ -31,5 +33,12 @@ void ossim::S3StreamDefaults::loadDefaults()
          }
      }
    }
-
+   if(!nReadCacheHeaders.empty())
+   {
+      m_nReadCacheHeaders =  nReadCacheHeaders.toInt64();
+      if(m_nReadCacheHeaders < 0)
+      {
+        m_nReadCacheHeaders = 10000;
+      }     
+   }
 }

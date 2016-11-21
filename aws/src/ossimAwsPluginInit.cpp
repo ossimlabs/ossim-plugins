@@ -60,7 +60,6 @@ extern "C"
       *info = &myInfo;
       
       ossim::S3StreamDefaults::loadDefaults();
- 
       /* Register our stream factory... */
       ossim::StreamFactoryRegistry::instance()->
          registerFactory( ossim::AwsStreamFactory::instance() );
