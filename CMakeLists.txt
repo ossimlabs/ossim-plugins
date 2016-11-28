@@ -51,7 +51,7 @@ SET(OSSIM_PLUGIN_LINK_TYPE "SHARED")
 
 if(BUILD_AWS_PLUGIN)
    add_subdirectory(aws)
-endif(BUILD_CNES_PLUGIN)
+endif(BUILD_AWS_PLUGIN)
 
 if(BUILD_CNES_PLUGIN)
    add_subdirectory(cnes)
