@@ -49,6 +49,9 @@ public:
     */
    virtual bool open(const ossimFilename& file);
 
+   virtual bool open(std::shared_ptr<ossim::istream>& str,
+                     const std::string& connectionString);
+
    /**
     * Print method.
     *
