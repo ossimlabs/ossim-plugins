@@ -41,6 +41,8 @@ public:
     * for memory.
     */
    virtual std::shared_ptr<ossimInfoBase> create(const ossimFilename& file) const;
+  virtual std::shared_ptr<ossimInfoBase> create(std::shared_ptr<ossim::istream>& str,
+                                                const std::string& connectionString)const;
    
 private:
    
