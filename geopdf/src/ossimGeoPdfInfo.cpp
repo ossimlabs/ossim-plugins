@@ -18,6 +18,7 @@
 //PoDoFo includes
 #include <podofo/doc/PdfMemDocument.h>
 #include <podofo/base/PdfString.h>
+#include <ossim/base/ossimStreamFactoryRegistry.h>
 
 //ossim includes
 #include <ossim/base/ossimTrace.h>
@@ -60,6 +61,11 @@ bool ossimGeoPdfInfo::open(const ossimFilename& file)
      return true;
    }
    return false;
+}
+
+bool ossimCcfInfo::open(const ossimFilename& file)
+{
+  return false;
 }
 
 bool ossimGeoPdfInfo::isOpen()

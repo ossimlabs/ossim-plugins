@@ -29,16 +29,27 @@ ossimGeoPdfInfoFactory* ossimGeoPdfInfoFactory::instance()
    return &sharedInstance;
 }
 
-ossimInfoBase* ossimGeoPdfInfoFactory::create(const ossimFilename& file) const
+std::shared_ptr<ossimInfoBase> ossimGeoPdfInfoFactory::create(std::shared_ptr<ossim::istream>& str,
+                                                              const std::string& connectionString) const
 {
-   ossimRefPtr<ossimInfoBase> result = 0;
+   std::shared_ptr<ossimInfoBase> result;
 
-   result = new ossimGeoPdfInfo();
+
+   return result;
+}
+
+std::shared_ptr<ossimInfoBase> ossimGeoPdfInfoFactory::create(const ossimFilename& file) const
+{
+   std::shared_ptr<ossimInfoBase> result;
+
+   result = std::make_shared<ossimGeoPdfInfo>();
    if ( result->open(file) )
    {
-      return result.release();
+      return result;
    }
-   return 0;
+   result.reset();
+   
+   return result;
 }
 
 ossimGeoPdfInfoFactory::ossimGeoPdfInfoFactory()
