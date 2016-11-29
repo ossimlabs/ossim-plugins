@@ -4,6 +4,7 @@
 #include <ossim/support_data/ossimInfoBase.h>
 #include <ossim/support_data/ossimInfoFactoryRegistry.h>
 #include <ossim/projection/ossimProjectionFactoryRegistry.h>
+#include <memory>
 
 RTTI_DEF1(ossimJpipProjectionFactory, "ossimJpipProjectionFactory", ossimProjectionFactoryBase)
 ossimJpipProjectionFactory::ossimJpipProjectionFactory()
@@ -34,8 +35,8 @@ ossimProjection* ossimJpipProjectionFactory::createProjection(const ossimFilenam
       
    if(canGetInfo)
    {
-      ossimRefPtr<ossimInfoBase> infoBase = ossimInfoFactoryRegistry::instance()->create(filename);
-      if(infoBase.valid())
+      std::shared_ptr<ossimInfoBase> infoBase = ossimInfoFactoryRegistry::instance()->create(filename);
+      if(infoBase)
       {
          ossimKeywordlist kwl;
          infoBase->getKeywordlist(kwl);

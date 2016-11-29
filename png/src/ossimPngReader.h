@@ -16,7 +16,9 @@
 #include <ossim/imaging/ossimImageHandler.h>
 #include <ossim/imaging/ossimStreamReaderInterface.h>
 #include <ossim/imaging/ossimAppFixedTileCache.h>
+#include <ossim/base/ossimIosFwd.h>
 #include <png.h>
+#include <memory>
 #include <vector>
 
 class ossimImageData;
@@ -172,25 +174,19 @@ public:
    bool isOpen()const;
 
    virtual double getMaxPixelValue(ossim_uint32 band = 0)const;
-   
+
    /**
-    *  @brief open method.
+    *  @brief This open takes a stream and stores/captures the shared pointer
+    *  on success.
     *
-    *  This open takes a stream, postition and a flag.
-    *
-    *  @param str Open stream to image.
-    *
-    *  @param restartPosition Typically 0, this is the stream offset to the
-    *  front of the image.
-    *
-    *  @param youOwnIt If true this object takes owner ship of the pointer
-    *  memory and will destroy on close.
+    *  Satisfies pure virtual from ossimStreamReaderInterface.
     *  
+    *  @param str Open stream to image.
+    *  @param connectionString Stored on success as the file name.
     *  @return true on success, false on error.
     */
-   virtual bool open( std::istream* str,
-                      std::streamoff restartPosition,
-                      bool youOwnIt );
+   virtual bool open( std::shared_ptr<ossim::istream>& str,
+                      const std::string& connectionString );
 
    /** Close method. */
    virtual void close();
@@ -198,7 +194,7 @@ public:
    /**
     * @return true if first 8 bytes matches png signature, false if not.
     */
-   bool checkSignature(std::istream* str);
+   bool checkSignature(std::istream& str);
 
    /**
     * @brief Gets the image geometry.
@@ -213,6 +209,14 @@ public:
    virtual ossimRefPtr<ossimImageGeometry> getImageGeometry();
    
 protected:
+
+   /**
+    *  @brief This open takes a stream and stores/captures the shared pointer
+    *  on success.
+    *  @param str Open stream to image.
+    *  @return true on success, false on error.
+    */
+   bool open( std::shared_ptr<ossim::istream>& str );
    
    /**
     * @brief Performs signature check and initializes png_structp and png_infop.
@@ -286,9 +290,7 @@ protected:
    ossim_uint8*  m_lineBuffer;
    ossim_uint32  m_lineBufferSizeInBytes;
 
-   std::istream*  m_str;
-   std::streamoff m_restartPosition;
-   bool           m_ownsStream;
+   std::shared_ptr<ossim::istream> m_str;
    
    ossimIrect    m_bufferRect;
    ossimIrect    m_imageRect;

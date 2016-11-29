@@ -2,6 +2,7 @@
 #include "ossimKakaduJpipInfo.h"
 #include <ossim/base/ossimRefPtr.h>
 #include <iostream>
+#include <memory>
 
 ossimKakaduJpipInfoFactory::~ossimKakaduJpipInfoFactory()
 {
@@ -13,18 +14,24 @@ ossimKakaduJpipInfoFactory* ossimKakaduJpipInfoFactory::instance()
    return &inst;
 }
 
-ossimInfoBase* ossimKakaduJpipInfoFactory::create(const ossimFilename& file) const
+std::shared_ptr<ossimInfoBase> ossimKakaduJpipInfoFactory::create(const ossimFilename& file) const
 {
 
-   ossimRefPtr<ossimKakaduJpipInfo> jpipInfo = new ossimKakaduJpipInfo();
+   std::shared_ptr<ossimInfoBase> jpipInfo = std::make_shared<ossimKakaduJpipInfo>();
    if(!jpipInfo->open(file))
    {
-      jpipInfo = 0;
+      jpipInfo.reset();
    }
-   return jpipInfo.release();
+   return jpipInfo;
 }
 
+std::shared_ptr<ossimInfoBase> ossimKakaduJpipInfoFactory::create(std::shared_ptr<ossim::istream>& str,
+                                                                  const std::string& connectionString)const
+{
+   std::shared_ptr<ossimInfoBase> jpipInfo;
 
+   return jpipInfo;
+}
 /** hidden from use default constructor */
 ossimKakaduJpipInfoFactory::ossimKakaduJpipInfoFactory()
 {

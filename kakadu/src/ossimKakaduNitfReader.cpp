@@ -547,7 +547,7 @@ bool ossimKakaduNitfReader::allocate()
          try
          {
             // Position to start of code stream prior to create call.
-            theFileStr.seekg(m_startOfCodestreamOffset, ios_base::beg);
+            theFileStr->seekg(m_startOfCodestreamOffset, ios_base::beg);
             
             //---
             // Initialize the codestream.  The class ossimKakaduNitfReader is a
@@ -858,15 +858,15 @@ bool ossimKakaduNitfReader::scanForJpegBlockOffsets()
          //---
          
          // Seek to the first block.
-         theFileStr.seekg(m_startOfCodestreamOffset, ios_base::beg);
-         if ( theFileStr.good() )
+         theFileStr->seekg(m_startOfCodestreamOffset, ios_base::beg);
+         if ( theFileStr->good() )
          {
             //---
             // Read the first two bytes and test for SOC (Start Of Codestream)
             // marker.
             //---
             ossim_uint8 markerField[2];
-            theFileStr.read( (char*)markerField, 2);
+            theFileStr->read( (char*)markerField, 2);
          
             if ( (markerField[0] == 0xff) && (markerField[1] == 0x4f) )
             {
@@ -881,18 +881,18 @@ bool ossimKakaduNitfReader::scanForJpegBlockOffsets()
                // Changed for multi-enty nitf where first entry is j2k, second is
                // uncompressed. Need to test at site. 02 August 2013 (drb)
                //---
-               // theFileStr.seekg(0, ios_base::beg);
-               theFileStr.seekg(m_startOfCodestreamOffset, ios_base::beg);
+               // theFileStr->seekg(0, ios_base::beg);
+               theFileStr->seekg(m_startOfCodestreamOffset, ios_base::beg);
                char c;
-               while ( theFileStr.get(c) )
+               while ( theFileStr->get(c) )
                {
                   if (static_cast<ossim_uint8>(c) == 0xff)
                   {
-                     if (  theFileStr.get(c) )
+                     if (  theFileStr->get(c) )
                      {
                         if (static_cast<ossim_uint8>(c) == 0x4f)
                         {
-                           m_startOfCodestreamOffset = theFileStr.tellg();
+                           m_startOfCodestreamOffset = theFileStr->tellg();
                            m_startOfCodestreamOffset -= 2;
                            result = true;
                            break;
@@ -907,7 +907,7 @@ bool ossimKakaduNitfReader::scanForJpegBlockOffsets()
                dumpTiles(ossimNotify(ossimNotifyLevel_DEBUG));
             }
             
-         } // matches: if (theFileStr.good())
+         } // matches: if (theFileStr->good())
          
       }  // if ( isJp2() ) ... else {
 
@@ -966,8 +966,8 @@ bool ossimKakaduNitfReader::checkJp2Signature()
       std::streamoff startOfDataPos = hdr->getDataLocation();
 
       // Seek to the start of data.
-      theFileStr.seekg(startOfDataPos, ios_base::beg);
-      if ( theFileStr.good() )
+      theFileStr->seekg(startOfDataPos, ios_base::beg);
+      if ( theFileStr->good() )
       {
          const ossim_uint8 J2K_SIGNATURE_BOX[SIGNATURE_BOX_SIZE] = 
             {0x00,0x00,0x00,0x0c,0x6a,0x50,0x20,0x20,0x0d,0x0a,0x87,0x0a};
@@ -975,7 +975,7 @@ bool ossimKakaduNitfReader::checkJp2Signature()
          ossim_uint8 box[SIGNATURE_BOX_SIZE];
          
          // Read in the box.
-         theFileStr.read((char*)box, SIGNATURE_BOX_SIZE);
+         theFileStr->read((char*)box, SIGNATURE_BOX_SIZE);
          result = true;
          for (ossim_uint32 i = 0; i < SIGNATURE_BOX_SIZE; ++i)
          {
@@ -988,7 +988,7 @@ bool ossimKakaduNitfReader::checkJp2Signature()
       }
       
       // Seek back to the start of data.
-      theFileStr.seekg(startOfDataPos, ios_base::beg);
+      theFileStr->seekg(startOfDataPos, ios_base::beg);
    }
    
    return result;
@@ -1048,11 +1048,11 @@ std::ostream& ossimKakaduNitfReader::dumpTiles(std::ostream& out)
    if(hdr)
    {
       // Capture the starting position.
-      std::streampos currentPos = theFileStr.tellg();
+      std::streampos currentPos = theFileStr->tellg();
       
       // Seek to the first block.
-      theFileStr.seekg(m_startOfCodestreamOffset, ios_base::beg);
-      if (theFileStr.good())
+      theFileStr->seekg(m_startOfCodestreamOffset, ios_base::beg);
+      if (theFileStr->good())
       {
          out << "offset to codestream: " << m_startOfCodestreamOffset << "\n";
          
@@ -1061,27 +1061,27 @@ std::ostream& ossimKakaduNitfReader::dumpTiles(std::ostream& out)
          // marker.
          //---
          ossim_uint8 markerField[2];
-         theFileStr.read( (char*)markerField, 2);
+         theFileStr->read( (char*)markerField, 2);
 
          bool foundSot = false;
          if ( (markerField[0] == 0xff) && (markerField[1] == 0x4f) )
          {
             // Get the SIZ marker and dump it.
-            theFileStr.read( (char*)markerField, 2);
+            theFileStr->read( (char*)markerField, 2);
             if ( (markerField[0] == 0xff) && (markerField[1] == 0x51) )
             {
                ossimJ2kSizRecord siz;
-               siz.parseStream(theFileStr);
+               siz.parseStream( *theFileStr );
                siz.print(out);
             }
             
             // Find the firt tile marker.
             char c;
-            while ( theFileStr.get(c) )
+            while ( theFileStr->get(c) )
             {
                if (static_cast<ossim_uint8>(c) == 0xff)
                {
-                  if (  theFileStr.get(c) )
+                  if (  theFileStr->get(c) )
                   {
                      if (static_cast<ossim_uint8>(c) == 0x90)
                      {
@@ -1099,24 +1099,24 @@ std::ostream& ossimKakaduNitfReader::dumpTiles(std::ostream& out)
                hdr->getNumberOfBlocksPerRow() * hdr->getNumberOfBlocksPerCol();
             for (ossim_uint32 i = 0; i < BLOCKS; ++i)
             {
-               std::streamoff pos = theFileStr.tellg();
+               std::streamoff pos = theFileStr->tellg();
                ossimJ2kSotRecord sotRecord;
-               sotRecord.parseStream(theFileStr);
+               sotRecord.parseStream( *theFileStr );
                pos += sotRecord.thePsot;
                sotRecord.print(out);
-               theFileStr.seekg(pos, ios_base::beg);
+               theFileStr->seekg(pos, ios_base::beg);
             }
          }
       }
 
       // If the last byte is read, the eofbit must be reset. 
-      if ( theFileStr.eof() )
+      if ( theFileStr->eof() )
       {
-         theFileStr.clear();
+         theFileStr->clear();
       }
       
       // Put the stream back to the where it was.
-      theFileStr.seekg(currentPos);
+      theFileStr->seekg(currentPos);
    }
 
    return out;

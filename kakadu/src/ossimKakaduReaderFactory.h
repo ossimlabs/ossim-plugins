@@ -50,6 +50,21 @@ public:
     */
    virtual ossimImageHandler* open(const ossimKeywordlist& kwl,
                                    const char* prefix=0)const;
+
+   /**
+    * @brief Open method that takes a stream.
+    *
+    * This implementation returns an ossimRefPtr with a null pointer.
+    * 
+    * @param str Open stream to image.
+    * @param connectionString
+    * @param openOverview If true attempt to open overview file. 
+    * @return ossimImageHandler
+    */
+   virtual ossimRefPtr<ossimImageHandler> open(
+      std::shared_ptr<ossim::istream>& str,
+      const std::string& connectionString,
+      bool openOverview ) const;
    
    /**
     * @brief Open overview that takes a file name.
@@ -59,7 +74,17 @@ public:
     * @return ossimRefPtr to image handler on success or null on failure.
     */
    virtual ossimRefPtr<ossimImageHandler> openOverview(
-      const ossimFilename& file ) const;   
+      const ossimFilename& file ) const;
+
+   /**
+    * @brief Open method that takes a stream.
+    * @param str Open stream to image.
+    * @param connectionString
+    * @return ossimImageHandler
+    */
+   virtual ossimRefPtr<ossimImageHandler> openOverview(
+      std::shared_ptr<ossim::istream>& str,
+      const ossimString& connectionString ) const;
    
    /**
     * @brief createObject that takes a class name (ossimKakaduReader)

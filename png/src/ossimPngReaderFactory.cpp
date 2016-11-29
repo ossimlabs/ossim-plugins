@@ -96,6 +96,31 @@ ossimImageHandler* ossimPngReaderFactory::open(const ossimKeywordlist& kwl,
 }
 
 ossimRefPtr<ossimImageHandler> ossimPngReaderFactory::open(
+   std::shared_ptr<ossim::istream>& str,
+   const ossimString& connectionString,
+   bool openOverview ) const
+{
+   ossimRefPtr<ossimImageHandler> result = 0;
+   
+   // PNG:
+   ossimRefPtr<ossimPngReader> ih = new ossimPngReader();
+   ih->setOpenOverviewFlag(openOverview);
+   if ( ih->open( str, connectionString ) )
+   {
+      result = ih.get();
+   }
+   else
+   {
+      // Reset the stream for downstream code.
+      str->seekg(0, std::ios_base::beg);
+      str->clear();
+   }
+   
+   return result;
+}
+
+#if 0
+ossimRefPtr<ossimImageHandler> ossimPngReaderFactory::open(
    std::istream* str, std::streamoff restartPosition, bool youOwnIt ) const
 {
    ossimRefPtr<ossimImageHandler> result = 0;
@@ -108,6 +133,9 @@ ossimRefPtr<ossimImageHandler> ossimPngReaderFactory::open(
    
    return result;
 }
+#endif
+
+
 
 ossimObject* ossimPngReaderFactory::createObject(
    const ossimString& typeName)const

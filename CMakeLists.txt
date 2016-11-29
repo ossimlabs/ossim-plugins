@@ -15,6 +15,7 @@ include(OssimUtilities)
 
 
 OPTION(OSSIM_INSTALL_PLUGINS_WITH_VERSION "Set to ON to build OSSIM's plugins to install with a version prefix like ossim-<version>/plugins.  Use OFF to not add a version and make it ossim/plugins." OFF)
+OPTION(BUILD_AWS_PLUGIN "Set to ON to build OSSIM's aws plugin.  Use OFF to skip this plugin." OFF)
 OPTION(BUILD_CNES_PLUGIN "Set to ON to build OSSIM's CNES that depend only on ossim.  Use OFF to skip this plugin." ON)
 OPTION(BUILD_FFTW3_PLUGIN "Set to ON to build OSSIM's fftw3 plugin.  Use OFF to skip this plugin." OFF)
 OPTION(BUILD_GDAL_PLUGIN "Set to ON to build OSSIM's gdal plugin.  Use OFF to skip this plugin." OFF)
@@ -47,6 +48,10 @@ include_directories(${OPENTHREADS_INCLUDE_DIR})
 
 SET(BUILD_OSSIM_FRAMEWORKS "OFF")
 SET(OSSIM_PLUGIN_LINK_TYPE "SHARED")
+
+if(BUILD_AWS_PLUGIN)
+   add_subdirectory(aws)
+endif(BUILD_AWS_PLUGIN)
 
 if(BUILD_CNES_PLUGIN)
    add_subdirectory(cnes)
@@ -128,6 +133,7 @@ else(OSSIM_BUILD_ADDITIONAL_PLUGIN_DIRECTORIES)
     SET(OSSIM_BUILD_ADDITIONAL_PLUGIN_DIRECTORIES "" CACHE PATH "Specify full paths separated by ; to additional plugins you wish to include into the ossim build framework" FORCE)
 endif()
 
+MESSAGE( STATUS "BUILD_AWS_PLUGIN              = ${BUILD_AWS_PLUGIN}" )
 MESSAGE( STATUS "BUILD_CNES_PLUGIN             = ${BUILD_CNES_PLUGIN}" )
 MESSAGE( STATUS "BUILD_FFTW3_PLUGIN            = ${BUILD_FFTW3_PLUGIN}" )
 MESSAGE( STATUS "BUILD_GDAL_PLUGIN             = ${BUILD_GDAL_PLUGIN}" )

@@ -119,14 +119,14 @@ bool ossimJpeg12NitfReader::uncompressJpegBlock(ossim_uint32 x, ossim_uint32 y)
    }
    
    // Seek to the block.
-   theFileStr.seekg(theNitfBlockOffset[blockNumber], ios::beg);
+   theFileStr->seekg(theNitfBlockOffset[blockNumber], ios::beg);
    
    // Read the block into memory.
    std::vector<ossim_uint8> compressedBuf(theNitfBlockSize[blockNumber]);
-   if (!theFileStr.read((char*)&(compressedBuf.front()),
+   if (!theFileStr->read((char*)&(compressedBuf.front()),
                         theNitfBlockSize[blockNumber]))
    {
-      theFileStr.clear();
+      theFileStr->clear();
       ossimNotify(ossimNotifyLevel_FATAL)
          << "ossimJpeg12NitrReader::uncompressJpegBlock Read Error!"
          << "\nReturning error..." << endl;

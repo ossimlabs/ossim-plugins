@@ -34,6 +34,8 @@ public:
    
    /** default constructor */
    ossimKakaduJpipInfo();
+   /** virtual destructor */
+   virtual ~ossimKakaduJpipInfo();
    
    
    /**
@@ -56,8 +58,6 @@ public:
    
    virtual void setHandler(ossimKakaduJpipHandler* handler);
 protected:
-   /** virtual destructor */
-   virtual ~ossimKakaduJpipInfo();
    mutable ossimRefPtr<ossimKakaduJpipHandler> m_handler;
    
 };
