@@ -316,13 +316,13 @@ bool ossimKakaduNitfOverviewBuilder::execute()
                
                // Get an info dump to a keyword list.
                ossimKeywordlist kwl;
-               ossimRefPtr<ossimInfoBase> info =
+               std::shared_ptr<ossimInfoBase> info =
                   ossimInfoFactoryRegistry::instance()->
                   create(m_imageHandler->getFilename());
-               if ( info.valid() )
+               if ( info )
                {
                   info->getKeywordlist(kwl);
-                  info = 0;
+                  info.reset();
                }
                
                fHdr = new ossimNitfFileHeaderV2_1();

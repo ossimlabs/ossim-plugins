@@ -28,21 +28,31 @@ ossimSqliteInfoFactory* ossimSqliteInfoFactory::instance()
    return &sharedInstance;
 }
 
-ossimInfoBase* ossimSqliteInfoFactory::create(const ossimFilename& file) const
+std::shared_ptr<ossimInfoBase> ossimSqliteInfoFactory::create(const ossimFilename& file) const
 {
-   ossimRefPtr<ossimInfoBase> result = 0;
+   std::shared_ptr<ossimInfoBase> result = 0;
 
    std::string ext = file.ext().downcase().string();
    if ( ext == "gpkg" )
    {
-      result = new ossimGpkgInfo;
+      result = std::make_shared<ossimGpkgInfo>();
       if(result->open(file) == false)
       {
-         result = 0;
+         result.reset();
       }
    }
 
-   return result.release();
+   return result;
+}
+
+std::shared_ptr<ossimInfoBase> ossimSqliteInfoFactory::create(std::shared_ptr<ossim::istream>& str,
+                                                              const std::string& connectionString)const
+{
+   std::shared_ptr<ossimInfoBase> result;
+
+
+
+   return result;
 }
 
 ossimSqliteInfoFactory::ossimSqliteInfoFactory()

@@ -27,7 +27,7 @@ std::shared_ptr<ossim::S3HeaderCache> ossim::S3HeaderCache::instance()
 
 bool ossim::S3HeaderCache::getCachedFilesize(const Key_t& key, ossim_int64& filesize)const
 {
-  std::unique_lock<std::mutex> lock(m_mutex);
+   std::unique_lock<std::mutex> lock(m_mutex);
    bool result = false;
    if(m_maxCacheEntries<=0) return result;
    CacheType::const_iterator iter = m_cache.find(key);

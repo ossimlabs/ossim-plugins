@@ -30,23 +30,34 @@ ossimGdalInfoFactory* ossimGdalInfoFactory::instance()
    return &sharedInstance;
 }
 
-ossimInfoBase* ossimGdalInfoFactory::create(const ossimFilename& file) const
+std::shared_ptr<ossimInfoBase> ossimGdalInfoFactory::create(const ossimFilename& file) const
 {
    // Test hdf...
-   ossimRefPtr<ossimInfoBase> result = 0;
-   result = new ossimHdfInfo();
-   if ( result->open(file) )
+   std::shared_ptr<ossimInfoBase> result;
+
+   std::shared_ptr<ossimHdfInfo> hdfInfo = std::make_shared<ossimHdfInfo>();
+   if ( hdfInfo->open(file) )
    {
-      return result.release();
+      return hdfInfo;
+   }
+   
+   std::shared_ptr<ossimOgrInfo> ogrInfo = std::make_shared<ossimOgrInfo>();
+   if ( ogrInfo->open(file) )
+   {
+      return ogrInfo;
    }
 
-   // Test ogr...
-   result = new ossimOgrInfo();
-   if ( result->open(file) )
-   {
-      return result.release();
-   }
-   return 0;
+   return result;
+}
+
+std::shared_ptr<ossimInfoBase> ossimGdalInfoFactory::create(std::shared_ptr<ossim::istream>& str,
+                                                            const std::string& connectionString)const
+{
+   std::shared_ptr<ossimInfoBase> result;
+
+   // generic stream open/adaptors not implemented yet
+
+   return result;
 }
 
 ossimGdalInfoFactory::ossimGdalInfoFactory()
