@@ -63,7 +63,8 @@ bool ossimGeoPdfInfo::open(const ossimFilename& file)
    return false;
 }
 
-bool ossimCcfInfo::open(const ossimFilename& file)
+bool ossimGeoPdfInfo::open(std::shared_ptr<ossim::istream>& str,
+                           const std::string& connectionString)
 {
   return false;
 }
