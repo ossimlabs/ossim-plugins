@@ -19,6 +19,7 @@ void ossim::S3StreamDefaults::loadDefaults()
        s3ReadBlocksize = ossimPreferences::instance()->findPreference("ossim.plugins.aws.s3.readBlocksize");
    }
    if(!s3ReadBlocksize.empty())
+   {
      ossim_int64 blockSize = s3ReadBlocksize.toInt64();
      if(blockSize > 0)
      {
