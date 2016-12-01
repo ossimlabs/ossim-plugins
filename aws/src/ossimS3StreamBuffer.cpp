@@ -12,30 +12,31 @@
 // $Id$
 
 #include "ossimS3StreamBuffer.h"
+#include "S3HeaderCache.h"
 
 #include <aws/s3/model/PutObjectRequest.h>
 #include <aws/s3/model/GetObjectRequest.h>
 #include <aws/s3/model/GetObjectResult.h>
 #include <aws/s3/model/HeadObjectRequest.h>
-
 #include <aws/core/Aws.h>
-#include <aws/core/utils/memory/stl/AWSStringStream.h> 
-#include <iostream>
+#include <aws/core/http/HttpRequest.h>
+#include <aws/core/utils/memory/stl/AWSStringStream.h>
+
 #include <ossim/base/ossimUrl.h>
 #include <ossim/base/ossimTrace.h>
 #include <ossim/base/ossimTimer.h>
 #include <ctime>
 
-//static const char* KEY = "test-file.txt";
-//static const char* BUCKET = "ossimlabs";
 #include <cstdio> /* for EOF */
+#include <cstring> /* for memcpy */
+#include <ios>
+#include <iostream>
 #include <streambuf>
 #include <sstream>
-#include <iosfwd>
-#include <ios>
 #include <vector>
-#include <cstring> /* for memcpy */
-#include "S3HeaderCache.h"
+
+//static const char* KEY = "test-file.txt";
+//static const char* BUCKET = "ossimlabs";
 
 using namespace Aws::S3;
 using namespace Aws::S3::Model;

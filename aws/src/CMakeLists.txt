@@ -39,6 +39,11 @@ file(GLOB OSSIMPLUGIN_HEADERS *.h)
 #---
 add_definitions("-DOSSIMPLUGINSMAKINGDLL")
 
+#---
+# For AWS_CORE_API(windows dllimport) macro from <aws/core/Core_EXORTS.h>
+#---
+add_definitions("-DUSE_IMPORT_EXPORT")
+
 # Adjust the install library path:
 if(OSSIM_INSTALL_PLUGINS_WITH_VERSION)
    set(INSTALL_LIBRARY_DIR   "${INSTALL_LIBRARY_DIR}/ossim-${OSSIM_VERSION}/plugins")
