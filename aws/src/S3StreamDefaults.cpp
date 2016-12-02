@@ -1,14 +1,21 @@
 #include "S3StreamDefaults.h"
 #include <ossim/base/ossimPreferences.h>
 #include <ossim/base/ossimEnvironmentUtility.h>
+#include <ossim/base/ossimTrace.h>
 
 // defaults to a 1 megabyte block size
 //
 ossim_int64 ossim::S3StreamDefaults::m_readBlocksize = 32768;
 ossim_int64 ossim::S3StreamDefaults::m_nReadCacheHeaders = 10000;
+static ossimTrace traceDebug("ossimS3StreamDefaults:debug");
 
 void ossim::S3StreamDefaults::loadDefaults()
 {
+   if(traceDebug())
+   {
+      ossimNotify(ossimNotifyLevel_DEBUG)
+         << "ossim::S3StreamDefaults::loadDefaults() DEBUG: entered.....\n";
+   }
    ossimString s3ReadBlocksize = ossimEnvironmentUtility::instance()->getEnvironmentVariable("OSSIM_PLUGINS_AWS_S3_READBLOCKSIZE");
 
    ossimString  nReadCacheHeaders = ossimPreferences::instance()->findPreference("OSSIM_PLUGINS_AWS_S3_NREADCACHEHEADERS");
@@ -51,5 +58,14 @@ void ossim::S3StreamDefaults::loadDefaults()
       {
         m_nReadCacheHeaders = 10000;
       }     
+   }
+   if(traceDebug())
+   {
+      ossimNotify(ossimNotifyLevel_DEBUG)
+         << "m_readBlocksize: " << m_readBlocksize << "\n";
+      ossimNotify(ossimNotifyLevel_DEBUG)
+         << "m_nReadCacheHeaders: " << m_nReadCacheHeaders << "\n";
+      ossimNotify(ossimNotifyLevel_DEBUG)
+         << "ossim::S3StreamDefaults::loadDefaults() DEBUG: leaving.....\n";
    }
 }
