@@ -246,9 +246,15 @@ int ossim::S3StreamBuffer::underflow()
          return EOF;
       }
    }
+   
+   // std::cout << "GPTR CHARACTER ========== "
+   // << (int)static_cast<ossim_uint8>(*gptr()) << std::endl;
 
-//  std::cout << "GPTR CHARACTER ========== " << (int)(*gptr()) << std::endl;
-   return (int)(*gptr());
+   //---
+   // Double cast to get non-negative values so as to not send an inadvertent
+   // EOF(-1) to caller.
+   //---
+   return (int)static_cast<ossim_uint8>(*gptr());
 }
 
 ossim::S3StreamBuffer::pos_type ossim::S3StreamBuffer::seekoff(off_type offset, 
