@@ -32,8 +32,8 @@
 #pragma warning( disable : 4290 )
 #endif
 #include "VTSMisc.h"
-#include <csm.h>
-#include <BytestreamIsd.h>
+#include <csm/csm.h>
+#include <csm/BytestreamIsd.h>
 #include <math.h>
 
 #ifdef _WIN32

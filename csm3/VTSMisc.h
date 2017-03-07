@@ -27,11 +27,11 @@
 #ifdef _WIN32
 #pragma warning( disable : 4290 )
 #endif
-#include <csm.h>
-#include <Error.h>
-#include <Warning.h>
-#include <BytestreamIsd.h>
-#include <NitfIsd.h>
+#include <csm/csm.h>
+#include <csm/Error.h>
+#include <csm/Warning.h>
+#include <csm/BytestreamIsd.h>
+#include <csm/NitfIsd.h>
 #include "constants.h"
 
 #include <ossim/plugin/ossimPluginConstants.h>

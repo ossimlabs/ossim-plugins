@@ -19,7 +19,7 @@
 #include <ossim/plugin/ossimPluginConstants.h>
 #include <ossim/projection/ossimSensorModel.h>
 #include <ossim/base/ossimFilename.h>
-#include <RasterGM.h>
+#include <csm/RasterGM.h>
 
 class OSSIM_PLUGINS_DLL ossimCsm3SensorModel : public ossimSensorModel
 {

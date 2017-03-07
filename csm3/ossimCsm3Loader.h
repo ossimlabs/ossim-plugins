@@ -16,7 +16,7 @@
 #include <ossim/plugin/ossimDynamicLibrary.h>
 #include <ossim/plugin/ossimPluginConstants.h>
 #include <ossim/base/ossimRefPtr.h>
-#include <RasterGM.h>
+#include <csm/RasterGM.h>
 #include <string>
 #include <vector>
 

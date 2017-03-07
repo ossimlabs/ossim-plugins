@@ -20,7 +20,7 @@
 #include <ossim/support_data/ossimNitfFile.h>
 #include <ossim/support_data/ossimNitfImageHeader.h>
 #include <ossim/base/ossimIpt.h>
-#include <Plugin.h>
+#include <csm/Plugin.h>
 
 //enable internal sensor model adjustment if implemented.  Not throughly tested.
 #define USE_INTERNAL_ADJUSTABLE_PARAMS 0

@@ -1,5 +1,5 @@
-set(LIB_NAME ossimcsm3_plugin)
-MESSAGE( "************** LIBRARY SETUP FOR ossimcsm_plugin******************")
+set(LIB_NAME ossim_csm3_plugin)
+MESSAGE( "************** LIBRARY SETUP FOR ossim_csm3_plugin******************")
 
 # Include ossim cmake stuff:
 include(OssimVersion)
@@ -28,7 +28,7 @@ endif( OPENTHREADS_FOUND )
 
 # csmApi - Required:
 
-find_package(csmApi)
+find_package(CsmApi)
 if (CSMAPI_FOUND)
    include_directories(${CSMAPI_INCLUDES})
    set( requiredLibs ${requiredLibs} ${CSMAPI_LIBRARIES} )

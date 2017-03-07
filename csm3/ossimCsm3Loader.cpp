@@ -15,8 +15,8 @@
 #include <ossim/base/ossimPreferences.h>
 #include <ossim/base/ossimDirectory.h>
 #include <ossim/base/ossimNotify.h>
-#include <Plugin.h>
-#include <NitfIsd.h>
+#include <csm/Plugin.h>
+#include <csm/NitfIsd.h>
 #include "VTSMisc.h"
 
 #ifdef _WIN32

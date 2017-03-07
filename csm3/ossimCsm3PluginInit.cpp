@@ -14,7 +14,7 @@
 #include <ossim/plugin/ossimPluginConstants.h>
 #include <ossim/plugin/ossimSharedObjectBridge.h>
 #include <ossim/projection/ossimProjectionFactoryRegistry.h>
-#include <Plugin.h>
+#include <csm/Plugin.h>
 
 #include <vector>
 #include <sstream>
