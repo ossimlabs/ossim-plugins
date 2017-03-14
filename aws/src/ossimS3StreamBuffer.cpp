@@ -167,7 +167,8 @@ ossim::S3StreamBuffer* ossim::S3StreamBuffer::open (const std::string& connectio
    // m_mode = mode;
    ossimTimer::Timer_t startTimer = ossimTimer::instance()->tick();
 
-   if(url.getProtocol() == "s3")
+   // AWS server is case insensitive:
+   if( (url.getProtocol() == "s3") || (url.getProtocol() == "S3") )
    {
       ossim_int64 filesize;
       m_bucket = url.getIp().c_str();
@@ -180,7 +181,6 @@ ossim::S3StreamBuffer* ossim::S3StreamBuffer::open (const std::string& connectio
       }
       else
       {
-
          if(!m_bucket.empty() && !m_key.empty())
          {
             HeadObjectRequest headObjectRequest;
@@ -516,3 +516,12 @@ bool ossim::S3StreamBuffer::withinWindow()const
    return ((gptr()>=eback()) && (gptr()<egptr()));
 }
 
+ossim_uint64 ossim::S3StreamBuffer::getFileSize() const
+{
+   return static_cast<ossim_uint32>(m_fileSize);
+}
+
+ossim_uint64 ossim::S3StreamBuffer::getBlockSize() const
+{
+   return m_buffer.size();
+}

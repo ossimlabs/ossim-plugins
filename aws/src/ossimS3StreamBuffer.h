@@ -37,6 +37,16 @@ public:
    {
       
    }
+
+   /**
+    * @return Size of file in bytes.
+    */
+   ossim_uint64 getFileSize() const;
+
+   /**
+    * @return Size of block buffer in bytes.
+    */
+   ossim_uint64 getBlockSize() const;
    
 protected:
    //virtual int_type pbackfail(int_type __c  = traits_type::eof());
