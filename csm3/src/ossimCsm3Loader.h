@@ -12,6 +12,7 @@
 #ifndef CSM3Loader_HEADER
 #define CSM3Loader_HEADER
 
+
 #include <ossim/base/ossimFilename.h>
 #include <ossim/plugin/ossimDynamicLibrary.h>
 #include <ossim/plugin/ossimPluginConstants.h>

@@ -24,6 +24,7 @@
 #ifndef __VTSMISC_H
 #define __VTSMISC_H
 
+
 #ifdef _WIN32
 #pragma warning( disable : 4290 )
 #endif

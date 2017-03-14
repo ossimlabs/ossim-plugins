@@ -27,36 +27,19 @@ else( OPENTHREADS_FOUND )
 endif( OPENTHREADS_FOUND )
 
 # csmApi - Required:
-
 find_package(CsmApi)
 if (CSMAPI_FOUND)
-   include_directories(${CSMAPI_INCLUDES})
+   include_directories(${CSMAPI_INCLUDE_DIRS})
    set( requiredLibs ${requiredLibs} ${CSMAPI_LIBRARIES} )
-else(CSMAPI_FOUND)
-   message(FATAL_ERROR "Could not find csmApi")
+#else(CSMAPI_FOUND)
+#   message(FATAL_ERROR "Could not find csmApi")
 endif(CSMAPI_FOUND)
 
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
-FILE(GLOB OSSIMPLUGIN_SRCS *.cpp)
-FILE(GLOB OSSIMPLUGIN_HEADERS *.h)
+add_subdirectory( src )
 
-#---
-# OSSIMPLUGINSMAKINGDLL controls dll linkage on windows.  
-# Adding this sets OSSIM_PLUGINS_DLL #define TO "__declspec(dllexport)".
-#---
-add_definitions("-DOSSIMPLUGINSMAKINGDLL")
+IF(BUILD_OSSIM_TESTS)
+   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test ${CMAKE_CURRENT_BINARY_DIR}/test)
+ENDIF()
 
-# Adjust the install library path:
-if(OSSIM_INSTALL_PLUGINS_WITH_VERSION)
-   set(INSTALL_LIBRARY_DIR   "${INSTALL_LIBRARY_DIR}/ossim-${OSSIM_VERSION}/plugins")
-else(OSSIM_INSTALL_PLUGINS_WITH_VERSION)
-   set(INSTALL_LIBRARY_DIR   "${INSTALL_LIBRARY_DIR}/ossim/plugins")
-endif(OSSIM_INSTALL_PLUGINS_WITH_VERSION)
 
-OSSIM_LINK_LIBRARY(${LIB_NAME}
-                   COMPONENT_NAME ossim TYPE "${OSSIM_PLUGIN_LINK_TYPE}"
-		   LIBRARIES ${requiredLibs}
-                   HEADERS "${OSSIMPLUGIN_HEADERS}" 
-		   SOURCE_FILES "${OSSIMPLUGIN_SRCS}"
-                   INSTALL_LIB)
