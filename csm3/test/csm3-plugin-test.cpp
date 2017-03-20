@@ -15,7 +15,15 @@ int main(int argc, char** argv)
 {
    ossimPreferences::instance()->loadPreferences();
    ossimCsm3Loader ocl;
+
+   std::vector<std::string> plugins = ocl.getAvailablePluginNames();
+   for(std::vector<std::string>::const_iterator iter = plugins.begin();
+       iter!=plugins.end();
+       ++iter)
+   {
+      std::cout << "Plugin: "<< *iter << "\n";
+   }
+
    return 0;
 }
-
 
