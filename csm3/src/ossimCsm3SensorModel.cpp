@@ -193,8 +193,21 @@ void ossimCsm3SensorModel::worldToLineSample(const ossimGpt& worldPoint,
 
 
 void ossimCsm3SensorModel::imagingRay(const ossimDpt& image_point,
-                                  ossimEcefRay&   image_ray) const
+                                      ossimEcefRay&   image_ray) const
 {
+ // std::cout << "imaging Ray .................................\n";
+   if(m_model)
+   {
+      double AP = 0.0;
+      EcefLocus ecefLocus = m_model->imageToRemoteImagingLocus(ImageCoord(image_point.y, image_point.x),  AP);
+      ossimEcefVector v(ecefLocus.direction.x, ecefLocus.direction.y, ecefLocus.direction.z);   
+      image_ray.setOrigin(ossimEcefPoint(ecefLocus.point.x, ecefLocus.point.y, ecefLocus.point.z));
+      image_ray.setDirection(v);
+   } 
+
+
+
+#if 0
     ossimGpt start;
     ossimGpt end;
 
@@ -208,6 +221,7 @@ void ossimCsm3SensorModel::imagingRay(const ossimDpt& image_point,
     image_ray = ossimEcefRay(start, end);
 
     return;
+#endif
 }
 
 void ossimCsm3SensorModel::updateModel()
