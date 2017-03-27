@@ -47,9 +47,11 @@ int main(int argc, char *argv[])
    typeAlgoMatch.push_back("BruteForce-L1");
    typeAlgoMatch.push_back("BruteForce-Hamming");
    typeAlgoMatch.push_back("BruteForce-Hamming(2)");
-   cv::CommandLineParser parser(argc, argv, "{ @image1  }"
-                                "{ @image2  }"
-                                "{help h ||}");
+
+   const String keys =  "{@image1 | | Reference image   }"
+                        "{@image2 | | Comparison image  }"
+                        "{help h  | | }";
+   CommandLineParser parser(argc, argv, keys);
    if (parser.has("help"))
    {
       help(argv[0]);
