@@ -48,35 +48,35 @@ ossimCsm3Loader::ossimCsm3Loader()
 
 bool ossimCsm3Loader::loadPlugins()
 {
-    // get plugin path from the preferences file and verify it
-    thePluginDir = ossimFilename(ossimPreferences::instance()->findPreference("csm3_plugin_path"));
-    if(thePluginDir.empty())
-        return false;
+   // get plugin path from the preferences file and verify it
+   thePluginDir = ossimFilename(ossimPreferences::instance()->findPreference("csm3_plugin_path"));
+   if(thePluginDir.empty())
+      return false;
 
-    // Load all of the dynamic libraries in the plugin path 
-    // first get the list of all the dynamic libraries found
-	 std::vector<ossimFilename> dllfiles;
-	 ossimDirectory pluginDir(thePluginDir);
-	 pluginDir.findAllFilesThatMatch(dllfiles, dylibExt );
+   // Load all of the dynamic libraries in the plugin path
+   // first get the list of all the dynamic libraries found
+   std::vector<ossimFilename> dllfiles;
+   ossimDirectory pluginDir(thePluginDir);
+   pluginDir.findAllFilesThatMatch(dllfiles, dylibExt );
 
-     for (int i=0; i<dllfiles.size(); i++)
-     {
-        // when loaded, each dynamic libraries found will register itself in the Plugin object
-	    // the list is accessible using  PluginList pluginList = Plugin::getList( )
+   for (int i=0; i<dllfiles.size(); i++)
+   {
+      // when loaded, each dynamic libraries found will register itself in the Plugin object
+      // the list is accessible using  PluginList pluginList = Plugin::getList( )
 
-        ossimDynamicLibrary *lib = new ossimDynamicLibrary;
-        if(lib->load(dllfiles[i]))
-        {
-            thePluginLibs.push_back(lib);
-        }
-        else
-            ossimNotify(ossimNotifyLevel_WARN) 
-            << "loadPlugins: " + dllfiles[i] + "\" file failed to load." << std::endl;
-        //if (NULL == dll)
-        //    DWORD ret = GetLastError();
-     }
+      ossimDynamicLibrary *lib = new ossimDynamicLibrary;
+      if(lib->load(dllfiles[i]))
+      {
+         thePluginLibs.push_back(lib);
+      }
+      else
+         ossimNotify(ossimNotifyLevel_WARN)
+         << "loadPlugins: " + dllfiles[i] + "\" file failed to load." << std::endl;
+      //if (NULL == dll)
+      //    DWORD ret = GetLastError();
+   }
 
-     return true;
+   return true;
 }
 
 
