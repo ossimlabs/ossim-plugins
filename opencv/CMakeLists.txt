@@ -1,3 +1,4 @@
+MESSAGE( "************** LIBRARY SETUP FOR ossim_opencv_plugin ******************")
 find_package( OpenCV )
 if( OPENCV_FOUND )
     include_directories( ${OPENCV_INCLUDE_DIR} )
