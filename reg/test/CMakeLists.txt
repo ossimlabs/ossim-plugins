@@ -1,3 +1,5 @@
+
+
 cmake_minimum_required (VERSION 2.8)
 
 # Get the library suffix for lib or lib64.
@@ -8,16 +10,15 @@ else()
    set(LIBSUFFIX "")
 endif()
 
-
-set(requiredLibs ${requiredLibs} ossim ossim_msp_plugin )
+set(requiredLibs ${requiredLibs} ossim_reg_plugin )
 
 # Add the executable:
-add_executable(msp-plugin-test msp-plugin-test.cpp )
+add_executable(match-test match-test.cpp )
 
 # Set the output dir:
-set_target_properties(msp-plugin-test 
+set_target_properties(match-test 
                       PROPERTIES 
                       RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
-target_link_libraries( msp-plugin-test ${requiredLibs} )
+target_link_libraries( match-test ${requiredLibs} )
 
