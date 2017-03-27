@@ -15,9 +15,8 @@
 #include <ossim/base/ossimString.h>
 #include <ossim/base/ossimTieMeasurementGeneratorInterface.h>
 #include "ossimIvtGeomXform.h"
-
 #include <opencv/cv.h>
-
+#include <opencv2/features2d.hpp>
 #include <ctime>
 #include <vector>
 #include <iostream>
@@ -124,7 +123,7 @@ protected:
 
    // Pointer to detector
    ossimString m_detectorName;
-   cv::Ptr<cv::FeatureDetector> m_detector;
+   cv::Ptr<cv::ORB> m_detector;
 
    // Pointer to descriptor extractor
    ossimString m_extractorName;
