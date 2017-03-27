@@ -26,19 +26,21 @@ public:
          m_curl = 0;
       }
    }
-   virtual ossimWebResponse* getResponse();
+   virtual ossimRefPtr<ossimWebResponse> getResponse();
    virtual bool supportsProtocol(const ossimString& protocol)const;
    static int curlWriteResponseBody(void *buffer, size_t size, size_t nmemb, void *stream);
    static int curlWriteResponseHeader(void *buffer, size_t size, size_t nmemb, void *stream);
-   
+   ossim_int64 getContentLength()const;
    virtual bool loadState(const ossimKeywordlist& kwl, const char* prefix=0)
    {
       m_response = 0;
       return ossimHttpRequest::loadState(kwl, prefix);
    }
-   
+
 protected:
    CURL* m_curl;
    mutable ossimRefPtr<ossimCurlHttpResponse> m_response;
 };
+
+
 #endif
