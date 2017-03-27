@@ -10,7 +10,6 @@ endif()
 
 
 set(requiredLibs ${requiredLibs} ossim )
-message( STATUS "Required libs       = ${requiredLibs}" )
 
 # Add the executable:
 add_executable(opencv-test opencv-test.cpp )

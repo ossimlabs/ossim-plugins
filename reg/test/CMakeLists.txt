@@ -12,8 +12,6 @@ endif()
 
 set(requiredLibs ${requiredLibs} ossim_reg_plugin )
 
-message( STATUS "match-test: Required libs       = ${requiredLibs}" )
-
 # Add the executable:
 add_executable(match-test match-test.cpp )
 

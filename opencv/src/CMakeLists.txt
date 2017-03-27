@@ -1,5 +1,4 @@
 set(LIB_NAME ossim_opencv_plugin)
-MESSAGE( "************** LIBRARY SETUP FOR ossim_opencv_plugin ******************")
 
 # Include ossim cmake stuff:
 include(OssimVersion)
@@ -7,8 +6,6 @@ include(OssimCommonVariables)
 include(OssimUtilities)
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
-
-SET(requiredLib)
 
 FILE(GLOB_RECURSE OSSIMPLUGIN_SRCS *.cpp)
 FILE(GLOB_RECURSE OSSIMPLUGIN_HEADERS *.h)

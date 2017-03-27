@@ -16,12 +16,15 @@
 #include <ossim/base/ossimKeywordlist.h>
 #include <ossim/base/ossimWebRequestFactoryRegistry.h>
 #include "ossimWebPluginRequestFactory.h"
+#include <ossim/base/ossimStreamFactoryRegistry.h>
+#include "CurlStreamDefaults.h"
+#include "ossimCurlStreamFactory.h"
+
 static void setDescription(ossimString& description)
 {
    description = "Web plugin\n";
    description += "\tsupport http, https web protocols\n";
 }
-
 
 extern "C"
 {
@@ -60,6 +63,12 @@ extern "C"
       *info = &myInfo;
       ossimKeywordlist kwl;
       kwl.parseString(ossimString(options));
+
+      ossim::CurlStreamDefaults::loadDefaults();
+      /* Register our stream factory... */
+      ossim::StreamFactoryRegistry::instance()->
+         registerFactory( ossim::CurlStreamFactory::instance() );
+
       if(ossimString(kwl.find("reader_factory.location")).downcase() == "front")
       {
          /* Register the readers... */

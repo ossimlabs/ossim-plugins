@@ -10,7 +10,6 @@ endif()
 
 
 set(requiredLibs ${requiredLibs} ossim ossim_msp_plugin )
-message( STATUS "Required libs       = ${requiredLibs}" )
 
 # Add the executable:
 add_executable(msp-plugin-test msp-plugin-test.cpp )
