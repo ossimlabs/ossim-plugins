@@ -537,9 +537,9 @@ bool ossimKakaduJpipHandler::loadClient(kdu_client* client, kdu_window& window)
 
          m_request->set(imageInfoUrl, ossimKeywordlist());
          m_request->addHeaderOption("HEADERS=Accept", "jpp-stream");
-         
+         ossimRefPtr<ossimWebResponse> webResponse = m_request->getResponse();
          //std::cout << "URL======================== " << imageInfoUrl.toString() << std::endl;
-         ossimRefPtr<ossimHttpResponse> response = dynamic_cast<ossimHttpResponse*>(m_request->getResponse());
+         ossimRefPtr<ossimHttpResponse> response = dynamic_cast<ossimHttpResponse*>(webResponse.get());
          //std::cout << "__________________________" << std::endl;
          if(response.valid()&&(response->getStatusCode()==200))
          {
