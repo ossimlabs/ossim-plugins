@@ -4,7 +4,11 @@ ossimRefPtr<ossimWebResponse> ossimCurlHttpRequest::getResponse()
 {
    ossimRefPtr<ossimWebResponse> response;
    ossimString protocol = getUrl().getProtocol();
-   if(!supportsProtocol(protocol)) return 0;
+   if(!supportsProtocol(protocol))
+   {
+      return 0;
+   }
+   curl_easy_reset(m_curl);
    switch (m_methodType) 
    {
       case ossimHttpRequest::HTTP_METHOD_GET:
@@ -117,6 +121,7 @@ int ossimCurlHttpRequest::curlWriteResponseHeader(void *buffer, size_t size, siz
 ossim_int64 ossimCurlHttpRequest::getContentLength()const
 {
    double contentLength=-1;
+   curl_easy_reset(m_curl);
 
    ossimString urlString = getUrl().toString();
    ossimString protocol = getUrl().getProtocol();
@@ -166,8 +171,8 @@ ossim_int64 ossimCurlHttpRequest::getContentLength()const
    }
    else
    {
-      //m_lastError = curl_easy_strerror((CURLcode)rc);
-      std::cout << curl_easy_strerror((CURLcode)rc) << std::endl;
+      m_lastError = curl_easy_strerror((CURLcode)rc);
+      //std::cout << curl_easy_strerror((CURLcode)rc) << std::endl;
    }
 
    return static_cast<ossim_int64> (contentLength);
