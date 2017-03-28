@@ -40,6 +40,7 @@ int main(int argc, char *argv[])
    typeDesc.push_back("AKAZE");    // see http://docs.opencv.org/trunk/d8/d30/classcv_1_1AKAZE.html
    typeDesc.push_back("ORB");      // see http://docs.opencv.org/trunk/de/dbf/classcv_1_1BRISK.html
    typeDesc.push_back("BRISK");    // see http://docs.opencv.org/trunk/db/d95/classcv_1_1ORB.html
+   typeDesc.push_back("CORNER");    // see http://docs.opencv.org/trunk/db/d95/classcv_1_1ORB.html
 
    const String keys =  "{@image1 | | Reference image   } {help h  | | }";
    CommandLineParser parser(argc, argv, keys);
@@ -67,7 +68,7 @@ int main(int argc, char *argv[])
       for (itDesc = typeDesc.begin(); itDesc != typeDesc.end(); ++itDesc)
       {
          // keypoint  for img1
-         vector<KeyPoint> keyImg1;
+         vector<KeyPoint> keypoints;
 
          // Descriptor for img1
          if (*itDesc == "AKAZE-DESCRIPTOR_KAZE_UPRIGHT")
@@ -78,25 +79,40 @@ int main(int argc, char *argv[])
             b = ORB::create();
          else if (*itDesc == "BRISK")
             b = BRISK::create();
+         else if (*itDesc == "CORNER")
+            b.release();
          else
          {
             cout << "\nUnknown descriptor type requested: <"<<*itDesc<<">\n"<<endl;
             return 0;
          }
 
-         // We can detect keypoint with detect method and then compute their descriptors:
          Mat descImg1;
-         b->detect(img1, keyImg1);
-         b->compute(img1, keyImg1, descImg1);
+         if (b)
+         {
+            // We can detect keypoint with detect method and then compute their descriptors:
+            b->detect(img1, keypoints);
+            b->compute(img1, keypoints, descImg1);
+
+         }
+         else
+         {
+            // Next demo goodFaturesToTrack:
+            vector<Point2f> features;
+            int maxCorners = 1000;
+            double qualityLevel = 0.001;
+            double minDistance = 5.0;
+            goodFeaturesToTrack(img1, features, maxCorners, qualityLevel, minDistance);
+            KeyPoint::convert(features, keypoints, 10.0);
+         }
 
          // Draw:
-         drawKeypoints(img1, keyImg1, descImg1, Scalar::all(-1),
+         drawKeypoints(img1, keypoints, descImg1, Scalar::all(-1),
                        DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
          namedWindow(*itDesc, WINDOW_AUTOSIZE);
          imshow(*itDesc, descImg1);
-
-         waitKey();
       }
+      waitKey();
    }
    catch (Exception& e)
    {
