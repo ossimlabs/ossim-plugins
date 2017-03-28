@@ -1,5 +1,4 @@
 set(LIB_NAME ossim_opencv_plugin)
-MESSAGE( "************** LIBRARY SETUP FOR ossim_opencv_plugin ******************")
 
 # Include ossim cmake stuff:
 include(OssimVersion)
@@ -7,19 +6,6 @@ include(OssimCommonVariables)
 include(OssimUtilities)
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
-
-SET(requiredLib)
-
-find_package( OpenCV )
-if( OPENCV_FOUND )
-	include_directories( ${OPENCV_INCLUDE_DIR} )
-	set( requiredLib ${requiredLib} ${OPENCV_LIBRARIES} )
-else( OPENCV_FOUND )
-	message( FATAL_ERROR "Could not find OpenCV package!" )
-endif( OPENCV_FOUND )
-
-MESSAGE( STATUS "OPENCV_LIBRARY = ${OPENCV_LIBRARIES}" )
-MESSAGE( STATUS "OPENCV_INCLUDE = ${OPENCV_INCLUDE_DIR}" )
 
 FILE(GLOB_RECURSE OSSIMPLUGIN_SRCS *.cpp)
 FILE(GLOB_RECURSE OSSIMPLUGIN_HEADERS *.h)
