@@ -19,9 +19,9 @@ using namespace cv;
 static void help(const char* appname)
 {
    cout <<"\nThis program demonstrates how to detect compute and match ORB BRISK and AKAZE descriptors \n"
-        "\nUsage: "<<appname<<" <image1> <image2>\n"
-        "\nPress a key on active image window to proceed to the following algorithm or descriptor"
-        <<endl;
+         "\nUsage: "<<appname<<" <image1> <image2>\n"
+         "\nPress a key on active image window to proceed to the following algorithm or descriptor"
+         <<endl;
 }
 
 int main(int argc, char *argv[])
@@ -49,8 +49,8 @@ int main(int argc, char *argv[])
    typeAlgoMatch.push_back("BruteForce-Hamming(2)");
 
    const String keys =  "{@image1 | | Reference image   }"
-                        "{@image2 | | Comparison image  }"
-                        "{help h  | | }";
+         "{@image2 | | Comparison image  }"
+         "{help h  | | }";
    CommandLineParser parser(argc, argv, keys);
    if (parser.has("help"))
    {
@@ -105,19 +105,19 @@ int main(int argc, char *argv[])
       }
       try
       {
-         // We can detect keypoint with detect method
+         // We can detect keypoint with detect method and then compute their descriptors:
          b->detect(img1, keyImg1, Mat());
-         // and compute their descriptors with method  compute
          b->compute(img1, keyImg1, descImg1);
+
          // or detect and compute descriptors in one step
          b->detectAndCompute(img2, Mat(), keyImg2, descImg2, false);
+
          // Match method loop
          for (itMatcher = typeAlgoMatch.begin(); itMatcher != typeAlgoMatch.end(); ++itMatcher)
          {
             descriptorMatcher = DescriptorMatcher::create(*itMatcher);
-            if ((*itMatcher == "BruteForce-Hamming" || *itMatcher == "BruteForce-Hamming(2)") && (b->descriptorType()
-                  == CV_32F
-                                                                                                  || b->defaultNorm() <= NORM_L2SQR))
+            if (((*itMatcher == "BruteForce-Hamming") || (*itMatcher == "BruteForce-Hamming(2)")) &&
+                  ((b->descriptorType() == CV_32F)  || (b->defaultNorm() <= NORM_L2SQR)))
             {
                cout << "**************************************************************************\n";
                cout << "It's strange. You should use Hamming distance only for a binary descriptor\n";

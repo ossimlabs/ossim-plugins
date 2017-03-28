@@ -14,11 +14,13 @@ set(requiredLibs ${requiredLibs} ossim_reg_plugin )
 
 # Add the executable:
 add_executable(match-test match-test.cpp )
+add_executable(detect-test detect-test.cpp )
 
 # Set the output dir:
-set_target_properties(match-test 
+set_target_properties(match-test detect-test
                       PROPERTIES 
                       RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
 target_link_libraries( match-test ${requiredLibs} )
+target_link_libraries( detect-test ${requiredLibs} )
 

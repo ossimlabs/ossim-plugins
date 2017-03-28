@@ -73,7 +73,7 @@ void ossimRegTool::initialize(const ossimKeywordlist& kwl)
 
    value = m_kwl.findKey("myoption");
    if (!value.empty())
-      m_alphamax = value.toDouble();
+      double myoption = value.toDouble();
 
    ossimChipProcTool::initialize(kwl);
 }
