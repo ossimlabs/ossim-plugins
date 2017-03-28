@@ -9,6 +9,7 @@ ossimRefPtr<ossimWebResponse> ossimCurlHttpRequest::getResponse()
       return 0;
    }
    curl_easy_reset(m_curl);
+   clearLastError();
    switch (m_methodType) 
    {
       case ossimHttpRequest::HTTP_METHOD_GET:
@@ -122,7 +123,7 @@ ossim_int64 ossimCurlHttpRequest::getContentLength()const
 {
    double contentLength=-1;
    curl_easy_reset(m_curl);
-
+   clearLastError();
    ossimString urlString = getUrl().toString();
    ossimString protocol = getUrl().getProtocol();
    ossimRefPtr<ossimCurlHttpResponse> response = new ossimCurlHttpResponse();
