@@ -138,7 +138,7 @@ ossim_uint32 ossimKakaduJp2Reader::getNumberOfLines(
    ossim_uint32 result = 0;
    if ( isValidRLevel(resLevel) )
    {
-      if (resLevel <= theMinDwtLevels)
+      if (resLevel < theJp2Dims.size() )
       {
          result = theJp2Dims[resLevel].height();
       }
@@ -156,7 +156,7 @@ ossim_uint32 ossimKakaduJp2Reader::getNumberOfSamples(
    ossim_uint32 result = 0;
    if ( isValidRLevel(resLevel) )
    {
-      if (resLevel <= theMinDwtLevels)
+      if (resLevel < theJp2Dims.size() )
       {
          result = theJp2Dims[resLevel].width();
       }

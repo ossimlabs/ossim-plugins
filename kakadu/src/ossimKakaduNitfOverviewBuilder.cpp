@@ -48,6 +48,7 @@
 #include <sstream>
 
 static const ossimString OVERVIEW_TYPE = "ossim_kakadu_nitf_j2k";
+static const ossimString OVERVIEW_TYPE_ALIAS = "j2k";
 
 static const ossimIpt DEFAULT_TILE_SIZE(1024, 1024);
 
@@ -121,7 +122,11 @@ bool ossimKakaduNitfOverviewBuilder::setOverviewType(const ossimString& type)
 {
    bool result = false;
 
-   if (type == OVERVIEW_TYPE) // Only have one type right now.
+   //---
+   // Only have one type right now.  These are the same:
+   // "ossim_kakadu_nitf_j2k" or "j2k"
+   //---
+   if ( (type == OVERVIEW_TYPE) || (type == OVERVIEW_TYPE_ALIAS) )
    {
       result = true;
    }
@@ -131,13 +136,14 @@ bool ossimKakaduNitfOverviewBuilder::setOverviewType(const ossimString& type)
 
 ossimString ossimKakaduNitfOverviewBuilder::getOverviewType() const
 {
-   return OVERVIEW_TYPE;
+   return OVERVIEW_TYPE;   
 }
 
 void ossimKakaduNitfOverviewBuilder::getTypeNameList(
    std::vector<ossimString>& typeList)const
 {
    typeList.push_back(OVERVIEW_TYPE);
+   typeList.push_back(OVERVIEW_TYPE_ALIAS);   
 }
 
 bool ossimKakaduNitfOverviewBuilder::execute()
