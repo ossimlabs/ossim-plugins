@@ -34,7 +34,7 @@ ossim::CurlStreamFactory* ossim::CurlStreamFactory::instance()
 std::shared_ptr<ossim::istream> ossim::CurlStreamFactory::createIstream(
    const std::string& connectionString, std::ios_base::openmode openMode) const
 {
-  std::cout << "ossim::CurlStreamFactory::createIstream............Entered\n";
+  //std::cout << "ossim::CurlStreamFactory::createIstream............Entered\n";
    std::shared_ptr<ossim::CurlIStream> result = std::make_shared<ossim::CurlIStream>();
    if(traceDebug())
    {
