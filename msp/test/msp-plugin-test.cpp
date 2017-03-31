@@ -7,9 +7,12 @@
 //**************************************************************************************************
 
 #include "../src/ossimMspTool.h"
+#include <common/csm/NitfIsd.h>
 
 int main(int argc, char** argv)
 {
+   csm::Nitf21Isd isd  (argv[1]);
+   cout<<"HEADER=<"<<isd.fileHeader()<<">\n"<<endl;
    return 0;
 }
 
