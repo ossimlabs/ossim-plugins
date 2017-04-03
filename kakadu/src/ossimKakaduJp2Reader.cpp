@@ -383,26 +383,32 @@ bool ossimKakaduJp2Reader::openJp2File()
                }
                case 11:
                {
-                  if (!isSigned)
-                  {
-                     theScalarType = OSSIM_USHORT11;
-                  }
-                  else
-                  {
-                     theScalarType = OSSIM_SINT16;
-                  }
+                  isSigned?OSSIM_SINT16:OSSIM_UINT11;
+                  break;
+               }
+               case 12:
+               {
+                  isSigned?OSSIM_SINT16:OSSIM_UINT12;
+                  break;
+               }
+               case 13:
+               {
+                  isSigned?OSSIM_SINT16:OSSIM_UINT13;
+                  break;
+               }
+               case 14:
+               {
+                  isSigned?OSSIM_SINT16:OSSIM_UINT14;
+                  break;
+               }
+               case 15:
+               {
+                  isSigned?OSSIM_SINT16:OSSIM_UINT15;
                   break;
                }
                case 16:
                {
-                  if (!isSigned)
-                  {
-                     theScalarType = OSSIM_UINT16;
-                  }
-                  else
-                  {
-                     theScalarType = OSSIM_SINT16;
-                  }
+                  isSigned?OSSIM_SINT16:OSSIM_UINT15;
                   break;
                }
                default:
