@@ -1,14 +1,14 @@
-//----------------------------------------------------------------------------
+//---
 //
 // File: ossimGpkgReader.cpp
 // 
-// License:  LGPL
+// License: MIT
 // 
 // See LICENSE.txt file in the top level directory for more details.
 //
 // Description: OSSIM GeoPackage reader (tile source).
 //
-//----------------------------------------------------------------------------
+//---
 // $Id$
 
 #include "ossimGpkgReader.h"

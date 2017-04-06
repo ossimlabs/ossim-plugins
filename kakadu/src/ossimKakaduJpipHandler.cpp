@@ -721,7 +721,27 @@ ossimScalarType ossimKakaduJpipHandler::getOutputScalarType() const
       }
       case 11:
       {
-         result = m_signed?OSSIM_SINT16:OSSIM_USHORT11;
+         result = m_signed?OSSIM_SINT16:OSSIM_UINT11;
+         break;
+      }
+      case 12:
+      {
+         result = m_signed?OSSIM_SINT16:OSSIM_UINT12;
+         break;
+      }
+      case 13:
+      {
+         result = m_signed?OSSIM_SINT16:OSSIM_UINT13;
+         break;
+      }
+      case 14:
+      {
+         result = m_signed?OSSIM_SINT16:OSSIM_UINT14;
+         break;
+      }
+      case 15:
+      {
+         result = m_signed?OSSIM_SINT16:OSSIM_UINT15;
          break;
       }
       case 16:
@@ -927,7 +947,7 @@ ossimRefPtr<ossimImageData>  ossimKakaduJpipHandler::getTileAtRes(const  ossimIr
          ossimRefPtr<ossimImageData> cacheTile =ossimAppFixedTileCache::instance()->getTile(m_rlevelBlockCache[resLevel],ossimIpt(x,y));
          if(!cacheTile.valid())
          {
-            double percent = (m_quality/100.0);
+            // double percent = (m_quality/100.0);
             window.init();
             region.pos.x = x;
             region.pos.y = y;

@@ -52,9 +52,14 @@ ossim_int64 ossim::CurlStreamBuffer::getBlockIndex(ossim_int64 byteOffset)const
       if(m_buffer.size()>0)
       {
          blockNumber = byteOffset/m_buffer.size();
+      }
+      else
+      {
       }    
    }
-
+   else
+   {
+   }
    return blockNumber;
 }
 
@@ -79,7 +84,7 @@ bool ossim::CurlStreamBuffer::getBlockRangeInBytes(ossim_int64 blockIndex,
    if(blockIndex >= 0)
    {
       startRange = blockIndex*m_buffer.size();
-      endRange = startRange + m_buffer.size()-1;
+      endRange   = startRange + m_buffer.size()-1;
 
       result = true;    
    }
@@ -109,39 +114,43 @@ bool ossim::CurlStreamBuffer::loadBlock(ossim_int64 absolutePosition)
       // std::cout << "HEADER ====== " << stringStream.str().c_str() << "\n";
       ossimRefPtr<ossimWebResponse> webResponse = m_curlHttpRequest.getResponse();
       ossimHttpResponse* response = dynamic_cast<ossimHttpResponse*>(webResponse.get());
-      //std::cout << "GOT RESPONSE!!!\n";
-
-      // may not get 200 for this is a partial content call
-      //
-      ossim_int32 code = response->getStatusCode();
-      if(response&&( (code >=200) && (code < 300)) )
+      ossim_int32 code = 404;
+      if(response)
       {
-         m_buffer.clear();
-         response->copyAllDataFromInputStream(m_buffer);
-         m_bufferPtr = &m_buffer.front();
-         response->convertHeaderStreamToKeywordlist();
-         const ossimKeywordlist& headerKwl = response->headerKwl();
-         ossim_int64 contentLen = response->getContentLength();
-         if(contentLen >=0)
-         {
-            m_bufferActualDataSize = contentLen;
-            ossim_int64 delta = absolutePosition-startRange;
-            m_bufferPtr = &m_buffer.front();
-            setg(m_bufferPtr, m_bufferPtr + delta, m_bufferPtr+m_bufferActualDataSize);
-            m_currentBlockPosition = startRange;
-            result = true;
-         }
-         else
+         code = response->getStatusCode();
+         //std::cout << "GOT RESPONSE!!!\n";
+
+         // may not get 200 for this is a partial content call
+         //
+         if((code >=200) && (code < 300))
          {
             m_buffer.clear();
-            m_bufferActualDataSize = 0;
-            // std::cout << "FAILED LOADED BLOCK\n";
+            response->copyAllDataFromInputStream(m_buffer);
+            m_bufferPtr = &m_buffer.front();
+            response->convertHeaderStreamToKeywordlist();
+            const ossimKeywordlist& headerKwl = response->headerKwl();
+            ossim_int64 contentLen = response->getContentLength();
+            if(contentLen >=0)
+            {
+               m_bufferActualDataSize = contentLen;
+               ossim_int64 delta = absolutePosition-startRange;
+               m_bufferPtr = &m_buffer.front();
+               setg(m_bufferPtr, m_bufferPtr + delta, m_bufferPtr+m_bufferActualDataSize);
+               m_currentBlockPosition = startRange;
+               result = true;
+            }
+            else
+            {
+               m_buffer.clear();
+               m_bufferActualDataSize = 0;
+               // std::cout << "FAILED LOADED BLOCK\n";
 
+            }
+         } 
+         else if(response)
+         {
+            // std::cout << "Status code was " << response->getStatusCode() << "\n";
          }
-      } 
-      else if(response)
-      {
-         // std::cout << "Status code was " << response->getStatusCode() << "\n";
       }
       // getObjectRequest.WithBucket(m_bucket.c_str())
       //    .WithKey(m_key.c_str()).WithRange(stringStream.str().c_str());
@@ -186,6 +195,7 @@ ossim::CurlStreamBuffer* ossim::CurlStreamBuffer::open (const std::string& conne
    }
    // bool result = false;
    ossimUrl url(connectionString);
+   ossimKeywordlist header;
    clearAll();
    // m_mode = mode;
    ossimTimer::Timer_t startTimer = ossimTimer::instance()->tick();
@@ -194,6 +204,7 @@ ossim::CurlStreamBuffer* ossim::CurlStreamBuffer::open (const std::string& conne
    if( (url.getProtocol() == "http") || (url.getProtocol() == "https") )
    {
       ossim_int64 filesize;
+      m_curlHttpRequest.set(url, header);
       if(ossim::CurlHeaderCache::instance()->getCachedFilesize(connectionString, filesize))
       {
          m_fileSize = filesize;
@@ -202,9 +213,7 @@ ossim::CurlStreamBuffer* ossim::CurlStreamBuffer::open (const std::string& conne
       }
       else
       {
-         ossimKeywordlist header;
          m_opened = true;
-         m_curlHttpRequest.set(url, header);
          m_fileSize = m_curlHttpRequest.getContentLength();
          m_currentBlockPosition = 0;
 
