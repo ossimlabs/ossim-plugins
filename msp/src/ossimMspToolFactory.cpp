@@ -34,7 +34,7 @@ ossimTool* ossimMspToolFactory::createUtility(const std::string& argName) const
    ossimString utilName (argName);
    utilName.downcase();
 
-   if ((utilName == "potrace") || (argName == "ossimPotraceUtil"))
+   if ((utilName == "msp") || (argName == "ossimMspTool"))
       return new ossimMspTool;
 
    return 0;
@@ -42,7 +42,7 @@ ossimTool* ossimMspToolFactory::createUtility(const std::string& argName) const
 
 void ossimMspToolFactory::getCapabilities(std::map<std::string, std::string>& capabilities) const
 {
-   capabilities.insert(pair<string, string>("potrace", ossimMspTool::DESCRIPTION));
+   capabilities.insert(pair<string, string>("msp", ossimMspTool::DESCRIPTION));
 }
 
 std::map<std::string, std::string> ossimMspToolFactory::getCapabilities() const
@@ -54,5 +54,5 @@ std::map<std::string, std::string> ossimMspToolFactory::getCapabilities() const
 
 void ossimMspToolFactory::getTypeNameList(vector<ossimString>& typeList) const
 {
-   typeList.push_back("ossimPotraceUtil");
+   typeList.push_back("ossimMspTool");
 }

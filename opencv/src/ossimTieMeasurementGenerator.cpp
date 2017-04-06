@@ -9,6 +9,7 @@
 //----------------------------------------------------------------------------
 // $Id$
 
+#include "ossimTieMeasurementGenerator.h"
 #include <ossim/base/ossimString.h>
 #include <ossim/base/ossimNotify.h>
 #include <ossim/base/ossimTrace.h>
@@ -19,14 +20,12 @@
 #include <ossim/imaging/ossimImageData.h>
 #include <ossim/imaging/ossimImageSource.h>
 
-#include "ossimTieMeasurementGenerator.h"
 #include "ossimIvtGeomXformVisitor.h"
 
 #include <opencv/highgui.h>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/flann/flann.hpp>
-#include <opencv2/legacy/legacy.hpp>
 // Note: These are purposely commented out to indicate non-use.
 // #include <opencv2/nonfree/nonfree.hpp>
 // #include <opencv2/nonfree/features2d.hpp>
@@ -153,8 +152,7 @@ bool ossimTieMeasurementGenerator::refreshCollectionTraits()
    {
       int gridRows = m_gridSize.y;
       int gridCols = m_gridSize.x;
-      cv::Ptr<cv::FeatureDetector> detector = m_detector;
-      m_detector = new cv::GridAdaptedFeatureDetector(detector, m_maxMatches, gridRows, gridCols);
+      cv::ORB::create();
    }
 
    return initOK;
