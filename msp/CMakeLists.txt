@@ -6,7 +6,7 @@ include(OssimVersion)
 include(OssimCommonVariables)
 include(OssimUtilities)
 
-set(requiredLibs)
+set(requiredLibs ${dependentLibs})
 
 find_package(MSP)
 if (MSP_FOUND)
