@@ -16,7 +16,7 @@
 #include <ossim/base/ossimTieMeasurementGeneratorInterface.h>
 #include "ossimIvtGeomXform.h"
 #include <opencv/cv.h>
-#include <opencv2/features2d.hpp>
+#include <opencv2/features2d/features2d.hpp>
 #include <ctime>
 #include <vector>
 #include <iostream>
