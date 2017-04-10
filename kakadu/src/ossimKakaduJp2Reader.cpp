@@ -2,8 +2,6 @@
 //
 // License: MIT
 // 
-// See LICENSE.txt file in the top level directory for more details.
-//
 // Description:  Class definition for JPEG2000 JP2 reader.
 //
 //---
