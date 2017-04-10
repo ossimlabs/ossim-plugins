@@ -406,7 +406,7 @@ bool ossimKakaduJp2Reader::openJp2File()
                }
                case 16:
                {
-                  theScalarType = isSigned?OSSIM_SINT16:OSSIM_UINT15;
+                  theScalarType = isSigned?OSSIM_SINT16:OSSIM_UINT16;
                   break;
                }
                default:
