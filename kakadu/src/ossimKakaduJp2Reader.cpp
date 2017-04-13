@@ -1,13 +1,11 @@
-//----------------------------------------------------------------------------
+//---
 //
-// License:  LGPL
+// License: MIT
 // 
-// See LICENSE.txt file in the top level directory for more details.
-//
 // Description:  Class definition for JPEG2000 JP2 reader.
 //
-//----------------------------------------------------------------------------
-// $Id: ossimKakaduJp2Reader.cpp 23209 2015-03-30 01:01:36Z dburken $
+//---
+// $Id$
 
 #include "ossimKakaduJp2Reader.h"
 #include "ossimKakaduCommon.h"
@@ -383,32 +381,32 @@ bool ossimKakaduJp2Reader::openJp2File()
                }
                case 11:
                {
-                  isSigned?OSSIM_SINT16:OSSIM_UINT11;
+                  theScalarType = isSigned?OSSIM_SINT16:OSSIM_UINT11;
                   break;
                }
                case 12:
                {
-                  isSigned?OSSIM_SINT16:OSSIM_UINT12;
+                  theScalarType = isSigned?OSSIM_SINT16:OSSIM_UINT12;
                   break;
                }
                case 13:
                {
-                  isSigned?OSSIM_SINT16:OSSIM_UINT13;
+                  theScalarType = isSigned?OSSIM_SINT16:OSSIM_UINT13;
                   break;
                }
                case 14:
                {
-                  isSigned?OSSIM_SINT16:OSSIM_UINT14;
+                  theScalarType = isSigned?OSSIM_SINT16:OSSIM_UINT14;
                   break;
                }
                case 15:
                {
-                  isSigned?OSSIM_SINT16:OSSIM_UINT15;
+                  theScalarType = isSigned?OSSIM_SINT16:OSSIM_UINT15;
                   break;
                }
                case 16:
                {
-                  isSigned?OSSIM_SINT16:OSSIM_UINT15;
+                  theScalarType = isSigned?OSSIM_SINT16:OSSIM_UINT16;
                   break;
                }
                default:
