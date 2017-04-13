@@ -29,7 +29,7 @@ ossimMspToolFactory::~ossimMspToolFactory()
    ossimToolRegistry::instance()->unregisterFactory(this);
 }
 
-ossimTool* ossimMspToolFactory::createUtility(const std::string& argName) const
+ossimTool* ossimMspToolFactory::createTool(const std::string& argName) const
 {
    ossimString utilName (argName);
    utilName.downcase();
