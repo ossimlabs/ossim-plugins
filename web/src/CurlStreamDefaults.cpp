@@ -7,6 +7,12 @@
 //
 ossim_int64 ossim::CurlStreamDefaults::m_readBlocksize = 32768;
 ossim_int64 ossim::CurlStreamDefaults::m_nReadCacheHeaders = 10000;
+ossimFilename ossim::CurlStreamDefaults::m_cacert=ossimFilename("");;
+ossimFilename ossim::CurlStreamDefaults::m_clientCert=ossimFilename("");
+ossimFilename ossim::CurlStreamDefaults::m_clientKey=ossimFilename("");;
+ossimString ossim::CurlStreamDefaults::m_clientCertType="";
+ossimString ossim::CurlStreamDefaults::m_clientKeyPassword="";
+
 static ossimTrace traceDebug("ossimCurlStreamDefaults:debug");
 
 void ossim::CurlStreamDefaults::loadDefaults()
@@ -18,9 +24,33 @@ void ossim::CurlStreamDefaults::loadDefaults()
    }
    ossimString curlReadBlocksize = ossimEnvironmentUtility::instance()->getEnvironmentVariable("OSSIM_PLUGINS_WEB_CURL_READBLOCKSIZE");
 
-   ossimString  nReadCacheHeaders = ossimPreferences::instance()->findPreference("OSSIM_PLUGINS_WEB_CURL_NREADCACHEHEADERS");
+   ossimString   nReadCacheHeaders = ossimPreferences::instance()->findPreference("OSSIM_PLUGINS_WEB_CURL_NREADCACHEHEADERS");
+   m_cacert = ossimPreferences::instance()->findPreference("OSSIM_PLUGINS_WEB_CURL_CACERT");
+   m_clientCert = ossimPreferences::instance()->findPreference("OSSIM_PLUGINS_WEB_CURL_CLIENT_CERT");
+   m_clientKey = ossimPreferences::instance()->findPreference("OSSIM_PLUGINS_WEB_CURL_CLIENT_KEY");
+   m_clientKeyPassword = ossimPreferences::instance()->findPreference("OSSIM_PLUGINS_WEB_CURL_CLIENT_KEY_PASSWORD");
+   m_clientCertType = ossimPreferences::instance()->findPreference("OSSIM_PLUGINS_WEB_CURL_CLIENT_KEY_PASSWORD");
 
-   
+   if(m_cacert.empty())
+   {
+       m_cacert = ossimPreferences::instance()->findPreference("ossim.plugins.web.curl.cacert");
+   }
+   if(m_clientCert.empty())
+   {
+       m_clientCert = ossimPreferences::instance()->findPreference("ossim.plugins.web.curl.clientCert");
+   }
+   if(m_clientKey.empty())
+   {
+       m_clientKey = ossimPreferences::instance()->findPreference("ossim.plugins.web.curl.clientKey");
+   }
+   if(m_clientKeyPassword.empty())
+   {
+       m_clientKeyPassword = ossimPreferences::instance()->findPreference("ossim.plugins.web.curl.clientKeyPassword");
+   }
+   if(m_clientCertType.empty())
+   {
+       m_clientCertType = ossimPreferences::instance()->findPreference("ossim.plugins.web.curl.clientCertType");
+   }
    if(curlReadBlocksize.empty())
    {
        curlReadBlocksize = ossimPreferences::instance()->findPreference("ossim.plugins.web.curl.readBlocksize");

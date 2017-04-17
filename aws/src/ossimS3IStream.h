@@ -12,14 +12,17 @@ namespace ossim{
       {}
 
       void open (const char* connectionString,  
+                const ossimKeywordlist& options,
+
                  std::ios_base::openmode mode)
       {
-         open(std::string(connectionString), mode);
+         open(std::string(connectionString), options, mode);
       }
       void open (const std::string& connectionString, 
+                 const ossimKeywordlist& options,
                  std::ios_base::openmode mode)
       {
-        if(m_s3membuf.open(connectionString, mode))
+        if(m_s3membuf.open(connectionString, options, mode))
         {
             clear();
         }

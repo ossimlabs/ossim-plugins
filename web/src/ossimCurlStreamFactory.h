@@ -25,14 +25,17 @@ namespace ossim
 
       virtual std::shared_ptr<ossim::istream>
          createIstream(const std::string& connectionString,
+                       const ossimKeywordlist& options,
                        std::ios_base::openmode openMode) const;
       
       virtual std::shared_ptr<ossim::ostream>
          createOstream(const std::string& connectionString,
+                       const ossimKeywordlist& options,
                        std::ios_base::openmode openMode) const;
       
       virtual std::shared_ptr<ossim::iostream>
          createIOstream(const std::string& connectionString,
+                       const ossimKeywordlist& options,
                         std::ios_base::openmode openMode) const;
    
    protected:

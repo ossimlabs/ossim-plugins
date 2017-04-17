@@ -1,4 +1,5 @@
 #include "ossimCurlHttpRequest.h"
+#include "CurlStreamDefaults.h"
 
 ossimRefPtr<ossimWebResponse> ossimCurlHttpRequest::getResponse()
 {
@@ -42,10 +43,8 @@ ossimRefPtr<ossimWebResponse> ossimCurlHttpRequest::getResponse()
          
          if(protocol == "https")
          {
-            curl_easy_setopt(m_curl, CURLOPT_SSLVERSION, CURL_SSLVERSION_DEFAULT);//);
-            curl_easy_setopt(m_curl, CURLOPT_SSL_VERIFYPEER, 0L);
+            setDefaultSSL(m_curl);
          }
-         
          
          int rc = curl_easy_perform(m_curl);
          
@@ -149,8 +148,7 @@ ossim_int64 ossimCurlHttpRequest::getContentLength()const
    curl_easy_setopt(m_curl, CURLOPT_URL, urlString.c_str());
    if(protocol == "https")
    {
-      curl_easy_setopt(m_curl, CURLOPT_SSLVERSION, CURL_SSLVERSION_DEFAULT);//);
-      curl_easy_setopt(m_curl, CURLOPT_SSL_VERIFYPEER, 0L);
+      setDefaultSSL(m_curl);
    }
    int rc = curl_easy_perform(m_curl);
          
@@ -179,3 +177,32 @@ ossim_int64 ossimCurlHttpRequest::getContentLength()const
    return static_cast<ossim_int64> (contentLength);
 }
 
+void ossimCurlHttpRequest::setDefaultSSL(CURL* curl)const
+{
+   curl_easy_setopt(curl, CURLOPT_SSLVERSION, CURL_SSLVERSION_DEFAULT);//);
+   if(!ossim::CurlStreamDefaults::m_cacert.empty())
+   {
+      curl_easy_setopt(curl, CURLOPT_CAINFO, ossim::CurlStreamDefaults::m_cacert.c_str());
+      curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
+   } 
+   else
+   {
+     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+   }
+   if(!ossim::CurlStreamDefaults::m_clientCert.empty())
+   {
+      curl_easy_setopt(curl, CURLOPT_SSLCERT, ossim::CurlStreamDefaults::m_clientCert.c_str());
+   } 
+   if(!ossim::CurlStreamDefaults::m_clientCertType.empty())
+   {
+     curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, ossim::CurlStreamDefaults::m_clientCertType.c_str()); 
+   } 
+   if(!ossim::CurlStreamDefaults::m_clientKeyPassword.empty())
+   {
+     curl_easy_setopt(curl, CURLOPT_SSLKEYPASSWD, ossim::CurlStreamDefaults::m_clientKeyPassword.c_str()); 
+   }
+   if(!ossim::CurlStreamDefaults::m_clientKey.empty())
+   {
+      curl_easy_setopt(curl, CURLOPT_SSLKEY, ossim::CurlStreamDefaults::m_clientKey.c_str());
+   } 
+}
