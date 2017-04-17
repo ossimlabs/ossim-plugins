@@ -32,7 +32,9 @@ ossim::CurlStreamFactory* ossim::CurlStreamFactory::instance()
 }
 
 std::shared_ptr<ossim::istream> ossim::CurlStreamFactory::createIstream(
-   const std::string& connectionString, std::ios_base::openmode openMode) const
+   const std::string& connectionString, 
+   const ossimKeywordlist& options,
+   std::ios_base::openmode openMode) const
 {
   //std::cout << "ossim::CurlStreamFactory::createIstream............Entered\n";
    std::shared_ptr<ossim::CurlIStream> result = std::make_shared<ossim::CurlIStream>();
@@ -65,13 +67,17 @@ std::shared_ptr<ossim::istream> ossim::CurlStreamFactory::createIstream(
 }
       
 std::shared_ptr<ossim::ostream> ossim::CurlStreamFactory::createOstream(
-   const std::string& /*connectionString*/, std::ios_base::openmode /*openMode*/) const
+   const std::string& /*connectionString*/, 
+   const ossimKeywordlist& options,
+   std::ios_base::openmode /*openMode*/) const
 {
    return std::shared_ptr<ossim::ostream>(0);
 }
 
 std::shared_ptr<ossim::iostream> ossim::CurlStreamFactory::createIOstream(
-   const std::string& /*connectionString*/, std::ios_base::openmode /*openMode*/) const
+   const std::string& /*connectionString*/, 
+   const ossimKeywordlist& options,
+   std::ios_base::openmode /*openMode*/) const
 {
    return std::shared_ptr<ossim::iostream>(0);
 }

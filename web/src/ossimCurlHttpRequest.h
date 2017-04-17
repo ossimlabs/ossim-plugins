@@ -40,6 +40,7 @@ public:
 protected:
    CURL* m_curl;
    mutable ossimRefPtr<ossimCurlHttpResponse> m_response;
+   void setDefaultSSL(CURL* curl)const;
 };
 
 

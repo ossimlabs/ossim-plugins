@@ -32,7 +32,9 @@ ossim::AwsStreamFactory* ossim::AwsStreamFactory::instance()
 }
 
 std::shared_ptr<ossim::istream> ossim::AwsStreamFactory::createIstream(
-   const std::string& connectionString, std::ios_base::openmode openMode) const
+   const std::string& connectionString, 
+   const ossimKeywordlist& options,
+   std::ios_base::openmode openMode) const
 {
    std::shared_ptr<ossim::S3IStream> result = std::make_shared<ossim::S3IStream>();
    if(traceDebug())
@@ -46,9 +48,9 @@ std::shared_ptr<ossim::istream> ossim::AwsStreamFactory::createIstream(
 #if defined(_WIN32)
    ossimFilename f = connectionString;
    f.convertBackToForwardSlashes();
-   result->open( f.string(), openMode) ;
+   result->open( f.string(), options, openMode) ;
 #else
-   result->open( connectionString, openMode );
+   result->open( connectionString, options, openMode );
 #endif
   
   if(!result->good())
@@ -64,13 +66,17 @@ std::shared_ptr<ossim::istream> ossim::AwsStreamFactory::createIstream(
 }
       
 std::shared_ptr<ossim::ostream> ossim::AwsStreamFactory::createOstream(
-   const std::string& /*connectionString*/, std::ios_base::openmode /*openMode*/) const
+   const std::string& /*connectionString*/, 
+   const ossimKeywordlist& options,
+   std::ios_base::openmode /*openMode*/) const
 {
    return std::shared_ptr<ossim::ostream>(0);
 }
 
 std::shared_ptr<ossim::iostream> ossim::AwsStreamFactory::createIOstream(
-   const std::string& /*connectionString*/, std::ios_base::openmode /*openMode*/) const
+   const std::string& /*connectionString*/, 
+   const ossimKeywordlist& options,
+   std::ios_base::openmode /*openMode*/) const
 {
    return std::shared_ptr<ossim::iostream>(0);
 }

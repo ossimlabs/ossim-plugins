@@ -179,14 +179,16 @@ bool ossim::CurlStreamBuffer::loadBlock(ossim_int64 absolutePosition)
 }
 
 ossim::CurlStreamBuffer* ossim::CurlStreamBuffer::open (const char* connectionString,  
+                                                   const ossimKeywordlist& options, 
                                                     std::ios_base::openmode m)
 {
    std::string temp(connectionString);
-   return open(temp, m);
+   return open(temp, options, m);
 }
 
 ossim::CurlStreamBuffer* ossim::CurlStreamBuffer::open (const std::string& connectionString, 
-                                                    std::ios_base::openmode /* mode */)
+                                                        const ossimKeywordlist& options, 
+                                                        std::ios_base::openmode /* mode */)
 {
    if(traceDebug())
    {

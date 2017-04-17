@@ -15,6 +15,7 @@
 #define ossimCurlStreamBuffer_HEADER 1
 
 #include <ossim/base/ossimConstants.h>
+#include <ossim/base/ossimKeywordlist.h>
 #include <iostream>
 #include "CurlStreamDefaults.h"
 #include "ossimCurlHttpRequest.h"
@@ -26,8 +27,14 @@ public:
    // S3StreamBuffer(ossim_int64 blockSize=4096);
    CurlStreamBuffer(ossim_int64 blockSize=ossim::CurlStreamDefaults::m_readBlocksize);
 
-   CurlStreamBuffer* open (const char* connectionString,  std::ios_base::openmode mode);
-   CurlStreamBuffer* open (const std::string& connectionString, std::ios_base::openmode mode);
+   CurlStreamBuffer* open (const char* connectionString,  
+                           const ossimKeywordlist& options, 
+                           std::ios_base::openmode mode);
+   CurlStreamBuffer* open (const std::string& connectionString,                            
+                           const ossimKeywordlist& options, 
+                           std::ios_base::openmode mode);
+
+
    
    bool is_open() const
    {
