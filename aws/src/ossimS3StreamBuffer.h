@@ -15,6 +15,7 @@
 #define ossimS3StreamBuffer_HEADER 1
 
 #include <ossim/base/ossimConstants.h>
+#include <ossim/base/ossimKeywordlist.h>
 #include <aws/s3/S3Client.h>
 #include <iostream>
 #include "S3StreamDefaults.h"
@@ -26,8 +27,12 @@ public:
    // S3StreamBuffer(ossim_int64 blockSize=4096);
    S3StreamBuffer(ossim_int64 blockSize=ossim::S3StreamDefaults::m_readBlocksize);
 
-   S3StreamBuffer* open (const char* connectionString,  std::ios_base::openmode mode);
-   S3StreamBuffer* open (const std::string& connectionString, std::ios_base::openmode mode);
+   S3StreamBuffer* open (const char* connectionString,                         
+                         const ossimKeywordlist& options,
+                         std::ios_base::openmode mode);
+   S3StreamBuffer* open (const std::string& connectionString, 
+                         const ossimKeywordlist& options,
+                         std::ios_base::openmode mode);
    
    bool is_open() const
    {

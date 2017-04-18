@@ -22,7 +22,7 @@ public:
    static ossimMspToolFactory* instance();
 
    virtual ~ossimMspToolFactory();
-   virtual ossimTool* createUtility(const std::string& typeName) const;
+   virtual ossimTool* createTool(const std::string& typeName) const;
    virtual void getTypeNameList(std::vector<ossimString>& typeList) const;
    virtual void getCapabilities(std::map<std::string, std::string>& capabilities) const;
    virtual std::map<std::string, std::string> getCapabilities() const;

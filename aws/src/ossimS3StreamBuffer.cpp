@@ -147,13 +147,15 @@ bool ossim::S3StreamBuffer::loadBlock(ossim_int64 absolutePosition)
 }
 
 ossim::S3StreamBuffer* ossim::S3StreamBuffer::open (const char* connectionString,  
+                                                    const ossimKeywordlist& options,
                                                     std::ios_base::openmode m)
 {
    std::string temp(connectionString);
-   return open(temp, m);
+   return open(temp, options, m);
 }
 
 ossim::S3StreamBuffer* ossim::S3StreamBuffer::open (const std::string& connectionString, 
+                                                    const ossimKeywordlist& options,
                                                     std::ios_base::openmode /* mode */)
 {
    if(traceDebug())
