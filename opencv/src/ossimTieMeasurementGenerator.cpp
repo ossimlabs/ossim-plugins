@@ -152,7 +152,7 @@ bool ossimTieMeasurementGenerator::refreshCollectionTraits()
    {
       int gridRows = m_gridSize.y;
       int gridCols = m_gridSize.x;
-      cv::ORB::create("");
+      cv::ORB::create();
    }
 
    return initOK;
@@ -388,20 +388,20 @@ bool ossimTieMeasurementGenerator::setFeatureDetector(const ossimString& name)
 {
    bool createOK = false;
    m_detectorName = name;
-   m_detector  = cv::FeatureDetector::create(m_detectorName);
+   m_detector  = cv::FeatureDetector::create(m_detectorName.string());
 
    if( m_detector != 0 )
    {
       createOK = true;
       std::vector<std::string> parameters;
-      m_detector->getParams(parameters);
-      if (traceDebug())
-      {
-         ossimNotify(ossimNotifyLevel_DEBUG)
-            << "DEBUG: ...detector..." << std::endl;
-         for (int i = 0; i < (int) parameters.size(); i++)
-            ossimNotify(ossimNotifyLevel_DEBUG)<<"  "<<parameters[i]<<std::endl;
-      }
+//      m_detector->getParams(parameters);
+//      if (traceDebug())
+//      {
+//         ossimNotify(ossimNotifyLevel_DEBUG)
+//            << "DEBUG: ...detector..." << std::endl;
+//         for (int i = 0; i < (int) parameters.size(); i++)
+//            ossimNotify(ossimNotifyLevel_DEBUG)<<"  "<<parameters[i]<<std::endl;
+//      }
    }
 
    return createOK;
@@ -428,7 +428,7 @@ bool ossimTieMeasurementGenerator::setDescriptorExtractor(const ossimString& nam
 {
    bool createOK = false;
    m_extractorName = name;
-   m_extractor = cv::DescriptorExtractor::create(m_extractorName);
+   m_extractor = cv::DescriptorExtractor::create(m_extractorName.string());
 
    if( m_extractor != 0 )
    {
@@ -482,21 +482,21 @@ bool ossimTieMeasurementGenerator::setDescriptorMatcher(const ossimString& name)
    }
    else
    {
-      m_matcher = cv::DescriptorMatcher::create(m_matcherName);
+      m_matcher = cv::DescriptorMatcher::create(m_matcherName.string());
    }
 
    if( m_matcher != 0 )
    {
       createOK = true;
-      std::vector<std::string> parameters;
-      m_matcher->getParams(parameters);
-      if (traceDebug())
-      {
-         ossimNotify(ossimNotifyLevel_DEBUG)
-            << "DEBUG: ...matcher..." << std::endl;
-         for (int i = 0; i < (int) parameters.size(); i++)
-            ossimNotify(ossimNotifyLevel_DEBUG)<<"  "<<parameters[i]<<std::endl;
-      }
+//      std::vector<std::string> parameters;
+//      m_matcher->getParams(parameters);
+//      if (traceDebug())
+//      {
+//         ossimNotify(ossimNotifyLevel_DEBUG)
+//            << "DEBUG: ...matcher..." << std::endl;
+//         for (int i = 0; i < (int) parameters.size(); i++)
+//            ossimNotify(ossimNotifyLevel_DEBUG)<<"  "<<parameters[i]<<std::endl;
+//      }
    }
 
    // TODO: Garrett: this was causing core dumps so I commented it out.  Also, it appears that in the docs 
