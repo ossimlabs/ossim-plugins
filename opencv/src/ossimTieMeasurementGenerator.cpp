@@ -152,7 +152,7 @@ bool ossimTieMeasurementGenerator::refreshCollectionTraits()
    {
       int gridRows = m_gridSize.y;
       int gridCols = m_gridSize.x;
-      cv::ORB::create();
+      cv::ORB::create("");
    }
 
    return initOK;
