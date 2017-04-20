@@ -14,18 +14,21 @@
 #include "ossimS3StreamBuffer.h"
 #include "S3HeaderCache.h"
 
+#include <ossim/base/ossimKeywordlist.h>
+#include <ossim/base/ossimPreferences.h>
+#include <ossim/base/ossimUrl.h>
+#include <ossim/base/ossimTrace.h>
+#include <ossim/base/ossimTimer.h>
+
+#include <aws/s3/S3Client.h>
 #include <aws/s3/model/PutObjectRequest.h>
 #include <aws/s3/model/GetObjectRequest.h>
 #include <aws/s3/model/GetObjectResult.h>
 #include <aws/s3/model/HeadObjectRequest.h>
 #include <aws/core/Aws.h>
+#include <aws/core/client/ClientConfiguration.h>
 #include <aws/core/http/HttpRequest.h>
 #include <aws/core/utils/memory/stl/AWSStringStream.h>
-
-#include <ossim/base/ossimUrl.h>
-#include <ossim/base/ossimTrace.h>
-#include <ossim/base/ossimTimer.h>
-#include <ctime>
 
 #include <cstdio> /* for EOF */
 #include <cstring> /* for memcpy */
@@ -33,6 +36,7 @@
 #include <iostream>
 #include <streambuf>
 #include <sstream>
+#include <ctime>
 #include <vector>
 
 //static const char* KEY = "test-file.txt";
@@ -44,6 +48,7 @@ static ossimTrace traceDebug("ossimS3StreamBuffer:debug");
 
 ossim::S3StreamBuffer::S3StreamBuffer(ossim_int64 blockSize)
    :
+   m_client(0),
    m_bucket(""),
    m_key(""),
    m_buffer(blockSize),
@@ -54,9 +59,30 @@ ossim::S3StreamBuffer::S3StreamBuffer(ossim_int64 blockSize)
    m_opened(false)
    //m_mode(0)
 {
+   Aws::Client::ClientConfiguration config;
+
+   // Look for AWS S3 regionn override:
+   std::string region = ossimPreferences::instance()->
+      preferencesKWL().findKey(std::string("ossim.plugins.aws.s3.region"));
+   if ( region.size() )
+   {
+      config.region = region.c_str();
+   }
+
+   m_client = new Aws::S3::S3Client( config );
+   
 //    std::cout << "CONSTRUCTED!!!!!" << std::endl;
 //  setp(0);
    setg(m_bufferPtr, m_bufferPtr, m_bufferPtr);
+}
+
+ossim::S3StreamBuffer::~S3StreamBuffer()
+{
+   if ( m_client )
+   {
+      delete m_client;
+      m_client = 0;
+   }
 }
 
 ossim_int64 ossim::S3StreamBuffer::getBlockIndex(ossim_int64 byteOffset)const
@@ -118,7 +144,7 @@ bool ossim::S3StreamBuffer::loadBlock(ossim_int64 absolutePosition)
       stringStream << "bytes=" << startRange << "-" << endRange;
       getObjectRequest.WithBucket(m_bucket.c_str())
          .WithKey(m_key.c_str()).WithRange(stringStream.str().c_str());
-      auto getObjectOutcome = m_client.GetObject(getObjectRequest);
+      auto getObjectOutcome = m_client->GetObject(getObjectRequest);
 
       if(getObjectOutcome.IsSuccess())
       {
@@ -146,7 +172,7 @@ bool ossim::S3StreamBuffer::loadBlock(ossim_int64 absolutePosition)
    return result;
 }
 
-ossim::S3StreamBuffer* ossim::S3StreamBuffer::open (const char* connectionString,  
+ossim::S3StreamBuffer* ossim::S3StreamBuffer::open (const char* connectionString,
                                                     const ossimKeywordlist& options,
                                                     std::ios_base::openmode m)
 {
@@ -154,8 +180,8 @@ ossim::S3StreamBuffer* ossim::S3StreamBuffer::open (const char* connectionString
    return open(temp, options, m);
 }
 
-ossim::S3StreamBuffer* ossim::S3StreamBuffer::open (const std::string& connectionString, 
-                                                    const ossimKeywordlist& options,
+ossim::S3StreamBuffer* ossim::S3StreamBuffer::open (const std::string& connectionString,
+                                                    const ossimKeywordlist& /* options */,
                                                     std::ios_base::openmode /* mode */)
 {
    if(traceDebug())
@@ -188,7 +214,7 @@ ossim::S3StreamBuffer* ossim::S3StreamBuffer::open (const std::string& connectio
             HeadObjectRequest headObjectRequest;
             headObjectRequest.WithBucket(m_bucket.c_str())
                .WithKey(m_key.c_str());
-            auto headObject = m_client.HeadObject(headObjectRequest);
+            auto headObject = m_client->HeadObject(headObjectRequest);
             if(headObject.IsSuccess())
             {
                m_fileSize = headObject.GetResult().GetContentLength();

@@ -53,7 +53,7 @@ void ossim::S3HeaderCache::addHeader(const Key_t& key, Node_t& node)
    }  
    else
    {
-      if(m_cache.size() >= m_maxCacheEntries)
+      if((ossim_int64)m_cache.size() >= m_maxCacheEntries)
       {
          shrinkEntries();
       }
@@ -67,7 +67,7 @@ void ossim::S3HeaderCache::shrinkEntries()
    ossim_int64 targetSize = static_cast<ossim_int64>(0.2*m_maxCacheEntries);
 
    if(m_cacheTime.empty()) return;
-   if(targetSize >= m_cache.size())
+   if(targetSize >= (ossim_int64)m_cache.size())
    {
       m_cache.clear();
       m_cacheTime.clear();

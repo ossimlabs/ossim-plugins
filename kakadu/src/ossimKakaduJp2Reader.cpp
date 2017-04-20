@@ -260,8 +260,7 @@ bool ossimKakaduJp2Reader::openJp2File()
    bool result = false;
    
    theJp2FamilySrc = new kdu_supp::jp2_family_src();
-
-   theJp2FamilySrc->open(theImageFile.chars(), true);
+   theJp2FamilySrc->open(theImageFile.c_str(), true);
 
    if (theJp2FamilySrc->exists())
    {
@@ -348,10 +347,24 @@ bool ossimKakaduJp2Reader::openJp2File()
             // Number of internal dwl layers
             theMinDwtLevels = theCodestream.get_min_dwt_levels();
 
-            // Get the number of bands.
-            theNumberOfBands =
-               static_cast<ossim_uint32>(theCodestream.
-                                         get_num_components(true));
+            //---
+            // Set up channel mapping for copyRegionToTile if it makes sense.
+            // This will set the number of bands if successful, ignoring the
+            // alpha channel.
+            //---
+            if ( configureChannelMapping() == false )
+            {
+               theNumberOfBands =
+                  static_cast<ossim_uint32>(theCodestream.get_num_components(true));
+            }
+
+            if (traceDebug())
+            {
+               ossimNotify(ossimNotifyLevel_DEBUG)
+                  << "codestream::get_num_components(true): "
+                  << theCodestream.get_num_components(true)
+                  << "\ntheNumberOfBands: " << theNumberOfBands << "\n";
+            }
             
             //---
             // Set the cache tile size.  Use the internal j2k tile size if it's
@@ -415,7 +428,7 @@ bool ossimKakaduJp2Reader::openJp2File()
                   break;
                }
             }
-            
+
             if (theScalarType != OSSIM_SCALAR_UNKNOWN)
             {
                // Initialize the cache.
@@ -437,8 +450,6 @@ bool ossimKakaduJp2Reader::openJp2File()
                // Call the base complete open to pick up overviews.
                completeOpen();
 
-               // Set up channel mapping for copyRegionToTile if it makes sense.
-               configureChannelMapping();
 
                // We should be good now so set the return result to true.
                result = true;
@@ -1262,7 +1273,7 @@ bool ossimKakaduJp2Reader::loadState(const ossimKeywordlist& kwl,
    return result;
 }
 
-void ossimKakaduJp2Reader::configureChannelMapping()
+bool ossimKakaduJp2Reader::configureChannelMapping()
 {
    bool result = false;
    
@@ -1277,8 +1288,8 @@ void ossimKakaduJp2Reader::configureChannelMapping()
             
    if ( theJp2Source )
    {
-      // Currently ignoring alpha:
-      result = theChannels->configure(static_cast<kdu_supp::jp2_source*>(theJp2Source), false);
+      // bool flag "ignore_alpha", turns on off alpha channel.
+      result = theChannels->configure(static_cast<kdu_supp::jp2_source*>(theJp2Source), true);
    }
    else
    {
@@ -1287,17 +1298,29 @@ void ossimKakaduJp2Reader::configureChannelMapping()
     
    if ( result )
    {
-      // If we the mapping doesn't have all our bands we don't use it.
-      if ( theChannels->get_num_colour_channels() !=  static_cast<int>(theNumberOfBands) )
+      theNumberOfBands = (ossim_uint32)theChannels->get_num_colour_channels();
+
+      if (traceDebug())
       {
-         result = false;
+         ossimNotify(ossimNotifyLevel_DEBUG)
+            << "\ossimKakaduJp2Reader::configureChannelMapping() DEBUG:"
+            << "\nkdu_channel_mapping::get_num_channels():        "
+            << theChannels->get_num_channels()
+            << "\nkdu_channel_mapping::get_num_colour_channels(): "
+            << theChannels->get_num_colour_channels()
+            << "\ntheNumberOfBands: " << theNumberOfBands << endl;
       }
    }
 
-   if ( !result )
+   // Force a per component kdu region decompress.
+   if ( !result || ( theNumberOfBands != (ossim_uint32)theChannels->get_num_channels() ) )
    {
+      // Remove the channel mapping.
       theChannels->clear();
       delete theChannels;
       theChannels = 0;
    }
+
+   return result;
 }
+

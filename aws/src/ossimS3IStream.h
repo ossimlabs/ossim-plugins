@@ -1,5 +1,5 @@
 #ifndef ossimS3IStream_HEADER
-#define ossimS3IStream_HEADER
+#define ossimS3IStream_HEADER 1
 #include <ossim/base/ossimIoStream.h>
 #include "ossimS3StreamBuffer.h"
 
@@ -10,10 +10,10 @@ namespace ossim{
    public:
       S3IStream():std::istream(&m_s3membuf)
       {}
-
+      
       void open (const char* connectionString,  
-                const ossimKeywordlist& options,
-
+                 const ossimKeywordlist& options,
+                 
                  std::ios_base::openmode mode)
       {
          open(std::string(connectionString), options, mode);
@@ -22,18 +22,28 @@ namespace ossim{
                  const ossimKeywordlist& options,
                  std::ios_base::openmode mode)
       {
-        if(m_s3membuf.open(connectionString, options, mode))
-        {
+         if(m_s3membuf.open(connectionString, options, mode))
+         {
             clear();
-        }
-        else
-        {
+         }
+         else
+         {
             setstate(std::ios::failbit);
-        }
+         }
       }
+      
+      ossim_uint64 getFileSize() const
+      {
+         return m_s3membuf.getFileSize();
+      }
+      
+      ossim_uint64 getBlockSize() const
+      {
+         return m_s3membuf.getBlockSize();
+      }
+      
    protected:
-     S3StreamBuffer m_s3membuf;
-
+      S3StreamBuffer m_s3membuf;
    };
 }
 

@@ -2,7 +2,7 @@
 //
 // License: MIT
 //
-// Description: OSSIM Amazon Web Services (AWS) stream factory.
+// Description: OSSIM CURL stream factory.
 //
 //---
 // $Id$
@@ -12,6 +12,7 @@
 
 #include <ossim/base/ossimStreamFactoryBase.h>
 #include <ossim/base/ossimIoStream.h>
+#include "ossimCurlHttpRequest.h"
 #include <memory>
 
 namespace ossim
@@ -37,10 +38,26 @@ namespace ossim
          createIOstream(const std::string& connectionString,
                        const ossimKeywordlist& options,
                         std::ios_base::openmode openMode) const;
+
+      /**
+       * @brief Methods to test if connection exists.
+       *
+       * @param connectionString
+       * 
+       * @param continueFlag Initializes by this, if set to false, indicates factory
+       * handles file/url and no more factory checks are necessary.  If true,
+       * connection is not handled by this factory.
+       * 
+       * @return true on success, false, if not.  
+       */
+      virtual bool exists(const std::string& connectionString,
+                          bool& continueFlag) const;
    
    protected:
       CurlStreamFactory();
       CurlStreamFactory(const CurlStreamFactory&);
+
+      ossimCurlHttpRequest m_curlHttpRequest;
       
       static CurlStreamFactory* m_instance;
    };

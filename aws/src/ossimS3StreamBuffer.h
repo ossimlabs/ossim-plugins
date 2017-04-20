@@ -15,10 +15,21 @@
 #define ossimS3StreamBuffer_HEADER 1
 
 #include <ossim/base/ossimConstants.h>
-#include <ossim/base/ossimKeywordlist.h>
-#include <aws/s3/S3Client.h>
-#include <iostream>
+// #include <aws/s3/S3Client.h>
+
 #include "S3StreamDefaults.h"
+#include <iostream>
+#include <vector>
+
+namespace Aws
+{
+   namespace S3
+   {
+      class S3Client;
+   }
+}
+
+class ossimKeywordlist;
 
 namespace ossim{
 class  S3StreamBuffer : public std::streambuf
@@ -38,10 +49,8 @@ public:
    {
       return m_opened;
    }
-   virtual ~S3StreamBuffer()
-   {
-      
-   }
+
+   virtual ~S3StreamBuffer();
 
    /**
     * @return Size of file in bytes.
@@ -76,7 +85,7 @@ protected:
    ossim_int64 getAbsoluteByteOffset()const;
    bool withinWindow()const;
 
-   Aws::S3::S3Client m_client;
+   Aws::S3::S3Client* m_client;
    std::string m_bucket;
    std::string m_key;
    std::vector<char> m_buffer;

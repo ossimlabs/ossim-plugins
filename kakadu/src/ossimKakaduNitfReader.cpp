@@ -1,8 +1,6 @@
-//----------------------------------------------------------------------------
+//---
 //
-// License:  LGPL
-// 
-// See LICENSE.txt file in the top level directory for more details.
+// License: MIT
 //
 // Author:  David Burken
 //
@@ -12,8 +10,8 @@
 // blocks using kakadu library for decompression.  The image data segment
 // can be raw J2K or have a JP2 wrapper.
 //
-//----------------------------------------------------------------------------
-// $Id: ossimKakaduNitfReader.cpp 22884 2014-09-12 13:14:35Z dburken $
+//---
+// $Id$
 
 #include "ossimKakaduNitfReader.h"
 #include "ossimKakaduCommon.h"
@@ -30,8 +28,10 @@
 #include <ossim/imaging/ossimImageDataFactory.h>
  
 #include <ossim/support_data/ossimNitfImageHeader.h>
+#include <ossim/support_data/ossimJ2kCodRecord.h>
 #include <ossim/support_data/ossimJ2kSizRecord.h>
 #include <ossim/support_data/ossimJ2kSotRecord.h>
+#include <ossim/support_data/ossimJ2kTlmRecord.h>
 
 #include <jp2.h>
 #include <kdu_sample_processing.h>
@@ -532,6 +532,7 @@ bool ossimKakaduNitfReader::allocate()
    if (traceDebug())
    {
       ossimNotify(ossimNotifyLevel_DEBUG) << MODULE << " entered...\n";
+      
    }
 
    bool result = ossimNitfTileSource::allocate();
@@ -540,6 +541,18 @@ bool ossimKakaduNitfReader::allocate()
    {
       // This only finds "Start Of Codestream" (SOC) so it's fast.
       result = scanForJpegBlockOffsets();
+
+      if (traceDebug())
+      {
+         const ossimNitfImageHeader* hdr = getCurrentImageHeader();
+         if( hdr )
+         {
+            ossimNotify(ossimNotifyLevel_DEBUG)
+               << "start_of_data: " << hdr->getDataLocation() << "\n";
+         }
+         ossimNotify(ossimNotifyLevel_DEBUG)
+            << "start_of_codestream: " << m_startOfCodestreamOffset << "\n";
+      }
       
       if ( result )
       {
@@ -1081,9 +1094,26 @@ std::ostream& ossimKakaduNitfReader::dumpTiles(std::ostream& out)
             {
                if (static_cast<ossim_uint8>(c) == 0xff)
                {
-                  if (  theFileStr->get(c) )
+                  if ( theFileStr->get(c) )
                   {
-                     if (static_cast<ossim_uint8>(c) == 0x90)
+                     out << "marker: 0xff" << hex << (ossim_uint16)c << dec << endl;
+                     
+                     if (static_cast<ossim_uint8>(c) == 0x52)
+                     {
+                        out << "\nFound COD...\n\n" << endl;
+                        ossimJ2kCodRecord cod;
+                        cod.parseStream( *theFileStr );
+                        cod.print(out);
+
+                     }
+                     else if (static_cast<ossim_uint8>(c) == 0x55)
+                     {
+                        out << "\nFound TLM...\n\n" << endl;
+                        ossimJ2kTlmRecord tlm;
+                        tlm.parseStream( *theFileStr );
+                        tlm.print(out);
+                     }
+                     else if (static_cast<ossim_uint8>(c) == 0x90)
                      {
                         foundSot = true;
                         break;
@@ -1100,6 +1130,7 @@ std::ostream& ossimKakaduNitfReader::dumpTiles(std::ostream& out)
             for (ossim_uint32 i = 0; i < BLOCKS; ++i)
             {
                std::streamoff pos = theFileStr->tellg();
+               out << "sot pos: " << pos << endl;
                ossimJ2kSotRecord sotRecord;
                sotRecord.parseStream( *theFileStr );
                pos += sotRecord.thePsot;
