@@ -37,6 +37,11 @@ bool ossim::CurlHeaderCache::getCachedFilesize(const Key_t& key, ossim_int64& fi
       filesize = iter->second->m_filesize;
       result = true;
    }
+   if(result)
+   {
+      ossim::CurlHeaderCache* curlHeaderConstPtr = const_cast<ossim::CurlHeaderCache*>(this);
+      curlHeaderConstPtr->touchEntryProtected(key);
+   }
 
    return result;
 }
@@ -46,10 +51,10 @@ void ossim::CurlHeaderCache::addHeader(const Key_t& key, Node_t& node)
    std::unique_lock<std::mutex> lock(m_mutex);
    if(m_maxCacheEntries<=0) return;
    CacheType::const_iterator iter = m_cache.find(key);
-
    if(iter != m_cache.end())
    {
       iter->second->m_filesize = node->m_filesize;
+      touchEntryProtected(key);
    }  
    else
    {
@@ -57,9 +62,35 @@ void ossim::CurlHeaderCache::addHeader(const Key_t& key, Node_t& node)
       {
          shrinkEntries();
       }
+      node->m_timestamp = ossimTimer::instance()->tick();
       m_cache.insert( std::make_pair(key, node) );
       m_cacheTime.insert( std::make_pair(node->m_timestamp, key) );
    } 
+}
+
+void ossim::CurlHeaderCache::touchEntry(const Key_t& key)
+{
+   // I think unique lock is recursive but need to test first
+   // So for now we will wrap with a touchEntryProtected that does not lock
+   // so all public methods are locking.
+   //
+   std::unique_lock<std::mutex> lock(m_mutex);
+   touchEntryProtected(key);
+}
+
+void ossim::CurlHeaderCache::touchEntryProtected(const Key_t& key)
+{
+   CacheType::iterator iter = m_cache.find(key);
+   if(iter!=m_cache.end())
+   {
+      CacheTimeIndexType::iterator cacheTimeIter = m_cacheTime.find(iter->second->m_timestamp);
+      if(cacheTimeIter!=m_cacheTime.end())
+      {
+         m_cacheTime.erase(cacheTimeIter);
+         iter->second->m_timestamp = ossimTimer::instance()->tick();
+         m_cacheTime.insert( std::make_pair(iter->second->m_timestamp, key) );
+      }
+   }
 }
 
 void ossim::CurlHeaderCache::shrinkEntries()

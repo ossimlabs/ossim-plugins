@@ -38,10 +38,13 @@ namespace ossim
       bool getCachedFilesize(const Key_t& key, ossim_int64& filesize)const;
       void addHeader(const Key_t& key, Node_t& node);
       void setMaxCacheEntries(ossim_int64 maxEntries);
+      void touchEntry(const Key_t& key);
+
       static std::shared_ptr<CurlHeaderCache> instance();
 
    protected:
       void shrinkEntries();
+      void touchEntryProtected(const Key_t& key);
 
       static std::shared_ptr<CurlHeaderCache> m_instance;
       mutable std::mutex m_mutex;
