@@ -1,24 +1,23 @@
-//----------------------------------------------------------------------------
+//---
 //
-// License:  LGPL
-//
-// See LICENSE.txt file in the top level directory for more details.
+// License: MIT
 //
 // Description: Wrapper class to compress whole tiles using kdu_analysis
 // object.
 //
-//----------------------------------------------------------------------------
-// $Id: ossimKakaduCompressor.h 22884 2014-09-12 13:14:35Z dburken $
+//---
+// $Id$
 
 #ifndef ossimKakaduCompressor_HEADER
 #define ossimKakaduCompressor_HEADER 1
 
 #include <ossim/base/ossimConstants.h>
 #include <ossim/base/ossimIrect.h>
+#include <ossim/base/ossimObject.h>
 #include <ossim/base/ossimProperty.h>
 #include <ossim/base/ossimRefPtr.h>
 #include <ossim/base/ossimString.h>
-
+#include <ossim/imaging/ossimKakaduCompressorInterface.h>
 #include <kdu_compressed.h>
 #include <kdu_elementary.h>
 #include <kdu_sample_processing.h>
@@ -39,27 +38,29 @@ namespace kdu_supp
    class jp2_target; 
 }
 
-class ossimKakaduCompressor
+class ossimKakaduCompressor :
+   public ossimObject, public ossimKakaduCompressorInterface
 {
 public:
 
+   // Enums moved to: ossimKakaduCompressorInterface.h
    // Matches static "COMPRESSION_QUALITY" string array in .cpp.
-   enum ossimKakaduCompressionQuality
-   {
-      // Prefixed with OKP for OSSIM Kakadu Plugin to avoid clashes.
-      OKP_UNKNOWN              = 0,
-      OKP_USER_DEFINED         = 1,
-      OKP_NUMERICALLY_LOSSLESS = 2,
-      OKP_VISUALLY_LOSSLESS    = 3,
-      OKP_LOSSY                = 4,
-      OKP_EPJE                 = 5  // Exploitation Preferred J2K Encoding
-   };
+   // enum ossimKakaduCompressionQuality
+   // {
+   //  Prefixed with OKP for OSSIM Kakadu Plugin to avoid clashes.
+   //   OKP_UNKNOWN              = 0,
+   //   OKP_USER_DEFINED         = 1,
+   //   OKP_NUMERICALLY_LOSSLESS = 2,
+   //   OKP_VISUALLY_LOSSLESS    = 3,
+   //   OKP_LOSSY                = 4,
+   //   OKP_EPJE                 = 5  // Exploitation Preferred J2K Encoding
+   // };
 
    /** default constructor */
    ossimKakaduCompressor();
 
    /** destructor */
-   ~ossimKakaduCompressor();
+   virtual ~ossimKakaduCompressor();
 
    /**
     * @brief Create method.
@@ -73,13 +74,13 @@ public:
     * @param jp2 If true jp2 header and jp2 geotiff block will be written out.
     * @note Throws ossimException on error.
     */
- void create(std::ostream* os,
-             ossimScalarType scalar,
-             ossim_uint32 bands,
-             const ossimIrect& imageRect,
-             const ossimIpt& tileSize,
-             ossim_uint32 tilesToWrite,
-             bool jp2);
+ virtual void create(ossim::ostream* os,
+                     ossimScalarType scalar,
+                     ossim_uint32 bands,
+                     const ossimIrect& imageRect,
+                     const ossimIpt& tileSize,
+                     ossim_uint32 tilesToWrite,
+                     bool jp2);
 
    /**
     * @brief Calls "open_codestream" on the m_jp2Target.
@@ -98,19 +99,28 @@ public:
     *
     * @return true on success, false on error.
     */
-   bool writeTile(ossimImageData& srcTile);
+   virtual bool writeTile(ossimImageData& srcTile);
 
    /**
     * @brief Finish method.  Every call to "create" should be matched by a
     * "finish".  Note the destructor calls finish.
     */
-   void finish();
+   virtual void finish();
 
    /**
     * @brief Sets the quality type.
+    *
+    * Type enumerations:
+    *   OKP_UNKNOWN              = 0,
+    *   OKP_USER_DEFINED         = 1,
+    *   OKP_NUMERICALLY_LOSSLESS = 2,
+    *   OKP_VISUALLY_LOSSLESS    = 3,
+    *   OKP_LOSSY                = 4,
+    *   OKP_EPJE                 = 5
+    *
     * @param type See enumeration for types.
     */
-   void setQualityType(ossimKakaduCompressionQuality type);
+   virtual void setQualityType(ossimKakaduCompressionQuality type);
 
    /** @return The quality type setting. */
    ossimKakaduCompressionQuality getQualityType() const;
@@ -129,11 +139,11 @@ public:
    bool getReversibleFlag() const;
    
    /**
-    * Set the writer to add an alpha channel to the output png image.
+    * Set the writer to add an alpha channel to the output.
     *
     * @param flag true to create an alpha channel.
     */
-   void setAlphaChannelFlag( bool flag );
+   virtual void setAlphaChannelFlag( bool flag );
 
    /**
     * Retrieve the writer's setting for whether or not to add an 
@@ -151,7 +161,7 @@ public:
     *
     * @param levels Levels to set.
     */
-   void setLevels(ossim_int32 levels);
+   virtual void setLevels(ossim_int32 levels);
 
    /** @return The number of levels. */
    ossim_int32 getLevels() const;
@@ -203,7 +213,7 @@ public:
     *
     * @return true if property was consumed, false if not.
     */
-   bool setProperty(ossimRefPtr<ossimProperty> property);
+   virtual bool setProperty(ossimRefPtr<ossimProperty> property);
    
    /**
     * @param name Name of property to return.
@@ -248,7 +258,11 @@ public:
     */
    void initialize( ossimNitfJ2klraTag* j2klraTag,
                     ossim_uint32 actualBitsPerPixel ) const;
-   
+
+   // ossimObject virtuals:
+   virtual ossimString getLongName()  const;
+   virtual ossimString getClassName() const;
+
 private:
 
    void initializeCodingParams(kdu_core::kdu_params* cod, const ossimIrect& imageRect);
@@ -330,6 +344,8 @@ private:
 
    void setTlmTileCount(ossim_uint32 tilesToWrite);
 
+   void printCompressionQualityTypes( std::ostream& out ) const;
+
    ossimKakaduCompressedTarget* m_target;
    
    kdu_supp::jp2_family_tgt*    m_jp2FamTgt;
@@ -369,8 +385,9 @@ private:
 
    /** tile to use for normalized float data. */
    ossimRefPtr<ossimImageData> m_normTile;
- 
-};
+
+TYPE_DATA
+}; // End: class ossimKakaduCompressor
 
 #endif /* matches: #ifndef ossimKakaduCompressor_HEADER */
  

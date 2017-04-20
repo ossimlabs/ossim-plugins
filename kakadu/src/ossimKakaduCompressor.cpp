@@ -1,16 +1,14 @@
-//----------------------------------------------------------------------------
+//---
 //
-// License:  LGPL
-//
-// See LICENSE.txt file in the top level directory for more details.
+// License: MIT
 //
 // Author:  David Burken
 //
 // Description: Wrapper class to compress whole tiles using kdu_analysis
 // object.
 //
-//----------------------------------------------------------------------------
-// $Id: ossimKakaduCompressor.cpp 23209 2015-03-30 01:01:36Z dburken $
+//---
+// $Id$
 
 #include "ossimKakaduCompressor.h"
 #include "ossimKakaduCommon.h"
@@ -39,6 +37,9 @@
 #include <jp2.h>
 #include <cmath> /* ceil */
 
+RTTI_DEF1_INST(ossimKakaduCompressor, "ossimKakaduCompressor", ossimObject)
+
+
 //---
 // For trace debugging (to enable at runtime do:
 // your_app -T "ossimKakaduCompressor:debug" your_app_args
@@ -56,6 +57,8 @@ static const ossimString COMPRESSION_QUALITY[] = { "unknown",
                                                    "numerically_lossless",
                                                    "visually_lossless",
                                                    "lossy",
+                                                   "lossy2",
+                                                   "lossy3",
                                                    "epje" };
 
 static void transfer_bytes(
@@ -203,7 +206,7 @@ void transfer_dwords(kdu_core::kdu_line_buf &dest, kdu_core::kdu_int32 *src,
       int upshift = 32-src_bits; assert(upshift >= 0);
       if (!dest.is_absolute())
       {
-         if (is_signed)
+          if (is_signed)
             for (; num_samples > 0; num_samples--, src+=sample_gap, dp++)
                dp->ival = (kdu_core::kdu_int16)
                   (((*src) << upshift) >> (32-KDU_FIX_POINT));
@@ -252,8 +255,11 @@ void transfer_dwords(kdu_core::kdu_line_buf &dest, kdu_core::kdu_int32 *src,
    }
 }
 
+
+
 ossimKakaduCompressor::ossimKakaduCompressor()
-   : 
+   :
+   ossimObject(),
    m_target(0),
    m_jp2FamTgt(0),
    m_jp2Target(0),
@@ -278,7 +284,18 @@ ossimKakaduCompressor::~ossimKakaduCompressor()
    finish();
 }
 
-void ossimKakaduCompressor::create(std::ostream* os,
+ossimString ossimKakaduCompressor::getLongName() const
+{
+   return ossimString("ossim kakadu compressor");
+}
+
+ossimString ossimKakaduCompressor::getClassName() const
+{
+   return ossimString("ossimKakaduCompressor");
+}
+
+
+void ossimKakaduCompressor::create(ossim::ostream* os,
                                    ossimScalarType scalar,
                                    ossim_uint32 bands,
                                    const ossimIrect& imageRect,
@@ -363,7 +380,7 @@ void ossimKakaduCompressor::create(std::ostream* os,
       if ( (bands != 1) && (bands != 3) )
       {
          m_alpha = false;
-         if ( traceDebug() )
+         // if ( traceDebug() )
          {
             ossimNotify(ossimNotifyLevel_WARN)
                << "Alpha channel being unset! Can only be used with "
@@ -375,7 +392,7 @@ void ossimKakaduCompressor::create(std::ostream* os,
    
    kdu_core::siz_params siz;
    
-   // Set the bands:
+   // Set the number of components adding in alpha if set.
    siz.set(Scomponents, 0, 0, static_cast<ossim_int32>( (m_alpha?bands+1:bands) ) );
    
    // Set the verical size.
@@ -591,7 +608,6 @@ bool ossimKakaduCompressor::writeTile(ossimImageData& srcTile)
          const ossim_int32 BANDS =
             static_cast<ossim_int32>(m_alpha?srcTile.getNumberOfBands()+1:
                                      srcTile.getNumberOfBands());
-
          tile.set_components_of_interest(BANDS);
          
          // Scalar:
@@ -698,7 +714,11 @@ bool ossimKakaduCompressor::writeTile(ossimImageData& srcTile)
                }
                break;
             }
-            case OSSIM_USHORT11:
+            case OSSIM_UINT11:
+            case OSSIM_UINT12:
+            case OSSIM_UINT13:
+            case OSSIM_UINT14:                  
+            case OSSIM_UINT15:
             case OSSIM_UINT16:
             {
                if (!m_alpha)
@@ -735,15 +755,8 @@ bool ossimKakaduCompressor::writeTile(ossimImageData& srcTile)
                   // Alpha currently stored a eight bit so we must move 255 to
                   // 2047 (11 bit) or 255 to 65535 for 16 bit.
                   //---
-                  ossim_float64 d = 0.0;
-                  if (SCALAR == OSSIM_USHORT11)
-                  {
-                     d = 2047.0/255.0;
-                  }
-                  else
-                  {
-                     d = 65535/255.0;
-                  }
+                  const ossim_float64 SCALAR_MAX = ossim::defaultMax( SCALAR );
+                  ossim_float64 d = SCALAR_MAX / 255.0;
 
                   ossim_int32 dataBands = BANDS-1;
                   std::vector<kdu_core::kdu_int16*> srcBuf(dataBands);
@@ -1195,6 +1208,10 @@ ossimRefPtr<ossimProperty> ossimKakaduCompressor::getProperty(
       constraintList.push_back(
          COMPRESSION_QUALITY[ossimKakaduCompressor::OKP_LOSSY]);
       constraintList.push_back(
+         COMPRESSION_QUALITY[ossimKakaduCompressor::OKP_LOSSY2]);
+      constraintList.push_back(
+         COMPRESSION_QUALITY[ossimKakaduCompressor::OKP_LOSSY3]);
+      constraintList.push_back(
          COMPRESSION_QUALITY[ossimKakaduCompressor::OKP_EPJE]);
       
       p = new ossimStringProperty(name,
@@ -1573,6 +1590,7 @@ void ossimKakaduCompressor::initializeCodingParams(kdu_core::kdu_params* cod,
       switch (m_qualityType)
       {
          case ossimKakaduCompressor::OKP_NUMERICALLY_LOSSLESS:
+         case ossimKakaduCompressor::OKP_EPJE:            
          {
             setReversibleFlag(true);
 
@@ -1676,6 +1694,7 @@ void ossimKakaduCompressor::initializeCodingParams(kdu_core::kdu_params* cod,
                static_cast<kdu_core::kdu_long>(std::ceil(TP * 3.5* 0.125 ));
             break;
          }
+#if 0
          case ossimKakaduCompressor::OKP_EPJE:
          {
             //---
@@ -1730,6 +1749,7 @@ void ossimKakaduCompressor::initializeCodingParams(kdu_core::kdu_params* cod,
                static_cast<kdu_core::kdu_long>(std::ceil(TP * 3.5* 0.125 ));
             break;
          }
+#endif
          case ossimKakaduCompressor::OKP_LOSSY:
          {
             setReversibleFlag(false);
@@ -1762,17 +1782,57 @@ void ossimKakaduCompressor::initializeCodingParams(kdu_core::kdu_params* cod,
             break;
          }
 
+         case ossimKakaduCompressor::OKP_LOSSY2:
+         {
+            setReversibleFlag(false);
+            
+            setWaveletKernel(cod, Ckernels_W9X7);
+            
+            m_layerSpecCount = 5;
+            m_layerByteSizes.resize(m_layerSpecCount);
+
+            m_layerByteSizes[0] =
+               static_cast<kdu_core::kdu_long>(std::ceil( TP * 0.03125 * 0.125 ));
+            m_layerByteSizes[1] =
+               static_cast<kdu_core::kdu_long>(std::ceil(TP * 0.0625 * 0.125 ));
+            m_layerByteSizes[2] =
+               static_cast<kdu_core::kdu_long>(std::ceil(TP * 0.125 * 0.125 ));
+            m_layerByteSizes[3] =
+               static_cast<kdu_core::kdu_long>(std::ceil(TP * 0.25 * 0.125 ));
+            m_layerByteSizes[4] =
+               static_cast<kdu_core::kdu_long>(std::ceil(TP * 0.5 * 0.125 ));
+            break;
+         }
+
+         case ossimKakaduCompressor::OKP_LOSSY3:
+         {
+            setReversibleFlag(false);
+            
+            setWaveletKernel(cod, Ckernels_W9X7);
+            
+            m_layerSpecCount = 4;
+            m_layerByteSizes.resize(m_layerSpecCount);
+
+            m_layerByteSizes[0] =
+               static_cast<kdu_core::kdu_long>(std::ceil( TP * 0.03125 * 0.125 ));
+            m_layerByteSizes[1] =
+               static_cast<kdu_core::kdu_long>(std::ceil(TP * 0.0625 * 0.125 ));
+            m_layerByteSizes[2] =
+               static_cast<kdu_core::kdu_long>(std::ceil(TP * 0.125 * 0.125 ));
+            m_layerByteSizes[3] =
+               static_cast<kdu_core::kdu_long>(std::ceil(TP * 0.25 * 0.125 ));
+            break;
+         }
+
          default:
          {
             m_layerSpecCount = 1;
             m_layerByteSizes.resize(m_layerSpecCount);
             m_layerByteSizes[0] = 0;
 
-            if (traceDebug())
-            {
-               ossimNotify(ossimNotifyLevel_WARN)
-                  << "unspecified quality type\n";
-            }
+            ossimNotify(ossimNotifyLevel_WARN)
+               << MODULE << "unhandled compression_quality type! Valid types:\n";
+            printCompressionQualityTypes( ossimNotify(ossimNotifyLevel_WARN) );
          }
          
       } // matches: switch (m_qualityType)
@@ -1844,19 +1904,25 @@ void ossimKakaduCompressor::setQualityTypeString(const ossimString& s)
    {
       setQualityType(ossimKakaduCompressor::OKP_LOSSY);
    }
+   else if (type == "lossy2")
+   {
+      setQualityType(ossimKakaduCompressor::OKP_LOSSY2);
+   }
+   else if (type == "lossy3")
+   {
+      setQualityType(ossimKakaduCompressor::OKP_LOSSY3);
+   }
    else if (type == "epje")
    {
       setQualityType(ossimKakaduCompressor::OKP_EPJE);
    }
    else
    {
-      if ( traceDebug() )
-      {
-         ossimNotify(ossimNotifyLevel_DEBUG)
-            << "ossimKakaduCompressor::setQualityTypeString DEBUG"
-            << "\nUnhandled quality type: " << type
-            << std::endl;
-      }
+      ossimNotify(ossimNotifyLevel_WARN)
+         << "ossimKakaduCompressor::setQualityTypeString WARNING"
+         << "\nUnhandled compression_quality type: " << type
+         << "\n";
+      printCompressionQualityTypes( ossimNotify(ossimNotifyLevel_WARN) );
    }
 }
 
@@ -1971,7 +2037,7 @@ void ossimKakaduCompressor::setQualityLayers(kdu_core::kdu_params* cod,
    }
 }
 
-void ossimKakaduCompressor::setTlmTileCount(ossim_uint32 tilesToWrite)
+void ossimKakaduCompressor::setTlmTileCount(ossim_uint32 /* tilesToWrite */)
 {
    //---
    // Identifies the maximum number of tile-parts which will be written to the
@@ -1981,4 +2047,21 @@ void ossimKakaduCompressor::setTlmTileCount(ossim_uint32 tilesToWrite)
    //---
    ossimString s = "ORGgen_tlm=1";
    m_codestream.access_siz()->parse_string( s.c_str() );
+}
+
+void ossimKakaduCompressor::printCompressionQualityTypes( std::ostream& out ) const
+{
+   out << "compression_quality="
+       << COMPRESSION_QUALITY[ossimKakaduCompressor::OKP_NUMERICALLY_LOSSLESS]
+       << "\ncompression_quality="
+       << COMPRESSION_QUALITY[ossimKakaduCompressor::OKP_VISUALLY_LOSSLESS]
+       << "\ncompression_quality="
+       << COMPRESSION_QUALITY[ossimKakaduCompressor::OKP_LOSSY]
+       << "\ncompression_quality="
+       << COMPRESSION_QUALITY[ossimKakaduCompressor::OKP_LOSSY2]
+       << "\ncompression_quality="
+       << COMPRESSION_QUALITY[ossimKakaduCompressor::OKP_LOSSY3]
+       << "\ncompression_quality="
+       << COMPRESSION_QUALITY[ossimKakaduCompressor::OKP_EPJE]
+       << "\n";
 }

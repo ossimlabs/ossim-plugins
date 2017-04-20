@@ -286,8 +286,10 @@ private:
 
    /**
     * Initializes m_channels to be used with copyRegionToTile if it makes sense.
+    * Also set number of bands if channel mapping was successful.
+    * @return true on success, false on error.
     */
-   void configureChannelMapping();
+   bool configureChannelMapping();
 
    kdu_supp::jp2_family_src*        theJp2FamilySrc;
    kdu_core::kdu_compressed_source* theJp2Source;
