@@ -57,13 +57,13 @@ std::shared_ptr<ossim::istream> ossim::AwsStreamFactory::createIstream(
    {
      ossimNotify(ossimNotifyLevel_WARN) << "ossim::AwsStreamFactory::createIstream: Entered...............\n";
    }
+   
    //---
    // Hack for upstream code calling ossimFilename::convertToNative()
    // wrecking s3 url.
    //---
 #if defined(_WIN32)
    ossimFilename f = connectionString;
-   f.convertBackToForwardSlashes();
    result->open( f.string(), options, openMode) ;
 #else
    result->open( connectionString, options, openMode );
