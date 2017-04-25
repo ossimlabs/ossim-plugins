@@ -27,11 +27,11 @@ public:
 
    unsigned int getTiePointID() const { return m_tiePointID; }
 
-   const ossimDpt& getImagePoint(unsigned int index) const;
+   void getImagePoint(unsigned int index, ossimDpt& imagePoint) const;
 
-   const ossimString& getImageID(unsigned int index) const;
+   void getImageID(unsigned int index, ossimString& imageID) const;
 
-   const ossimDpt& getCovariance(unsigned int index) const;
+   void getCovariance(unsigned int index, Covariance& covariance) const;
 
 private:
    unsigned int             m_tiePointID;

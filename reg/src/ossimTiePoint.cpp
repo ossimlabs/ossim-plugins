@@ -21,17 +21,17 @@ ossimTiePoint::~ossimTiePoint()
 
 }
 
-const ossimDpt& ossimTiePoint::getImagePoint(unsigned int index) const
+void ossimTiePoint::getImagePoint(unsigned int index, ossimDpt& imagePoint) const
 {
 
 }
 
-const ossimString& ossimTiePoint::getImageID(unsigned int index) const
+void ossimTiePoint::getImageID(unsigned int index, ossimString& imageID) const
 {
 
 }
 
-const ossimDpt& ossimTiePoint::getCovariance(unsigned int index) const
+void ossimTiePoint::getCovariance(unsigned int index, ossimTiePoint::Covariance& covariance) const
 {
 
 }
