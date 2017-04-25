@@ -7,10 +7,6 @@
 
 #include <ossim/base/ossimArgumentParser.h>
 #include <ossim/base/ossimApplicationUsage.h>
-#include <ossim/imaging/ossimImageHandlerRegistry.h>
-#include <ossim/imaging/ossimImageSourceSequencer.h>
-#include <ossim/imaging/ossimCacheTileSource.h>
-#include <ossim/base/ossimKeywordNames.h>
 #include <ossim/base/ossimException.h>
 #include "ossimRegTool.h"
 #include <sstream>
@@ -78,20 +74,17 @@ void ossimRegTool::initialize(const ossimKeywordlist& kwl)
    ossimChipProcTool::initialize(kwl);
 }
 
-void ossimRegTool::initProcessingChain()
-{
-   // Nothing to do.
-}
-
-void ossimRegTool::finalizeChain()
-{
-   // Do nothing and avoid ossimChipProcUtil from doing its standard stuff.
-}
-
 bool ossimRegTool::execute()
 {
    ostringstream xmsg;
 
+   // Establish intersections
+
+   // Find tiepoints
+
+   // Register images
+
+   // Report results
 
    return true;
 }
