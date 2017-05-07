@@ -14,7 +14,7 @@
 // $Id$
 
 #ifndef ossimGpkgTileEntry_HEADER
-#define ossimonGpkgTileEntry_HEADER 1
+#define ossimGpkgTileEntry_HEADER 1
 
 #include "ossimGpkgSpatialRefSysRecord.h"
 #include "ossimGpkgTileMatrixRecord.h"
