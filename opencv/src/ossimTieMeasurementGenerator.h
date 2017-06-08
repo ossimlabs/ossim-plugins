@@ -35,10 +35,12 @@ public:
    ossimTieMeasurementGenerator();
    bool init(std::ostream& report = cout);
 
-   // Define collection ROI
-   bool setBox(std::vector<ossimIrect> roi,
-               const ossim_uint32& index,
-               std::vector<ossimImageSource*> src);
+   virtual bool setImageList(std::vector<ossimImageSource*> src);
+
+   // Define collection ROIs, coordinate system depends on derived class use. List of AOIs
+   // must correspond to the list of images.
+   virtual bool setROIs(std::vector<ossimIrect> roi);
+
    bool isValidCollectionBox() const {return m_validBox;}   
 
    // Measurement collection
@@ -88,6 +90,8 @@ protected:
    // Initialize patch reference positions
    bool refreshCollectionTraits();
 
+   cv::Ptr<cv::Feature2D> createFeature2D(const ossimString& name);
+
    // Image-related members
    std::vector<ossimImageSource*> m_src;
    ossimRefPtr<ossimIvtGeomXform> m_igxA;
@@ -123,7 +127,7 @@ protected:
 
    // Pointer to detector
    ossimString m_detectorName;
-   cv::Ptr<cv::ORB> m_detector;
+   cv::Ptr<cv::Feature2D> m_detector;
 
    // Pointer to descriptor extractor
    ossimString m_extractorName;

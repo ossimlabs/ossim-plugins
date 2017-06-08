@@ -26,6 +26,8 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/flann/flann.hpp>
+#include <opencv2/features2d.hpp>
+#include <opencv2/imgproc.hpp>
 // Note: These are purposely commented out to indicate non-use.
 // #include <opencv2/nonfree/nonfree.hpp>
 // #include <opencv2/nonfree/features2d.hpp>
@@ -67,7 +69,7 @@ ossimTieMeasurementGenerator::ossimTieMeasurementGenerator()
    m_distEditFactor(0),
    m_detectorName("ORB"),
    m_detector(),
-   m_extractorName("FREAK"),
+   m_extractorName("ORB"),
    m_extractor(),
    m_matcherName("BruteForce-Hamming"),
    m_matcher(),
@@ -152,7 +154,7 @@ bool ossimTieMeasurementGenerator::refreshCollectionTraits()
    {
       int gridRows = m_gridSize.y;
       int gridCols = m_gridSize.x;
-      cv::ORB::create("");
+      //cv::ORB::create("");
    }
 
    return initOK;
@@ -364,13 +366,43 @@ bool ossimTieMeasurementGenerator::run()
 }
 
 
+cv::Ptr<cv::Feature2D> ossimTieMeasurementGenerator::createFeature2D(const ossimString& name)
+{
+   cv::Ptr<cv::Feature2D> feature2d;
+   if (name == "FAST")
+      feature2d = cv::FastFeatureDetector::create();
+   else if (name == "ORB")
+      feature2d = cv::ORB::create();
+   else if (name == "BRISK")
+      feature2d = cv::BRISK::create();
+   else if (name == "MSER")
+      feature2d = cv::MSER::create();
+   else if (name == "GFTT")
+      feature2d = cv::GFTTDetector::create();
+   else if (name == "HARRIS")
+   {
+      cv::Ptr<cv::GFTTDetector> d = cv::GFTTDetector::create();
+      d->setHarrisDetector(true);
+      feature2d = d;
+   }
+   else if (name == "SimpleBlob")
+      feature2d = cv::SimpleBlobDetector::create();
+   else if (name == "AKAZE")
+      feature2d = cv::AKAZE::create();
+   else if (name == "KAZE")
+      feature2d = cv::KAZE::create();
+   else if (name == "AGAST")
+      feature2d = cv::AgastFeatureDetector::create();
+
+   return feature2d;
+}
+
 //*****************************************************************************
 //  METHOD: ossimTieMeasurementGenerator::setFeatureDetector()
 //   Set the feature detector
 //  
 // The following detector types are supported:
 //     "FAST" – FastFeatureDetector
-//     "STAR" – StarFeatureDetector
 //     "SIFT" – SIFT (nonfree module)
 //     "SURF" – SURF (nonfree module)
 //     "ORB" – ORB
@@ -388,12 +420,12 @@ bool ossimTieMeasurementGenerator::setFeatureDetector(const ossimString& name)
 {
    bool createOK = false;
    m_detectorName = name;
-   m_detector  = cv::FeatureDetector::create(m_detectorName.string());
+   m_detector = createFeature2D(name);
 
    if( m_detector != 0 )
    {
       createOK = true;
-      std::vector<std::string> parameters;
+//      std::vector<std::string> parameters;
 //      m_detector->getParams(parameters);
 //      if (traceDebug())
 //      {
@@ -428,20 +460,20 @@ bool ossimTieMeasurementGenerator::setDescriptorExtractor(const ossimString& nam
 {
    bool createOK = false;
    m_extractorName = name;
-   m_extractor = cv::DescriptorExtractor::create(m_extractorName.string());
+   m_extractor = createFeature2D(name);
 
    if( m_extractor != 0 )
    {
       createOK = true;
-      std::vector<std::string> parameters;
-      m_extractor->getParams(parameters);
-      if (traceDebug())
-      {
-         ossimNotify(ossimNotifyLevel_DEBUG)
-            << "DEBUG: ...extractor..." << std::endl;
-         for (int i = 0; i < (int) parameters.size(); i++)
-            ossimNotify(ossimNotifyLevel_DEBUG)<<"  "<<parameters[i]<<std::endl;
-      }
+//      std::vector<std::string> parameters;
+//      m_extractor->getParams(parameters);
+//      if (traceDebug())
+//      {
+//         ossimNotify(ossimNotifyLevel_DEBUG)
+//            << "DEBUG: ...extractor..." << std::endl;
+//         for (int i = 0; i < (int) parameters.size(); i++)
+//            ossimNotify(ossimNotifyLevel_DEBUG)<<"  "<<parameters[i]<<std::endl;
+//      }
    }
 
    return createOK;
@@ -527,73 +559,65 @@ bool ossimTieMeasurementGenerator::setGridSize(const ossimIpt& gridDimensions)
 }
 
 
-//*****************************************************************************
-//  METHOD: ossimTieMeasurementGenerator::setBox()
-//
-//  Delineate the bounding collection boxes
-//*****************************************************************************
-bool ossimTieMeasurementGenerator::setBox(std::vector<ossimIrect> roi,
-                                          const ossim_uint32& index,
-                                          std::vector<ossimImageSource*> src)
+bool ossimTieMeasurementGenerator::setImageList(std::vector<ossimImageSource*> src)
 {
-
-   m_validBox = false;
+   m_src.clear();
 
    // Load the image source pointers
    //    Note: The source pointer vector may contain more than
    //          two images, but only the first two are used
    //          in the auto measurement process.
-   m_src.clear();
    for (ossim_uint32 n=0; n<src.size(); ++n)
       m_src.push_back(src[n]);
 
+   m_spIndexA = 0;
+   m_spIndexB = 1;
+}
 
-   // Set the patch indices
-   if (index<2)
+bool ossimTieMeasurementGenerator::setROIs(std::vector<ossimIrect> roi)
+{
+   // The image list must be defined first!
+   if (m_src.size() != roi.size())
+      return false;
+
+   m_validBox = false;
+
+   // Save reference points (patch centers)
+   roi[m_spIndexA].getCenter(m_patchRefA);
+   roi[m_spIndexB].getCenter(m_patchRefB);
+
+   // Save dimensions (patch sizes)
+   m_patchSizeA.x = roi[m_spIndexA].width();
+   m_patchSizeA.y = roi[m_spIndexA].height();
+   m_patchSizeB.x = roi[m_spIndexB].width();
+   m_patchSizeB.y = roi[m_spIndexB].height();
+
+   // Set the IvtGeometryXforms
+   ossimIvtGeomXformVisitor visitorA;
+   m_src[m_spIndexA]->accept(visitorA);
+   if (visitorA.getTransformList().size() == 1)
    {
-      m_spIndexA = index;
-      if (m_spIndexA == 0)
-         m_spIndexB = 1;
-      else
-         m_spIndexB = 0;
+      m_igxA = visitorA.getTransformList()[0].get();
+   }
+   ossimIvtGeomXformVisitor visitorB;
+   m_src[m_spIndexB]->accept(visitorB);
+   if (visitorB.getTransformList().size() == 1)
+   {
+      m_igxB = visitorB.getTransformList()[0].get();
+   }
 
-      // Save reference points (patch centers)
-      roi[m_spIndexA].getCenter(m_patchRefA);
-      roi[m_spIndexB].getCenter(m_patchRefB);
+   m_validBox = true;
 
-      // Save dimensions (patch sizes)
-      m_patchSizeA.x = roi[m_spIndexA].width();
-      m_patchSizeA.y = roi[m_spIndexA].height();
-      m_patchSizeB.x = roi[m_spIndexB].width();
-      m_patchSizeB.y = roi[m_spIndexB].height();
-
-      // Set the IvtGeometryXforms
-      ossimIvtGeomXformVisitor visitorA;
-      m_src[m_spIndexA]->accept(visitorA);
-      if (visitorA.getTransformList().size() == 1)
-      {
-         m_igxA = visitorA.getTransformList()[0].get();
-      }
-      ossimIvtGeomXformVisitor visitorB;
-      m_src[m_spIndexB]->accept(visitorB);
-      if (visitorB.getTransformList().size() == 1)
-      {
-         m_igxB = visitorB.getTransformList()[0].get();
-      }
-
-      m_validBox = true;
-
-      if (traceDebug())
-      {
-         ossimNotify(ossimNotifyLevel_DEBUG)
-            << "DEBUG: ...ossimTieMeasurementGenerator::setBox" << std::endl;
-         ossimNotify(ossimNotifyLevel_DEBUG)<<" m_spIndexA  = "<<m_spIndexA<<std::endl;
-         ossimNotify(ossimNotifyLevel_DEBUG)<<" m_spIndexB  = "<<m_spIndexB<<std::endl;
-         ossimNotify(ossimNotifyLevel_DEBUG)<<" m_patchRefA = "<<m_patchRefA<<std::endl;
-         ossimNotify(ossimNotifyLevel_DEBUG)<<" m_patchRefB = "<<m_patchRefB<<std::endl;
-         ossimNotify(ossimNotifyLevel_DEBUG)<<" m_patchSizeA = "<<m_patchSizeA<<std::endl;
-         ossimNotify(ossimNotifyLevel_DEBUG)<<" m_patchSizeB = "<<m_patchSizeB<<std::endl;
-      }
+   if (traceDebug())
+   {
+      ossimNotify(ossimNotifyLevel_DEBUG)
+                  << "DEBUG: ...ossimTieMeasurementGenerator::setBox" << std::endl;
+      ossimNotify(ossimNotifyLevel_DEBUG)<<" m_spIndexA  = "<<m_spIndexA<<std::endl;
+      ossimNotify(ossimNotifyLevel_DEBUG)<<" m_spIndexB  = "<<m_spIndexB<<std::endl;
+      ossimNotify(ossimNotifyLevel_DEBUG)<<" m_patchRefA = "<<m_patchRefA<<std::endl;
+      ossimNotify(ossimNotifyLevel_DEBUG)<<" m_patchRefB = "<<m_patchRefB<<std::endl;
+      ossimNotify(ossimNotifyLevel_DEBUG)<<" m_patchSizeA = "<<m_patchSizeA<<std::endl;
+      ossimNotify(ossimNotifyLevel_DEBUG)<<" m_patchSizeB = "<<m_patchSizeB<<std::endl;
    }
 
    return m_validBox;
@@ -687,7 +711,7 @@ void ossimTieMeasurementGenerator::showCvResultsWindow(
    // DRAW_OVER_OUTIMG
    // NOT_DRAW_SINGLE_POINTS
    // DRAW_RICH_KEYPOINTS
-   cv::namedWindow(m_cvWindowName);
+   cv::namedWindow(m_cvWindowName.string());
    cv::Mat imgMatch;
    cv::drawMatches(m_imgA, keypointsA, m_imgB, keypointsB, goodMatches, imgMatch,
        cv::Scalar::all(-1), cv::Scalar::all(-1), vector<char>(), cv::DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);      
@@ -707,8 +731,8 @@ void ossimTieMeasurementGenerator::showCvResultsWindow(
          sFac = cRatio;
    }
    cv::Mat imgMatchOut;
-   cv::resize(imgMatch, imgMatchOut, cv::Size(), sFac, sFac, cv::INTER_AREA);
-   cv::imshow(m_cvWindowName, imgMatchOut);
+   cv::resize(imgMatch, imgMatchOut, cv::Size(), sFac, sFac);
+   cv::imshow(m_cvWindowName.string(), imgMatchOut);
 }
 
 
@@ -723,5 +747,5 @@ void ossimTieMeasurementGenerator::closeCvWindow(const bool waitKeyPress)
       cv::waitKey();
    }
 
-   cv::destroyWindow(m_cvWindowName);
+   cv::destroyWindow(m_cvWindowName.string());
 }
