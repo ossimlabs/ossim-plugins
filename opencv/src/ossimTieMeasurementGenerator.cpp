@@ -172,7 +172,8 @@ bool ossimTieMeasurementGenerator::run()
 
    // Refresh collection traits before run
    runOK = refreshCollectionTraits();
-
+   if(!m_detector) runOK = false;
+   if(!m_extractor) runOK = false;
    if (runOK)
    {
       // ossimIrect constructor center-based constructor
