@@ -18,7 +18,7 @@ extern "C"
 
    const char* getDescription()
    {
-      return "Potrace utility plugin\n\n";
+      return "Potrace Tool plugin\n\n";
    }
 
    int getNumberOfClassNames()
@@ -30,7 +30,7 @@ extern "C"
    {
       if (idx == 0)
       {
-         return "ossimPotraceUtil";
+         return "ossimPotraceTool";
       }
       return (const char*)0;
    }

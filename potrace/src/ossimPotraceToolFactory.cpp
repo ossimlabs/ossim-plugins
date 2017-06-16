@@ -34,7 +34,7 @@ ossimTool* ossimPotraceToolFactory::createTool(const std::string& argName) const
    ossimString utilName (argName);
    utilName.downcase();
 
-   if ((utilName == "potrace") || (argName == "ossimPotraceUtil"))
+   if ((utilName == "potrace") || (argName == "ossimPotraceTool"))
       return new ossimPotraceTool;
 
    return 0;
@@ -54,5 +54,5 @@ std::map<std::string, std::string> ossimPotraceToolFactory::getCapabilities() co
 
 void ossimPotraceToolFactory::getTypeNameList(vector<ossimString>& typeList) const
 {
-   typeList.push_back("ossimPotraceUtil");
+   typeList.push_back("ossimPotraceTool");
 }

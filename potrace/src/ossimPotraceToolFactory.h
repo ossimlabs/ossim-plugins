@@ -5,8 +5,8 @@
 //
 //**************************************************************************************************
 
-#ifndef ossimPotraceUtilFactory_HEADER
-#define ossimPotraceUtilFactory_HEADER 1
+#ifndef ossimPotraceToolFactory_HEADER
+#define ossimPotraceToolFactory_HEADER 1
 
 #include <ossim/plugin/ossimPluginConstants.h>
 #include <ossim/util/ossimToolFactoryBase.h>
@@ -37,4 +37,4 @@ protected:
 
 };
 
-#endif /* end of #ifndef ossimPotraceUtilFactory_HEADER */
+#endif /* end of #ifndef ossimPotraceToolFactory_HEADER */

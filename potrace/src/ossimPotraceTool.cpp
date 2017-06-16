@@ -127,7 +127,7 @@ void ossimPotraceTool::initialize(const ossimKeywordlist& kwl)
       m_mode = LINESTRING;
    else if (!value.empty())
    {
-      xmsg <<"ossimPotraceUtil:"<<__LINE__<<" Unallowed mode requested: <"<<value<<">."
+      xmsg <<"ossimPotraceTool:"<<__LINE__<<" Unallowed mode requested: <"<<value<<">."
             <<endl;
       throw ossimException(xmsg.str());
    }
@@ -151,7 +151,7 @@ bool ossimPotraceTool::execute()
 
    if (m_imgLayers.empty() || !m_geom.valid())
    {
-      xmsg<<"ossimPotraceUtil:"<<__LINE__<<" Null input image list encountered! ";
+      xmsg<<"ossimPotraceTool:"<<__LINE__<<" Null input image list encountered! ";
       throw ossimException(xmsg.str());
    }
 
@@ -173,7 +173,7 @@ bool ossimPotraceTool::execute()
    potrace_state_t* potraceOutput = potrace_trace(potraceParam, m_productBitmap);
    if (!potraceOutput)
    {
-      xmsg <<"ossimPotraceUtil:"<<__LINE__<<" Null pointer returned from potrace_trace!";
+      xmsg <<"ossimPotraceTool:"<<__LINE__<<" Null pointer returned from potrace_trace!";
       throw ossimException(xmsg.str());
    }
 
@@ -497,7 +497,7 @@ bool ossimPotraceTool::writeGeoJSON(potrace_path_t* vectorList)
    FILE* outFile = fopen(m_productFilename.chars(), "w");
    if (!outFile)
    {
-      xmsg <<"ossimPotraceUtil:"<<__LINE__<<" Could not open output file <"<<m_productFilename
+      xmsg <<"ossimPotraceTool:"<<__LINE__<<" Could not open output file <"<<m_productFilename
             <<"> for writing.";
       throw ossimException(xmsg.str());
    }
@@ -510,7 +510,7 @@ bool ossimPotraceTool::writeGeoJSON(potrace_path_t* vectorList)
       ifstream vectorFile (m_productFilename.chars());
       if (vectorFile.fail())
       {
-         xmsg <<"ossimPotraceUtil:"<<__LINE__<<" Error encountered opening temporary vector file at: "
+         xmsg <<"ossimPotraceTool:"<<__LINE__<<" Error encountered opening temporary vector file at: "
                "<"<<m_productFilename<<">.";
          throw ossimException(xmsg.str());
       }
