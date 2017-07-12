@@ -131,6 +131,12 @@ bool ossim::S3StreamBuffer::getBlockRangeInBytes(ossim_int64 blockIndex,
 
 bool ossim::S3StreamBuffer::loadBlock(ossim_int64 absolutePosition)
 {
+   if(traceDebug())
+   {
+      ossimNotify(ossimNotifyLevel_DEBUG)
+         << "ossim::S3StreamBuffer::loadBlock DEBUG: entered with absolute position: " << absolutePosition << "\n";
+
+   }
    bool result = false;
    m_bufferPtr = 0;
    GetObjectRequest getObjectRequest;
@@ -168,6 +174,12 @@ bool ossim::S3StreamBuffer::loadBlock(ossim_int64 absolutePosition)
          m_bufferActualDataSize = 0;
       }
    }
+   if(traceDebug())
+   {
+      ossimNotify(ossimNotifyLevel_DEBUG)
+         << "ossim::S3StreamBuffer::loadBlock DEBUG: leaving with absolutePosition " << absolutePosition << "\n";
+
+   }
 
    return result;
 }
@@ -204,8 +216,11 @@ ossim::S3StreamBuffer* ossim::S3StreamBuffer::open (const std::string& connectio
       if(ossim::S3HeaderCache::instance()->getCachedFilesize(connectionString, filesize))
       {
          m_fileSize = filesize;
-         m_opened = true;
-         m_currentBlockPosition = 0;
+         if(m_fileSize >= 0)
+         {
+            m_opened = true;
+            m_currentBlockPosition = 0;
+         }
       }
       else
       {
@@ -222,6 +237,14 @@ ossim::S3StreamBuffer* ossim::S3StreamBuffer::open (const std::string& connectio
                m_currentBlockPosition = 0;
                ossim::S3HeaderCache::Node_t nodePtr = std::make_shared<ossim::S3HeaderCacheNode>(m_fileSize);
                ossim::S3HeaderCache::instance()->addHeader(connectionString, nodePtr);
+            }
+            else
+            {
+               m_opened = false;
+               m_fileSize = -1;
+               m_currentBlockPosition = 0;
+               ossim::S3HeaderCache::Node_t nodePtr = std::make_shared<ossim::S3HeaderCacheNode>(m_fileSize);
+               ossim::S3HeaderCache::instance()->addHeader(connectionString, nodePtr);               
             }
          }
       }
@@ -332,7 +355,6 @@ ossim::S3StreamBuffer::pos_type ossim::S3StreamBuffer::seekoff(off_type offset,
             absolutePosition = getAbsoluteByteOffset();
             ossim_int64 delta = offset - absolutePosition;
             setg(eback(), gptr()+delta, egptr());
-            //gbump(offset - absolutePosition);
          }
          // std::cout << "ossim::S3StreamBuffer::seekoff beg RESULT??????????????????? " << result << std::endl;
          break;
@@ -356,11 +378,8 @@ ossim::S3StreamBuffer::pos_type ossim::S3StreamBuffer::seekoff(off_type offset,
          else
          {
             result += offset;
-//            gbump(offset);
             setg(eback(), gptr()+offset, egptr());
-
          }
-         // std::cout << "ossim::S3StreamBuffer::seekoff cur RESULT??????????????????? " << result << std::endl;
 
         break;
       }
@@ -369,20 +388,10 @@ ossim::S3StreamBuffer::pos_type ossim::S3StreamBuffer::seekoff(off_type offset,
          ossim_int64 absolutePosition  = m_fileSize + offset;
          if(!gptr())
          {
-            // if(absolutePosition==m_fileSize)
-            // {
-            //    if(!loadBlock(absolutePosition))
-            //    {
-            //       return result;
-            //    }
-            // }
-            // else
-            // {
-               if(!loadBlock(absolutePosition))
-               {
-                  return result;
-               }               
-//            }
+            if(!loadBlock(absolutePosition))
+            {
+               return result;
+            }               
          }
          ossim_int64 currentAbsolutePosition = getAbsoluteByteOffset();
          ossim_int64 delta = absolutePosition-currentAbsolutePosition;
@@ -393,7 +402,6 @@ ossim::S3StreamBuffer::pos_type ossim::S3StreamBuffer::seekoff(off_type offset,
          {
             setg(eback(), gptr()+delta, egptr());
 
-//            gbump(delta);
             result = absolutePosition;
          }
          // std::cout << "ossim::S3StreamBuffer::seekoff end RESULT??????????????????? " << result << std::endl;
