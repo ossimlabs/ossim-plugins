@@ -164,6 +164,8 @@ bool ossim::S3StreamBuffer::loadBlock(ossim_int64 absolutePosition)
 
          ossim_int64 delta = absolutePosition-startRange;
          setg(m_bufferPtr, m_bufferPtr + delta, m_bufferPtr+m_bufferActualDataSize);
+         m_blockInfo.setBytes(startRange,startRange+delta,startRange+m_bufferActualDataSize);
+         // std::cout << "LOADING BLOCK: " << m_blockInfo.getStartByte() << ", " << m_blockInfo.getCurrentByte() << ", " << m_blockInfo.getEndByte() << "\n";
          m_currentBlockPosition = startRange;
          result = true;
          //std::cout << "Successfully retrieved object from s3 with value: " << std::endl;
@@ -275,6 +277,7 @@ void ossim::S3StreamBuffer::clearAll()
    m_fileSize = 0;
    m_opened = false;
    m_currentBlockPosition = 0;
+   m_blockInfo.setBytes(0,0,0);
 }
 
 
@@ -284,7 +287,7 @@ int ossim::S3StreamBuffer::underflow()
    {
       return EOF;
    }
-   else if( !withinWindow() )
+   else if( !m_blockInfo.withinWindow() )
    {
       ossim_int64 absolutePosition = getAbsoluteByteOffset();
       if(absolutePosition < 0)
@@ -331,45 +334,47 @@ ossim::S3StreamBuffer::pos_type ossim::S3StreamBuffer::seekoff(off_type offset,
          // we have to have one valid block read in to properly adjust
          // gptr() with gbump
          //
-         if(!gptr())
-         {
-            if(!loadBlock(offset))
-            {
-               return result;
-            }
-         }
+         // if(!gptr())
+         // {
+         //    if(!loadBlock(offset))
+         //    {
+         //       return result;
+         //    }
+         // }
          if((offset <= (ossim_int64)m_fileSize)&&
             (offset >=0))
          {
             result = pos_type(offset);
          }
-         if(!gptr())
-         {
-            if(!loadBlock(result))
-            {
-               return EOF;
-            }
-         }
-         else if(mode  & std::ios_base::in)
+         // if(!gptr())
+         // {
+         //    if(!loadBlock(result))
+         //    {
+         //       return EOF;
+         //    }
+         // }
+         //else 
+         if(mode  & std::ios_base::in)
          {
             absolutePosition = getAbsoluteByteOffset();
             ossim_int64 delta = offset - absolutePosition;
             setg(eback(), gptr()+delta, egptr());
+            m_blockInfo.setCurrentByte(offset);
          }
          // std::cout << "ossim::S3StreamBuffer::seekoff beg RESULT??????????????????? " << result << std::endl;
          break;
       }
       case std::ios_base::cur:
       {
-         if(!gptr())
-         {
-            // std::cout << "LOADING BLOCK!!!!!!!!!!!!!!\n" << std::endl;
-            if(!loadBlock(0))
-            {
-               return result;
-            }
-         }
-         result = getAbsoluteByteOffset();
+         // if(!gptr())
+         // {
+         //    // std::cout << "LOADING BLOCK!!!!!!!!!!!!!!\n" << std::endl;
+         //    if(!loadBlock(0))
+         //    {
+         //       return result;
+         //    }
+         // }
+         // result = getAbsoluteByteOffset();
          // std::cout << "INITIAL ABSOLUTE BYTE OFFSET ==== " << result << "\n";
          if(!offset)
          {
@@ -379,6 +384,7 @@ ossim::S3StreamBuffer::pos_type ossim::S3StreamBuffer::seekoff(off_type offset,
          {
             result += offset;
             setg(eback(), gptr()+offset, egptr());
+            m_blockInfo.setCurrentByte(m_blockInfo.getCurrentByte()+offset);
          }
 
         break;
@@ -386,13 +392,13 @@ ossim::S3StreamBuffer::pos_type ossim::S3StreamBuffer::seekoff(off_type offset,
       case std::ios_base::end:
       {
          ossim_int64 absolutePosition  = m_fileSize + offset;
-         if(!gptr())
-         {
-            if(!loadBlock(absolutePosition))
-            {
-               return result;
-            }               
-         }
+         // if(!gptr())
+         // {
+         //    if(!loadBlock(absolutePosition))
+         //    {
+         //       return result;
+         //    }               
+         // }
          ossim_int64 currentAbsolutePosition = getAbsoluteByteOffset();
          ossim_int64 delta = absolutePosition-currentAbsolutePosition;
 
@@ -401,7 +407,7 @@ ossim::S3StreamBuffer::pos_type ossim::S3StreamBuffer::seekoff(off_type offset,
          if(mode & std::ios_base::in )
          {
             setg(eback(), gptr()+delta, egptr());
-
+            m_blockInfo.setCurrentByte(absolutePosition);
             result = absolutePosition;
          }
          // std::cout << "ossim::S3StreamBuffer::seekoff end RESULT??????????????????? " << result << std::endl;
@@ -422,23 +428,23 @@ ossim::S3StreamBuffer::pos_type ossim::S3StreamBuffer::seekpos(pos_type pos, std
    pos_type result = pos_type(off_type(-1));
    ossim_int64 tempPos = static_cast<ossim_int64>(pos);
    // Currently we must initialize to a block
-   if(!gptr())
-   {
-      if(!loadBlock(tempPos))
-      {
-         return result;
-      }
-   }
+   // if(!gptr())
+   // {
+   //    if(!loadBlock(tempPos))
+   //    {
+   //       return result;
+   //    }
+   // }
    ossim_int64 absoluteLocation = getAbsoluteByteOffset();
    if(mode & std::ios_base::in)
    {
       if((pos >= 0)&&(pos < (ossim_int64)m_fileSize))
       {
+         m_blockInfo.setCurrentByte(tempPos);
          ossim_int64 delta = tempPos-absoluteLocation;
          if(delta)
          {
             setg(eback(), gptr()+delta, egptr());
-            //gbump(delta);
          }
          result = pos;
       }
@@ -453,16 +459,21 @@ std::streamsize ossim::S3StreamBuffer::xsgetn(char_type* s, std::streamsize n)
    if(!is_open()) return EOF;
    // unsigned long int bytesLeftToRead = egptr()-gptr();
    // initialize if we need to to load the block at current position
-   if((!withinWindow())&&is_open())
+//   if((!withinWindow())&&is_open())
+   if((!m_blockInfo.withinWindow())&&is_open())
    {
-      if(!gptr())
-      {
-         if(!loadBlock(0))
-         {
-            return EOF;
-         }
-      }
-      else if(!loadBlock(getAbsoluteByteOffset()))
+      // if(!gptr())
+      // {
+      //    if(!loadBlock(0))
+      //    {
+      //       return EOF;
+      //    }
+      // }
+      // else if(!loadBlock(getAbsoluteByteOffset()))
+      // {
+      //    return EOF;
+      // }
+      if(!loadBlock(m_blockInfo.getCurrentByte()))
       {
          return EOF;
       }
@@ -470,7 +481,7 @@ std::streamsize ossim::S3StreamBuffer::xsgetn(char_type* s, std::streamsize n)
    ossim_int64 bytesNeedToRead = n;
    // ossim_int64 bytesToRead = 0;
    ossim_int64 bytesRead = 0;
-   ossim_int64 currentAbsolutePosition = getAbsoluteByteOffset();
+   ossim_int64 currentAbsolutePosition = m_blockInfo.getCurrentByte();//getAbsoluteByteOffset();
    // ossim_int64 startOffset, endOffset;
    if(currentAbsolutePosition >= (ossim_int64)m_fileSize)
    {
@@ -483,14 +494,15 @@ std::streamsize ossim::S3StreamBuffer::xsgetn(char_type* s, std::streamsize n)
 
    while(bytesNeedToRead > 0)
    {
-      currentAbsolutePosition = getAbsoluteByteOffset();
-      if(!withinWindow())
+      currentAbsolutePosition = m_blockInfo.getCurrentByte();//getAbsoluteByteOffset();
+      //if(!withinWindow())
+      if(!m_blockInfo.withinWindow())
       {
-         if(!loadBlock(currentAbsolutePosition))
+         if(!loadBlock(m_blockInfo.getCurrentByte()))
          {
             return bytesRead;
          }
-         currentAbsolutePosition = getAbsoluteByteOffset();
+         currentAbsolutePosition = m_blockInfo.getCurrentByte();
       }
 
       // get each bloc  
@@ -498,10 +510,11 @@ std::streamsize ossim::S3StreamBuffer::xsgetn(char_type* s, std::streamsize n)
       {
          //getBlockRangeInBytes(getBlockIndex(m_currentBlockPosition), startOffset, endOffset);      
     
-         ossim_int64 delta = (egptr()-gptr());//(endOffset - m_currentBlockPosition)+1;
+         ossim_int64 delta = (m_blockInfo.getEndByte()-m_blockInfo.getCurrentByte());//(endOffset - m_currentBlockPosition)+1;
 
          if(delta <= bytesNeedToRead)
          {
+
             std::memcpy(s+bytesRead, gptr(), delta);
             //m_currentBlockPosition += delta;
             //setg(eback(), egptr(), egptr());
@@ -509,12 +522,13 @@ std::streamsize ossim::S3StreamBuffer::xsgetn(char_type* s, std::streamsize n)
             bytesNeedToRead-=delta;
             //gbump(delta);
             setg(eback(), gptr()+delta, egptr());
-
+            m_blockInfo.setCurrentByte(m_blockInfo.getCurrentByte()+delta);
          }
          else
          {
             std::memcpy(s+bytesRead, gptr(), bytesNeedToRead);
             setg(eback(), gptr()+bytesNeedToRead, egptr());
+            m_blockInfo.setCurrentByte(m_blockInfo.getCurrentByte()+bytesNeedToRead);
             //gbump(bytesNeedToRead);
 //            std::cout << "gbump 2 DELTA ========= " << bytesNeedToRead << std::endl;
             bytesRead+=bytesNeedToRead;
@@ -535,11 +549,12 @@ ossim_int64 ossim::S3StreamBuffer::getAbsoluteByteOffset()const
    
    if(m_currentBlockPosition >= 0)
    {
-      result = m_currentBlockPosition;
-      if(gptr()&&eback())
-      {
-         result += (gptr()-eback());
-      }
+      result = m_blockInfo.getCurrentByte();
+      //result = m_currentBlockPosition;
+      // if(gptr()&&eback())
+      // {
+      //    result += (gptr()-eback());
+      // }
    }
 
    // std::cout << "RESULT getAbsoluteByteOffset======== " << result << "\n";
