@@ -15,19 +15,19 @@
 #define ossimS3StreamBuffer_HEADER 1
 
 #include <ossim/base/ossimConstants.h>
-// #include <aws/s3/S3Client.h>
+#include <aws/s3/S3Client.h>
 
 #include "S3StreamDefaults.h"
 #include <iostream>
 #include <vector>
 
-namespace Aws
-{
-   namespace S3
-   {
-      class S3Client;
-   }
-}
+// namespace Aws
+// {
+//    namespace S3
+//    {
+//       class S3Client;
+//    }
+// }
 
 class ossimKeywordlist;
 
