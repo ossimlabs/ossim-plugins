@@ -31,11 +31,6 @@ ossim::AwsStreamFactory* ossim::AwsStreamFactory::m_instance = 0;
 
 ossim::AwsStreamFactory::~AwsStreamFactory()
 {
-   if ( m_client )
-   {
-      //delete m_client;
-      m_client = 0;
-   }
 }
 
 ossim::AwsStreamFactory* ossim::AwsStreamFactory::instance()
@@ -106,12 +101,6 @@ bool ossim::AwsStreamFactory::exists(
          << "ossim::AwsStreamFactory::exists() DEBUG: entered.....\n";
 
    }
-   // This is causing core dumps under MAC.  Don't know why.  I have moved this during
-   // the initialization of the constructor.  All seems to work there.
-   // if ( !m_client )
-   // {
-   //    initClient(); // First time through...
-   // }
    bool result = false;
    
    // ossimTimer::Timer_t startTimer = ossimTimer::instance()->tick();
@@ -178,6 +167,8 @@ bool ossim::AwsStreamFactory::exists(
 // Hidden from use:
 ossim::AwsStreamFactory::AwsStreamFactory()
 {
+   // the stream is now shared so we must allocate here.  
+   // 
    initClient();
 }
 
