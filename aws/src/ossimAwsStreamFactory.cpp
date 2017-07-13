@@ -33,7 +33,7 @@ ossim::AwsStreamFactory::~AwsStreamFactory()
 {
    if ( m_client )
    {
-      delete m_client;
+      //delete m_client;
       m_client = 0;
    }
 }
@@ -198,5 +198,6 @@ void ossim::AwsStreamFactory::initClient() const
       config.region = region.c_str();
    }
    
-   m_client = new Aws::S3::S3Client( config );
+   m_client = std::make_shared<Aws::S3::S3Client>(config);
+//new Aws::S3::S3Client( config );
 }

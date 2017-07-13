@@ -115,7 +115,8 @@ protected:
    ossim_int64 getAbsoluteByteOffset()const;
    bool withinWindow()const;
 
-   Aws::S3::S3Client* m_client;
+   //Aws::S3::S3Client* m_client;
+   mutable std::shared_ptr<Aws::S3::S3Client> m_client;
    std::string m_bucket;
    std::string m_key;
    std::vector<char> m_buffer;
