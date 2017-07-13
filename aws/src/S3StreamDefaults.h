@@ -12,7 +12,7 @@ namespace ossim{
 
          static ossim_int64 m_readBlocksize;
          static ossim_int64 m_nReadCacheHeaders;
-
+         static bool m_cacheInvalidLocations;
    };
 
 }

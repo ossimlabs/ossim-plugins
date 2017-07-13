@@ -12,6 +12,7 @@
 // $Id$
 
 #include "ossimS3StreamBuffer.h"
+#include "ossimAwsStreamFactory.h"
 #include "S3HeaderCache.h"
 
 #include <ossim/base/ossimKeywordlist.h>
@@ -48,7 +49,6 @@ static ossimTrace traceDebug("ossimS3StreamBuffer:debug");
 
 ossim::S3StreamBuffer::S3StreamBuffer(ossim_int64 blockSize)
    :
-   m_client(0),
    m_bucket(""),
    m_key(""),
    m_buffer(blockSize),
@@ -68,8 +68,8 @@ ossim::S3StreamBuffer::S3StreamBuffer(ossim_int64 blockSize)
    {
       config.region = region.c_str();
    }
-
-   m_client = new Aws::S3::S3Client( config );
+   m_client = ossim::AwsStreamFactory::instance()->getSharedS3Client();
+  // m_client = new Aws::S3::S3Client( config );
    
 //    std::cout << "CONSTRUCTED!!!!!" << std::endl;
 //  setp(0);
@@ -78,11 +78,6 @@ ossim::S3StreamBuffer::S3StreamBuffer(ossim_int64 blockSize)
 
 ossim::S3StreamBuffer::~S3StreamBuffer()
 {
-   if ( m_client )
-   {
-      delete m_client;
-      m_client = 0;
-   }
 }
 
 ossim_int64 ossim::S3StreamBuffer::getBlockIndex(ossim_int64 byteOffset)const

@@ -55,6 +55,8 @@ namespace ossim
        */
       bool exists(const std::string& connectionString, bool& continueFlag) const;   
       
+      std::shared_ptr<Aws::S3::S3Client> getSharedS3Client()const{return m_client;}
+
    protected:
 
       /**
@@ -67,7 +69,8 @@ namespace ossim
       AwsStreamFactory();
       AwsStreamFactory(const AwsStreamFactory&);
 
-      mutable Aws::S3::S3Client* m_client;
+     // mutable Aws::S3::S3Client* m_client;
+      mutable std::shared_ptr<Aws::S3::S3Client> m_client;
       
       static AwsStreamFactory* m_instance;
    };
