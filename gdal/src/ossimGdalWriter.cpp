@@ -316,7 +316,7 @@ void ossimGdalWriter::checkColorLut()
       }
    }
 
-   if (needColorLut && colorLut != 0)
+   if (needColorLut && colorLut )
    {
       setLut(*colorLut.get());
    }

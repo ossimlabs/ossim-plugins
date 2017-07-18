@@ -136,7 +136,7 @@ bool ossimHdfReader::open()
       }
 
       std::vector<ossimString> entryStringList;
-      if (m_gdalTileSource != 0)
+      if (m_gdalTileSource )
       {
          m_gdalTileSource->getEntryNames(entryStringList);
       }
@@ -431,7 +431,7 @@ ossimString ossimHdfReader::getDriverName()
 
 bool ossimHdfReader::setOutputBandList(const vector<ossim_uint32>& outputBandList)
 {
-   if (outputBandList.size() && m_gdalTileSource != 0)
+   if (outputBandList.size() && m_gdalTileSource )
    {
       m_gdalTileSource->setOutputBandList(outputBandList);
       open();
