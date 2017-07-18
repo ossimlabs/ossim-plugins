@@ -31,11 +31,6 @@ ossim::AwsStreamFactory* ossim::AwsStreamFactory::m_instance = 0;
 
 ossim::AwsStreamFactory::~AwsStreamFactory()
 {
-   if ( m_client )
-   {
-      delete m_client;
-      m_client = 0;
-   }
 }
 
 ossim::AwsStreamFactory* ossim::AwsStreamFactory::instance()
@@ -100,11 +95,12 @@ std::shared_ptr<ossim::iostream> ossim::AwsStreamFactory::createIOstream(
 bool ossim::AwsStreamFactory::exists(
    const std::string& connectionString, bool& continueFlag) const
 {
-   if ( !m_client )
+   if(traceDebug())
    {
-      initClient(); // First time through...
-   }
+      ossimNotify(ossimNotifyLevel_DEBUG)
+         << "ossim::AwsStreamFactory::exists() DEBUG: entered.....\n";
 
+   }
    bool result = false;
    
    // ossimTimer::Timer_t startTimer = ossimTimer::instance()->tick();
@@ -123,14 +119,15 @@ bool ossim::AwsStreamFactory::exists(
             ossim_int64 filesize;
             if(ossim::S3HeaderCache::instance()->getCachedFilesize(connectionString, filesize))
             {
-               // std::cout << "cached..." << std::endl;
-               result = true;
+               if(filesize >=0)
+               {
+                  result = true;
+               }
             }
             else
             {
                std::string bucket = url.getIp().string();
                std::string key    = url.getPath().string();
-               
                Aws::S3::Model::HeadObjectRequest headObjectRequest;
                headObjectRequest.WithBucket( bucket.c_str() )
                   .WithKey( key.c_str() );
@@ -138,8 +135,15 @@ bool ossim::AwsStreamFactory::exists(
                if(headObject.IsSuccess())
                {
                   result = true;
-
-                  // Add to cache ???
+                  filesize = headObject.GetResult().GetContentLength();
+                  ossim::S3HeaderCache::Node_t nodePtr = std::make_shared<ossim::S3HeaderCacheNode>(filesize);
+                  ossim::S3HeaderCache::instance()->addHeader(connectionString, nodePtr);               
+               }
+               else
+               {
+                  result = false;                  
+                  ossim::S3HeaderCache::Node_t nodePtr = std::make_shared<ossim::S3HeaderCacheNode>(-1);
+                  ossim::S3HeaderCache::instance()->addHeader(connectionString, nodePtr);               
                }
             }
          }
@@ -150,6 +154,12 @@ bool ossim::AwsStreamFactory::exists(
    // cout << "time: " << ossimTimer::instance()->delta_s(startTimer, endTimer) << endl;
 
    // std::cout << "aws result: " << result << std::endl;
+   if(traceDebug())
+   {
+      ossimNotify(ossimNotifyLevel_DEBUG)
+         << "ossim::AwsStreamFactory::exists() DEBUG: leaving.....\n";
+
+   }
    
    return result;
 }
@@ -157,6 +167,9 @@ bool ossim::AwsStreamFactory::exists(
 // Hidden from use:
 ossim::AwsStreamFactory::AwsStreamFactory()
 {
+   // the stream is now shared so we must allocate here.  
+   // 
+   initClient();
 }
 
 // Hidden from use:
@@ -168,7 +181,7 @@ void ossim::AwsStreamFactory::initClient() const
 {
    Aws::Client::ClientConfiguration config;
    
-   // Look for AWS S3 regionn override:
+   // Look for AWS S3 region override:
    std::string region = ossimPreferences::instance()->
       preferencesKWL().findKey(std::string("ossim.plugins.aws.s3.region"));
    if ( region.size() )
@@ -176,5 +189,6 @@ void ossim::AwsStreamFactory::initClient() const
       config.region = region.c_str();
    }
    
-   m_client = new Aws::S3::S3Client( config );
+   m_client = std::make_shared<Aws::S3::S3Client>(config);
+//new Aws::S3::S3Client( config );
 }

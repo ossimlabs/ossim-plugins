@@ -3,10 +3,10 @@
 #include <ossim/base/ossimEnvironmentUtility.h>
 #include <ossim/base/ossimTrace.h>
 
-// defaults to a 1 megabyte block size
-//
 ossim_int64 ossim::S3StreamDefaults::m_readBlocksize = 32768;
 ossim_int64 ossim::S3StreamDefaults::m_nReadCacheHeaders = 10000;
+bool ossim::S3StreamDefaults::m_cacheInvalidLocations = true;
+
 static ossimTrace traceDebug("ossimS3StreamDefaults:debug");
 
 void ossim::S3StreamDefaults::loadDefaults()
@@ -16,14 +16,22 @@ void ossim::S3StreamDefaults::loadDefaults()
       ossimNotify(ossimNotifyLevel_DEBUG)
          << "ossim::S3StreamDefaults::loadDefaults() DEBUG: entered.....\n";
    }
-   ossimString s3ReadBlocksize = ossimEnvironmentUtility::instance()->getEnvironmentVariable("OSSIM_PLUGINS_AWS_S3_READBLOCKSIZE");
-
-   ossimString  nReadCacheHeaders = ossimPreferences::instance()->findPreference("OSSIM_PLUGINS_AWS_S3_NREADCACHEHEADERS");
-
+   ossimString s3ReadBlocksize       = ossimEnvironmentUtility::instance()->getEnvironmentVariable("OSSIM_PLUGINS_AWS_S3_READBLOCKSIZE");
+   ossimString nReadCacheHeaders     = ossimEnvironmentUtility::instance()->getEnvironmentVariable("OSSIM_PLUGINS_AWS_S3_NREADCACHEHEADERS");
+   ossimString cacheInvalidLocations = ossimEnvironmentUtility::instance()->getEnvironmentVariable("OSSIM_PLUGINS_AWS_S3_CACHEINVALIDLOCATIONS");
+ 
    
    if(s3ReadBlocksize.empty())
    {
        s3ReadBlocksize = ossimPreferences::instance()->findPreference("ossim.plugins.aws.s3.readBlocksize");
+   }
+   if(cacheInvalidLocations.empty())
+   {
+       cacheInvalidLocations = ossimPreferences::instance()->findPreference("ossim.plugins.aws.s3.cacheInvalidLocations");
+   }
+   if(!cacheInvalidLocations.empty())
+   {
+      m_cacheInvalidLocations = cacheInvalidLocations.toBool();
    }
    if(!s3ReadBlocksize.empty())
    {
