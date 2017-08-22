@@ -8,7 +8,10 @@
 
 // This test code was adapted from the opencv sample "matchmethod_orb_akaze_brisk"
 
-#include <opencv/cv.hpp>
+#include <opencv/cv.h>
+#include <opencv2/highgui.hpp>
+#include <opencv2/features2d.hpp>
+#include <opencv2/objdetect.hpp>
 #include <vector>
 #include <iostream>
 #include <string>

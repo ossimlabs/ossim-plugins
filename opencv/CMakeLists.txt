@@ -7,15 +7,6 @@ else( OPENCV_FOUND )
     message( FATAL_ERROR "Could not find OpenCV package!" )
 endif( OPENCV_FOUND )
 
-# Check for optional OpenCV libraries:
-if( OPENCV_GPU_FOUND )
-    set( requiredLib ${requiredLib} ${OPENCV_GPU_LIBRARY} )
-endif( OPENCV_GPU_FOUND )
-
-if( OPENCV_IMGCODECS_FOUND )
-    set( requiredLib ${requiredLib} ${OPENCV_IMGCODECS_LIBRARY} )
-endif( OPENCV_IMGCODECS_FOUND )
-
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_BINARY_DIR}/src)
 
 #IF(BUILD_OSSIM_TESTS)
