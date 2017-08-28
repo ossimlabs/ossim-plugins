@@ -54,7 +54,6 @@ ossim::S3StreamBuffer::S3StreamBuffer(ossim_int64 blockSize)
    m_buffer(blockSize),
    m_bufferActualDataSize(0),
    m_currentBlockPosition(-1),
-   m_bufferPtr(0),
    m_fileSize(0),
    m_opened(false)
    //m_mode(0)
@@ -73,7 +72,8 @@ ossim::S3StreamBuffer::S3StreamBuffer(ossim_int64 blockSize)
    
 //    std::cout << "CONSTRUCTED!!!!!" << std::endl;
 //  setp(0);
-   setg(m_bufferPtr, m_bufferPtr, m_bufferPtr);
+   setg(0, 0, 0);
+   m_blockInfo.setBuffer(&m_buffer.front(), m_buffer.size());
 }
 
 ossim::S3StreamBuffer::~S3StreamBuffer()
@@ -86,9 +86,9 @@ ossim_int64 ossim::S3StreamBuffer::getBlockIndex(ossim_int64 byteOffset)const
   
    if(byteOffset < (ossim_int64)m_fileSize)
    {
-      if(m_buffer.size()>0)
+      if(m_blockInfo.isBlocked())
       {
-         blockNumber = byteOffset/m_buffer.size();
+         blockNumber = byteOffset/m_blockInfo.getBlockSize();
       }    
    }
 
@@ -99,9 +99,9 @@ ossim_int64 ossim::S3StreamBuffer::getBlockOffset(ossim_int64 byteOffset)const
 {
    ossim_int64 blockOffset = -1;
   
-   if(m_buffer.size()>0)
+   if(m_blockInfo.m_blockSize>0)
    {
-      blockOffset = byteOffset%m_buffer.size();
+      blockOffset = byteOffset%m_blockInfo.m_blockSize;
    }    
 
    return blockOffset;
@@ -115,8 +115,8 @@ bool ossim::S3StreamBuffer::getBlockRangeInBytes(ossim_int64 blockIndex,
 
    if(blockIndex >= 0)
    {
-      startRange = blockIndex*m_buffer.size();
-      endRange = startRange + m_buffer.size()-1;
+      startRange = blockIndex*m_blockInfo.getBlockSize();
+      endRange = startRange + m_blockInfo.getBlockSize()-1;
 
       result = true;    
    }
@@ -133,7 +133,6 @@ bool ossim::S3StreamBuffer::loadBlock(ossim_int64 absolutePosition)
 
    }
    bool result = false;
-   m_bufferPtr = 0;
    GetObjectRequest getObjectRequest;
    std::stringstream stringStream;
    ossim_int64 startRange, endRange;
@@ -154,11 +153,12 @@ bool ossim::S3StreamBuffer::loadBlock(ossim_int64 absolutePosition)
          ossim_int64 bufSize = getObjectOutcome.GetResult().GetContentLength();
 //        std::cout << "SIZE OF RESULT ======== " << bufSize << std::endl;
          m_bufferActualDataSize = bufSize;
-         bodyStream.read(&m_buffer.front(), bufSize);
-         m_bufferPtr = &m_buffer.front();
+         bodyStream.read(m_blockInfo.m_bufferPtr, m_blockInfo.getBlockSize());
 
          ossim_int64 delta = absolutePosition-startRange;
-         setg(m_bufferPtr, m_bufferPtr + delta, m_bufferPtr+m_bufferActualDataSize);
+         setg(m_blockInfo.m_bufferPtr, 
+              m_blockInfo.m_bufferPtr + delta, 
+              m_blockInfo.m_bufferPtr+m_bufferActualDataSize);
          m_blockInfo.setBytes(startRange,startRange+delta,startRange+m_bufferActualDataSize);
          // std::cout << "LOADING BLOCK: " << m_blockInfo.getStartByte() << ", " << m_blockInfo.getCurrentByte() << ", " << m_blockInfo.getEndByte() << "\n";
          m_currentBlockPosition = startRange;
@@ -180,6 +180,7 @@ bool ossim::S3StreamBuffer::loadBlock(ossim_int64 absolutePosition)
 
    return result;
 }
+
 
 ossim::S3StreamBuffer* ossim::S3StreamBuffer::open (const char* connectionString,
                                                     const ossimKeywordlist& options,
@@ -569,5 +570,5 @@ ossim_uint64 ossim::S3StreamBuffer::getFileSize() const
 
 ossim_uint64 ossim::S3StreamBuffer::getBlockSize() const
 {
-   return m_buffer.size();
+   return m_blockInfo.m_blockSize;
 }
