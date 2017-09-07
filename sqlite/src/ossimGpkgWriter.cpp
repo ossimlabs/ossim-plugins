@@ -1,16 +1,14 @@
-//----------------------------------------------------------------------------
+//---
 //
 // File: ossimGpkgReader.cpp
 //
 // Author:  David Burken
 //
-// License:  LGPL
-// 
-// See LICENSE.txt file in the top level directory for more details.
+// License: MIT
 //
 // Description: OSSIM Geo Package writer.
 //
-//----------------------------------------------------------------------------
+//---
 // $Id$
 
 #include "ossimGpkgWriter.h"
@@ -48,6 +46,8 @@
 #include <ossim/imaging/ossimJpegMemDest.h>
 #include <ossim/imaging/ossimRectangleCutFilter.h>
 #include <ossim/imaging/ossimScalarRemapper.h>
+
+#include <ossim/matrix/myexcept.h>
 
 #include <ossim/projection/ossimEquDistCylProjection.h>
 #include <ossim/projection/ossimEpsgProjectionFactory.h>
@@ -626,6 +626,14 @@ bool ossimGpkgWriter::writeFile()
       ossimNotify(ossimNotifyLevel_WARN)
          << MODULE << " Caught exception!\n"
          << e.what()
+         << std::endl;
+      status = false;
+   }
+   catch ( const RBD_COMMON::BaseException& me ) // Matrix exeption...
+   {
+      ossimNotify(ossimNotifyLevel_WARN)
+         << MODULE << " Caught Matrix exception!\n"
+         << me.what()
          << std::endl;
       status = false;
    }
