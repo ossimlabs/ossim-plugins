@@ -1303,7 +1303,7 @@ bool ossimKakaduJp2Reader::configureChannelMapping()
       if (traceDebug())
       {
          ossimNotify(ossimNotifyLevel_DEBUG)
-            << "\ossimKakaduJp2Reader::configureChannelMapping() DEBUG:"
+            << "ossimKakaduJp2Reader::configureChannelMapping() DEBUG:"
             << "\nkdu_channel_mapping::get_num_channels():        "
             << theChannels->get_num_channels()
             << "\nkdu_channel_mapping::get_num_colour_channels(): "
