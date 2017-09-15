@@ -35,25 +35,7 @@ void ossim::S3StreamDefaults::loadDefaults()
    }
    if(!s3ReadBlocksize.empty())
    {
-     ossim_int64 blockSize = s3ReadBlocksize.toInt64();
-     if(blockSize > 0)
-     {
-         ossimString byteType(s3ReadBlocksize.begin()+(s3ReadBlocksize.size()-1), s3ReadBlocksize.end());
-         byteType.upcase();
-         m_readBlocksize = blockSize;
-         if ( byteType == "K")
-         {
-            m_readBlocksize *=static_cast<ossim_int64>(1024);
-         }
-         else if ( byteType == "M")
-         {
-            m_readBlocksize *=static_cast<ossim_int64>(1048576);
-         }
-         else if ( byteType == "G")
-         {
-            m_readBlocksize *=static_cast<ossim_int64>(1073741824);
-         }
-     }
+     ossim_int64 blockSize = s3ReadBlocksize.memoryUnitToInt64();
    }
    if(nReadCacheHeaders.empty())
    {
