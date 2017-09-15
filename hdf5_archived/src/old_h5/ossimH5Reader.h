@@ -22,8 +22,7 @@
 #include <ossim/imaging/ossimImageHandler.h>
 #include "ossimH5ImageDataset.h"
 
-#include <OpenThreads/Mutex>
-
+#include <mutex>
 #include <vector>
 
 // Forward class declarations:
@@ -291,7 +290,7 @@ protected:
    ossim_uint32                     m_currentEntry;
    ossimRefPtr<ossimImageData>      m_tile;
    ossimRefPtr<ossimProjection>     m_projection;
-   OpenThreads::Mutex               m_mutex;
+   std::mutex                       m_mutex;
    
 TYPE_DATA
 };
