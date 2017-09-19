@@ -13,10 +13,10 @@
 #include <ossim/base/ossimNotify.h>
 #include <ossim/base/ossimTrace.h>
 #include <sqlite3.h>
-#include <OpenThreads/Mutex>
 #include <ctime>
+#include <mutex>
 
-static OpenThreads::Mutex timeMutex;
+static std::mutex timeMutex;
 static ossimTrace traceDebug("ossimSqliteUtil:debug");
 
 int ossim_sqlite::exec( sqlite3* db, const std::string& sql )
