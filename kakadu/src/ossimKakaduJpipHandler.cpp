@@ -7,7 +7,7 @@
 #include <ossim/base/ossimKeywordNames.h>
 #include "ossimKakaduCommon.h"
 #include <ossim/imaging/ossimImageDataFactory.h>
-#include <OpenThreads/Thread>
+#include <ossim/base/Thread.h>
 #include <jpx.h>
 #include <ossim/base/ossimNumericProperty.h>
 #include <ossim/base/ossimWebRequestFactoryRegistry.h>
@@ -645,7 +645,7 @@ bool ossimKakaduJpipHandler::loadClient(kdu_client* client, kdu_window& window)
                //
                while( !client->is_idle() &&client->is_alive())
                {
-                  OpenThreads::Thread::microSleep(2000);
+                  ossim::Thread::sleepInMicroSeconds(2000);
                }
 
                result = true;
