@@ -10,6 +10,7 @@ FILE(GLOB OSSIMPLUGIN_HEADERS *.h)
 #---
 add_definitions("-DOSSIMPLUGINSMAKINGDLL")
 
+
 # Adjust the install library path:
 if(OSSIM_INSTALL_PLUGINS_WITH_VERSION)
    set(INSTALL_LIBRARY_DIR   "${INSTALL_LIBRARY_DIR}/ossim-${OSSIM_VERSION}/plugins")

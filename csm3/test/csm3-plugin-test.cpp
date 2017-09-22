@@ -6,8 +6,8 @@
 //
 //**************************************************************************************************
 // $Id: plugin-test.cpp 23401 2015-06-25 15:00:31Z okramer $
-#include "../src/ossimCsm3Loader.h"
 #include "../src/ossimCsm3ProjectionFactory.h"
+#include "../src/ossimMspLoader.h"
 #include <ossim/base/ossimPreferences.h>
 #include <ossim/base/ossimGpt.h>
 #include <ossim/base/ossimDpt.h>
@@ -28,8 +28,8 @@ int main(int argc, char** argv)
       image_file = argv[1];
 
    ossimPreferences::instance()->loadPreferences();
-   ossimCsm3Loader ocl;
-   vector<string> plugins = ocl.getAvailablePluginNames();
+   vector<string> plugins;
+   ossimMspLoader::getAvailablePluginNames(plugins);
    cout<<"\nFound "<<plugins.size()<<" plugins:"<<endl;
    for (int i=0; i<plugins.size(); i++)
       cout << "  "<<plugins[i]<<endl;

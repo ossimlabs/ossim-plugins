@@ -30,9 +30,8 @@ ossimCsm3ProjectionFactory* ossimCsm3ProjectionFactory::instance()
 ossimProjection* ossimCsm3ProjectionFactory::createProjection(const ossimFilename& filename,
                                                              ossim_uint32 entryIdx ) const
 {
-    ossimProjection* result = 0;
     string filenameStr = filename.string();
-    result = PTR_CAST(ossimProjection, theLoader.getSensorModel(filenameStr, entryIdx) );
+    ossimProjection* result = ossimMspLoader::getSensorModel(filenameStr, entryIdx);
     return result;
 }
 
@@ -86,10 +85,12 @@ std::list<ossimString> ossimCsm3ProjectionFactory::getList()const
     std::list<ossimString> result;
     std::string pError;
 
-	vector<string> pluginList = theLoader.getAvailablePluginNames( );
+	vector<string> pluginList;
+	ossimMspLoader::getAvailablePluginNames(pluginList);
     for (int i=0; i<pluginList.size(); i++)
     {
-        vector<string> sensorList = theLoader.getAvailableSensorModelNames( pluginList[i] );
+        vector<string> sensorList;
+        ossimMspLoader::getAvailableSensorModelNames( pluginList[i], sensorList );
         std::copy (sensorList.begin (), sensorList.end (), std::back_inserter (result));
     }
 
