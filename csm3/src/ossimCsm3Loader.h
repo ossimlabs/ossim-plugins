@@ -1,5 +1,6 @@
 //**************************************************************************************************
-// ossimCSM3Loader.h
+// OSSIM Open Source Geospatial Data Processing Library
+// See top level LICENSE.txt file for license information
 //
 // Author:  cchuah
 //
@@ -12,74 +13,55 @@
 #ifndef CSM3Loader_HEADER
 #define CSM3Loader_HEADER
 
-
+#include "ossimCsm3Config.h"
 #include <ossim/base/ossimFilename.h>
-#include <ossim/plugin/ossimDynamicLibrary.h>
 #include <ossim/plugin/ossimPluginConstants.h>
-#include <ossim/base/ossimRefPtr.h>
 #include <csm/RasterGM.h>
 #include <string>
 #include <vector>
 
 class ossimCsm3SensorModel;
 
+/**
+ * This is the class responsible for loading all the sensor models found in the CSM plugin folder
+ */
 class OSSIM_PLUGINS_DLL ossimCsm3Loader 
 {
 public:
-   /*!
-    * Constructor
-    */
-    ossimCsm3Loader();
+   /** Needs to be instantiated once to load all CSM plugins (unless MSP is used) */
+   ossimCsm3Loader();
 
    /*!
     * Returns available plugins found in plugin path
     * plguin path is specified in prefrence file, in keyword "csm3_plugin_path"
     */
-	std::vector<std::string> getAvailablePluginNames() const;
+   static void getAvailablePluginNames(std::vector<std::string>& plugins);
 
    /*!
     * Returns a list of sensor model names contained in the specified plugin 
     */
-	std::vector<std::string> getAvailableSensorModelNames( std::string& pPluginName) const;
+   static void getAvailableSensorModelNames(const std::string& pluginName,
+                                            std::vector<std::string>& models);
     
    /*!
     * Returns the sensor model for the specified image file name 
     */
-    ossimCsm3SensorModel* getSensorModel( std::string& filename, ossim_uint32 index) const;
-
-   /*!
-    * Remove the specified plugin from our list.
-    * All available plugins are loaded automatically in the constructor.
-    */
-    bool removePlugin(const std::string& pluginName);
-
-	//enum imageTypeSelections { NITF20, NITF21, NOT_NITF };
-	//static imageTypeSelections determineNITFType(const char* pInputImage);
-
-protected:
-
-    ossimFilename thePluginDir;
-    std::vector<std::string> thePluginNames;
-    std::vector<std::string> theSensorModelNames;
-    std::vector<ossimRefPtr<ossimDynamicLibrary> > thePluginLibs;
-
-   /*!
-    * Called by constructor to load all plugins found in plugin path.
-    */
-    bool loadPlugins();
+	static ossimCsm3SensorModel* getSensorModel(const ossimFilename& filename, ossim_uint32 index);
 
    /*!
     * Load the named sensor models from the named plugin for the input image file
     */
-    csm::RasterGM* loadModelFromFile( std::string& pPluginName, std::string& pSensorModelName, 
-			        std::string& pInputImage, ossim_uint32 index) const;
+	static csm::RasterGM* loadModelFromFile(const std::string& pPluginName,
+	                                        const std::string& pSensorModelName,
+	                                        const std::string& pInputImage,
+	                                         ossim_uint32 index=0);
 
     /*!
     * Load the named sensor models from the named plugin from the sensor state
     */
-    csm::RasterGM* loadModelFromState( std::string& pPluginName, std::string& pSensorModelName, 
-			        std::string& pSensorState) const;
-
+	static csm::RasterGM* loadModelFromState(const std::string& pPluginName,
+	                                         const std::string& pSensorModelName,
+	                                         const std::string& pSensorState);
 };
 
 

@@ -73,9 +73,8 @@ public:
 
 protected:
 
-    ossimCsm3ProjectionFactory() {}
+    ossimCsm3ProjectionFactory();
     static ossimCsm3ProjectionFactory* theInstance;
-    ossimCsm3Loader theLoader;
 };
 
 #endif

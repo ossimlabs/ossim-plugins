@@ -8,14 +8,21 @@ include(OssimUtilities)
 
 set(requiredLibs)
 
-# csmApi - Required:
-find_package(CsmApi)
-if (CSMAPI_FOUND)
-   include_directories(${CSMAPI_INCLUDE_DIRS})
-   set( requiredLibs ${requiredLibs} ${CSMAPI_LIBRARIES} )
-else(CSMAPI_FOUND)
-   message(FATAL_ERROR "Could not find csmApi")
-endif(CSMAPI_FOUND)
+message("MSP_HOME = <${MSP_HOME}>")
+find_package(MSP)
+if (MSP_FOUND)
+   include_directories(${MSP_INCLUDE_DIRS})
+   set( requiredLibs ${requiredLibs} ${MSP_LIBRARIES} )
+   set( OSSIM_HAS_MSP 1 )
+   message( "CSM3 is using MSP" )
+   
+else(MSP_FOUND)
+   message( "Could not find MSP package. Building CSM3 plugin without MSP support.")
+   set( OSSIM_HAS_MSP 0 )
+endif(MSP_FOUND)
+
+CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/src/ossimCsm3Config.h.in
+               ${CMAKE_CURRENT_SOURCE_DIR}/src/ossimCsm3Config.h @ONLY)
 
 add_subdirectory( src )
 

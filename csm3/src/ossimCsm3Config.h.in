@@ -1,0 +1,11 @@
+//**************************************************************************************************
+// OSSIM Open Source Geospatial Data Processing Library
+// See top level LICENSE.txt file for license information
+//
+//**************************************************************************************************
+#ifndef ossimCsm3Config_HEADER
+#define ossimCsm3Config_HEADER
+
+#define OSSIM_HAS_MSP @OSSIM_HAS_MSP@
+
+#endif /* End of "#ifndef ossimConfig_HEADER" */
