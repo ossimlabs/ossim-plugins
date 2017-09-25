@@ -290,7 +290,7 @@ void ossimCsm3SensorModel::initAdjustableParameters()
 //  considered the initial state of the parameters.
 void ossimCsm3SensorModel::initializeModel()
 {
-   ossimNotify(ossimNotifyLevel_INFO) << "initializing ossimCsm3SensorModel\n" << std::endl;
+   //ossimNotify(ossimNotifyLevel_INFO) << "initializing ossimCsm3SensorModel\n" << std::endl;
 
    // this model has not been adjusted
    if (getNumberOfAdjustments() == 0)
@@ -323,7 +323,7 @@ void ossimCsm3SensorModel::initializeModel()
 
    ImageVector size = m_model->getImageSize();
    theImageSize = ossimIpt(size.samp, size.line);
-   ossimNotify(ossimNotifyLevel_INFO) << "Csm3Sensor image size: " << theImageSize << std::endl;
+   //ossimNotify(ossimNotifyLevel_INFO) << "Csm3Sensor image size: " << theImageSize << std::endl;
 
    // Note that the model might not be valid over the entire imaging operation.
    // Use getValidImageRange() to get the valid range of image coordinates.
@@ -338,7 +338,7 @@ void ossimCsm3SensorModel::initializeModel()
 
    ossimDrect fullImgRect = ossimDrect(ossimDpt(0, 0),
                                        ossimDpt(theImageSize.samp-1, theImageSize.line-1));
-   ossimNotify(ossimNotifyLevel_INFO) << "Csm3Sensor Valid Image Range: " << fullImgRect << std::endl;
+   //ossimNotify(ossimNotifyLevel_INFO) << "Csm3Sensor Valid Image Range: " << fullImgRect << std::endl;
 
    // set theImageClipRect to at most the full image
    theImageClipRect = theImageClipRect.clipToRect(fullImgRect);
@@ -362,15 +362,15 @@ void ossimCsm3SensorModel::initializeModel()
    // get the ref image point and ground point
    EcefCoord refEcefPt = m_model->getReferencePoint();
    theRefGndPt = ossimGpt(ossimEcefPoint(refEcefPt.x, refEcefPt.y, refEcefPt.z));
-   ossimNotify(ossimNotifyLevel_INFO) << "Csm3Sensor ref Ground Pt: " << theRefGndPt << std::endl;
+   //ossimNotify(ossimNotifyLevel_INFO) << "Csm3Sensor ref Ground Pt: " << theRefGndPt << std::endl;
 
    double desiredPrecision = 0.001;
    double* achievedPrecision = NULL;
    WarningList warnings;
    ImageCoord refImgPt = m_model->groundToImage(refEcefPt, desiredPrecision,
                                                 achievedPrecision, &warnings);
-   ossimNotify(ossimNotifyLevel_INFO) << "Csm3Sensor ref Image Pt: " <<
-         ossimDpt(refImgPt.samp, refImgPt.line)  << std::endl;
+//   ossimNotify(ossimNotifyLevel_INFO) << "Csm3Sensor ref Image Pt: " <<
+//         ossimDpt(refImgPt.samp, refImgPt.line)  << std::endl;
    if (warnings.size() > 0)
       ossimNotify(ossimNotifyLevel_WARN)
       << "initializeModel: Computing refImgPt:\n" << warnings.begin()->getMessage()

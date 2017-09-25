@@ -109,7 +109,6 @@ void ossimCsm3Loader::getAvailablePluginNames(vector<string>& plugins)
 #else
 
    // now get the PluginList to get the PluginName
-   Plugin::setDataDirectory("/home/okramer/dev/ossim/3rdParty/msp-1.5/ToolKit/data");
    PluginList pluginList = Plugin::getList( );
    for( PluginList::const_iterator i = pluginList.begin(); i != pluginList.end(); i++ )
       plugins.push_back( (*i)->getPluginName() );
@@ -303,7 +302,7 @@ RasterGM* ossimCsm3Loader::loadModelFromFile(const string& pPluginName,
 
          if (constructible)
          {
-            ossimNotify(ossimNotifyLevel_INFO)<<MODULE<< "Constructing sensor model via filename"<<endl;
+            //ossimNotify(ossimNotifyLevel_INFO)<<MODULE<< "Constructing sensor model via filename"<<endl;
             sensorModel = plugin->constructModelFromISD( *fnameIsd, pSensorModelName );
             delete fnameIsd;
             break;
@@ -325,7 +324,7 @@ RasterGM* ossimCsm3Loader::loadModelFromFile(const string& pPluginName,
 
          if (constructible)
          {
-            ossimNotify(ossimNotifyLevel_INFO) << "Constructing sensor model from NITF 2.1 file" << endl;
+            //ossimNotify(ossimNotifyLevel_INFO) << "Constructing sensor model from NITF 2.1 file" << endl;
             sensorModel = plugin->constructModelFromISD( *nitf21Isd, pSensorModelName );
             delete nitf21Isd;
             break;
@@ -347,7 +346,7 @@ RasterGM* ossimCsm3Loader::loadModelFromFile(const string& pPluginName,
 
          if (constructible)
          {
-            ossimNotify(ossimNotifyLevel_INFO) << "Constructing sensor model from NITF 2.0 file" << endl;
+            //ossimNotify(ossimNotifyLevel_INFO) << "Constructing sensor model from NITF 2.0 file" << endl;
             sensorModel = plugin->constructModelFromISD( *nitf20Isd, pSensorModelName );
             delete nitf20Isd;
             break;
@@ -357,15 +356,16 @@ RasterGM* ossimCsm3Loader::loadModelFromFile(const string& pPluginName,
       }
       catch(exception& e)
       {
-         ossimNotify(ossimNotifyLevel_WARN)<< "Exception:"<< e.what() << endl;
+         // This is noisy. Leave out for production:
+         // ossimNotify(ossimNotifyLevel_WARN)<< "Exception: "<< e.what() << endl;
       }
    } while (false);
 
    if( sensorModel )
       return dynamic_cast<RasterGM*>(sensorModel);
 
-   ossimNotify(ossimNotifyLevel_WARN)<<MODULE<<"Unable to create sensor model \""
-         << pSensorModelName<< "\" using the image \"" + pInputImage + "\""  << endl;
+//   ossimNotify(ossimNotifyLevel_WARN)<<MODULE<<"Unable to create sensor model \""
+//         << pSensorModelName<< "\" using the image \"" + pInputImage + "\""  << endl;
    return NULL;
 }
 

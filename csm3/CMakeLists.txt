@@ -8,14 +8,17 @@ include(OssimUtilities)
 
 set(requiredLibs)
 
-message(" MSP_HOME = <${MSP_HOME}>")
+message("MSP_HOME = <${MSP_HOME}>")
 find_package(MSP)
 if (MSP_FOUND)
    include_directories(${MSP_INCLUDE_DIRS})
    set( requiredLibs ${requiredLibs} ${MSP_LIBRARIES} )
-   message( "Found MSP" )
+   set( OSSIM_HAS_MSP 1 )
+   message( "CSM3 is using MSP" )
+   
 else(MSP_FOUND)
-   message(FATAL_ERROR, "Could not find MSP package. Cannot build CSM3 plugin.")
+   message( "Could not find MSP package. Building CSM3 plugin without MSP support.")
+   set( OSSIM_HAS_MSP 0 )
 endif(MSP_FOUND)
 
 CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/src/ossimCsm3Config.h.in
