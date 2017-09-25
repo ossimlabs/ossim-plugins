@@ -90,6 +90,9 @@ public:
    virtual ossimString getPluginName() { return m_pluginName;  };
    virtual ossimString getSensorName() { return m_sensorName;  };
 
+   //! Perhaps consumers will want direct access to CSM.
+   std::shared_ptr<csm::RasterGM> getCsmModel() { return m_model; }
+
 protected:
    enum AdjustParamIndex
    {

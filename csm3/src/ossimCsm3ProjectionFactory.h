@@ -10,7 +10,7 @@
 #ifndef ossimCsm3ProjectionFactory_HEADER
 #define ossimCsm3ProjectionFactory_HEADER
 
-#include "ossimMspLoader.h"
+#include "ossimCsm3Loader.h"
 #include <ossim/plugin/ossimPluginConstants.h>
 #include <ossim/projection/ossimProjectionFactoryBase.h>
 
@@ -73,7 +73,7 @@ public:
 
 protected:
 
-    ossimCsm3ProjectionFactory() {}
+    ossimCsm3ProjectionFactory();
     static ossimCsm3ProjectionFactory* theInstance;
 };
 

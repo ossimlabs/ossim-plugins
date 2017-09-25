@@ -18,6 +18,9 @@ else(MSP_FOUND)
    message(FATAL_ERROR, "Could not find MSP package. Cannot build CSM3 plugin.")
 endif(MSP_FOUND)
 
+CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/src/ossimCsm3Config.h.in
+               ${CMAKE_CURRENT_SOURCE_DIR}/src/ossimCsm3Config.h @ONLY)
+
 add_subdirectory( src )
 
 IF(BUILD_OSSIM_TESTS)

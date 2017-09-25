@@ -16,7 +16,7 @@
 //  $Id: ossimCsm3SensorModel.cpp 1680 2016-01-12 16:27:39Z cchuah $
 
 #include "ossimCsm3SensorModel.h"
-#include "ossimMspLoader.h"
+#include "ossimCsm3Loader.h"
 #include <ossim/elevation/ossimElevManager.h>
 #include <ossim/support_data/ossimNitfFile.h>
 #include <ossim/support_data/ossimNitfImageHeader.h>
@@ -82,7 +82,7 @@ ossimCsm3SensorModel::ossimCsm3SensorModel(const ossimCsm3SensorModel& src)
 
    // can they all be constructed from state?
    string srcState = src.m_model->getModelState();
-   m_model.reset(ossimMspLoader::loadModelFromState(srcState));
+   m_model.reset(ossimCsm3Loader::loadModelFromState(m_pluginName, m_sensorName, srcState));
 }
 
 
@@ -424,7 +424,7 @@ bool ossimCsm3SensorModel::loadState(const ossimKeywordlist& kwl, const char* pr
 
       // restore from csm3 sensor state
       ossimString sensorState  = kwl.find(prefix, "csm_sensor_state");
-      m_model.reset(ossimMspLoader::loadModelFromState(sensorState));
+      m_model.reset(ossimCsm3Loader::loadModelFromState(m_pluginName, m_sensorName, sensorState));
    }
 
    return result;
