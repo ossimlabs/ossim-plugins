@@ -1,13 +1,14 @@
 #ifndef ossimPngCodec_HEADER
-#define ossimPngCodec_HEADER
+#define ossimPngCodec_HEADER 1
 #include <ossim/imaging/ossimCodecBase.h>
 
 class ossimPngCodec : public ossimCodecBase
 {
 public:
-	ossimPngCodec(bool addAlpha=false);
+   ossimPngCodec(bool addAlpha=false);
+   
+   virtual ossimString getCodecType()const;
 
-	virtual ossimString getCodecType()const;
    /**
     * @brief Encode png method.
     *
@@ -40,6 +41,8 @@ public:
     */
    virtual bool decode( const std::vector<ossim_uint8>& in,
                         ossimRefPtr<ossimImageData>& out ) const;
+
+   virtual const std::string& getExtension() const;
 
    /**
    * Ineterface to allow for specific properties to be set.
@@ -84,10 +87,8 @@ public:
 
 
 protected:
-	bool m_addAlphaChannel;
-
-
-TYPE_DATA;
+   bool m_addAlphaChannel;
+   std::string m_ext;
 };
 
 #endif

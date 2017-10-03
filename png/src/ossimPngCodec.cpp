@@ -1,12 +1,9 @@
 #include "ossimPngCodec.h"
 #include <ossim/base/ossimConstants.h>
 #include <png.h>
-#include <stdlib.h>
+#include <cstdlib>
 
 static const char ADD_ALPHA_CHANNEL_KW[] = "add_alpha_channel";
-
-RTTI_DEF1(ossimPngCodec, "ossimPngCodec", ossimCodecBase);
-
 
 static void user_read_data (png_structp png_ptr, png_bytep data, png_size_t length)
 {
@@ -29,7 +26,8 @@ struct TPngDestructor {
 };
 
 ossimPngCodec::ossimPngCodec(bool addAlpha)
-   :m_addAlphaChannel(addAlpha)
+   :m_addAlphaChannel(addAlpha),
+    m_ext("png")
 {
 
 }
@@ -38,6 +36,12 @@ ossimString ossimPngCodec::getCodecType()const
 {
    return "png";
 }
+
+const std::string& ossimPngCodec::getExtension() const
+{
+   return m_ext; // "png"
+}
+
 
 bool ossimPngCodec::encode(const ossimRefPtr<ossimImageData>& in,
                            std::vector<ossim_uint8>& out ) const

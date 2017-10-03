@@ -49,7 +49,7 @@ ossimCodecBase* ossimPngCodecFactory::createCodec(const ossimString& type)const
    {
       result = new ossimPngCodec(true);
    }
-   else if(tempType == STATIC_TYPE_NAME(ossimPngCodec))
+   else if(tempType == "ossimPngCodec")
    {
       result = new ossimPngCodec();
    }
@@ -77,7 +77,7 @@ void ossimPngCodecFactory::getTypeNameList(std::vector<ossimString>& typeNames)c
 {
    typeNames.push_back("png");
    typeNames.push_back("pnga");
-   typeNames.push_back(STATIC_TYPE_NAME(ossimPngCodec));
+   typeNames.push_back("ossimPngCodec");
 }
 
 ossimPngCodecFactory::ossimPngCodecFactory()

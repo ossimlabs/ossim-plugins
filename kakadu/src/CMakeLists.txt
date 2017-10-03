@@ -20,15 +20,6 @@ else( CURL_FOUND )
    add_definitions("-DKAKADU_USE_CURL=0")   
 endif( CURL_FOUND )
 
-# OpenThreads - Required:
-find_package( OpenThreads )
-if( OPENTHREADS_FOUND )
-   include_directories( ${OPENTHREADS_INCLUDE_DIR} )
-   set( requiredLibs ${requiredLibs} ${OPENTHREADS_LIBRARY} )
-else( OPENTHREADS_FOUND )
-   message( FATAL_ERROR "Could not find required OpenThreads package!" )
-endif( OPENTHREADS_FOUND )
-
 # TIFF - Required:
 find_package( TIFF )
 if( TIFF_FOUND )
