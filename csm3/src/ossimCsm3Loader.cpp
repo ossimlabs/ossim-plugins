@@ -411,7 +411,7 @@ ossimCsm3SensorModel* ossimCsm3Loader::getSensorModel(const ossimFilename& filen
 #endif
       if (csmModel)
       {
-         clog<<"ossimCsm3Loader::getSensorModel()  modelName: "<<base->getModelName()<<endl;
+         clog<<"ossimCsm3Loader::getSensorModel()  modelName: "<<csmModel->getModelName()<<endl;
          model = new ossimCsm3SensorModel(csmModel);
       }
    }
