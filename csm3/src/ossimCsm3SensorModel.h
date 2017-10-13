@@ -31,8 +31,7 @@ public:
     */
    ossimCsm3SensorModel();
    ossimCsm3SensorModel( const ossimCsm3SensorModel& src);
-   ossimCsm3SensorModel( const ossimString& pluginName, const ossimString& sensorName,
-                         const ossimString& imageFile, csm::RasterGM* model);
+   ossimCsm3SensorModel( csm::RasterGM* model);
 
    virtual ~ossimCsm3SensorModel();
 

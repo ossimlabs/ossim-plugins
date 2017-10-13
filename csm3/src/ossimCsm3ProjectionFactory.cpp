@@ -29,10 +29,8 @@ ossimCsm3ProjectionFactory* ossimCsm3ProjectionFactory::instance()
 
 ossimCsm3ProjectionFactory::ossimCsm3ProjectionFactory()
 {
-#if !OSSIM_HAS_MSP
    // Instantiate once to load CSM model dynamic libs
    ossimCsm3Loader csml;
-#endif
 }
 
 

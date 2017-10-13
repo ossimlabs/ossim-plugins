@@ -1,15 +1,9 @@
 //**************************************************************************************************
-// ossimCSM3Loader.cpp
 //
-// Author:  cchuah
-//
-// DESCRIPTION:
-//   Contains implementation of class ossimCSM3Loader
+//     OSSIM Open Source Geospatial Data Processing Library
+//     See top level LICENSE.txt file for license information
 //
 //**************************************************************************************************
-//  $Id: ossimCSM3Loader.cpp 1578 2015-06-08 16:27:20Z cchuah $
-
-
 #include "ossimCsm3Loader.h"
 #include "ossimCsm3SensorModel.h"
 #include <ossim/plugin/ossimDynamicLibrary.h>
@@ -51,7 +45,20 @@ ossimCsm3Loader::ossimCsm3Loader()
 {
    static const char* MODULE = "ossimCsm3Loader Constructor -- ";
 
-#if !OSSIM_HAS_MSP
+#if OSSIM_HAS_MSP
+   try
+   {
+      //cout<<"In ossimCsm3Loader Ctor"<<endl;//#### TODO REMOVE
+      MSP::SMS::SensorModelService sms;
+      MSP::SMS::NameList pluginList;
+      sms.getAllRegisteredPlugins(pluginList);
+   }
+   catch(exception &mspError)
+   {
+      cout<<"Exception: "<<mspError.what()<<endl;;
+   }
+
+#else
    // get plugin path from the preferences file and verify it
    ossimFilename pluginPath (ossimPreferences::instance()->findPreference("csm3_plugin_path"));
    if(pluginPath.empty())
@@ -373,31 +380,46 @@ RasterGM* ossimCsm3Loader::loadModelFromFile(const string& pPluginName,
 ossimCsm3SensorModel* ossimCsm3Loader::getSensorModel(const ossimFilename& filename,
                                                       ossim_uint32 index)
 {
+   ostringstream xmsg;
+   xmsg<<__FILE__<<": getCsmSensorModel() -- ";
+
    ossimCsm3SensorModel* model = 0;
    string pluginName = "";
    string sensorName = "";
    string fname = filename;
 
-   // now try to get available sensor model name and see if we can instantiate a sensor model from it
-   RasterGM* internalCsmModel = 0;
-   std::vector<string> pluginNames;
-   getAvailablePluginNames(pluginNames);
-
-   for(int i = 0; i < pluginNames.size(); ++i)
+   csm::RasterGM* csmModel = 0;
+   try
    {
-      std::vector<string> sensorModelNames;
-      getAvailableSensorModelNames( pluginNames[i], sensorModelNames );
-      for(int j = 0; j < sensorModelNames.size(); ++j)
+#if OSSIM_HAS_MSP
+      MSP::SMS::SensorModelService sms;
+      const char* modelName = 0;
+      MSP::ImageIdentifier entry ("IMAGE_INDEX", ossimString::toString(index).string());
+      sms.setPluginPreferencesRigorousBeforeRpc();
+      csm::Model* base = sms.createModelFromFile(filename.c_str(), modelName, &entry);
+      csmModel = dynamic_cast<csm::RasterGM*>(base);
+#else
+      std::vector<string> pluginNames;
+      getAvailablePluginNames(pluginNames);
+      for(int i = 0; i < pluginNames.size(); ++i)
       {
-         internalCsmModel = loadModelFromFile( pluginNames[i], sensorModelNames[j], filename, index);
-         if(internalCsmModel)
-         {
-            model = new ossimCsm3SensorModel( pluginNames[i], sensorModelNames[j],
-                                              filename, internalCsmModel);
-         }
+         std::vector<string> sensorModelNames;
+         getAvailableSensorModelNames( pluginNames[i], sensorModelNames );
+         for(int j = 0; j<sensorModelNames.size() && !csmModel; ++j)
+            csmModel = loadModelFromFile( pluginNames[i], sensorModelNames[j], filename, index);
+      }
+#endif
+      if (csmModel)
+      {
+         clog<<"ossimCsm3Loader::getSensorModel()  modelName: "<<csmModel->getModelName()<<endl;
+         model = new ossimCsm3SensorModel(csmModel);
       }
    }
-
+   catch (exception& e)
+   {
+      xmsg<<"Caught exception: "<<e.what();
+      throw ossimException(xmsg.str());
+   }
    return model;
 }
 
