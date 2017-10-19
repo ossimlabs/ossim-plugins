@@ -20,7 +20,7 @@
 #include "CurlStreamDefaults.h"
 #include "ossimCurlStreamFactory.h"
 
-static void setDescription(ossimString& description)
+static void setWebDescription(ossimString& description)
 {
    description = "Web plugin\n";
    description += "\tsupport http, https web protocols\n";
@@ -28,25 +28,25 @@ static void setDescription(ossimString& description)
 
 extern "C"
 {
-   ossimSharedObjectInfo  myInfo;
-   ossimString theDescription;
-   std::vector<ossimString> theObjList;
+   ossimSharedObjectInfo  myWebInfo;
+   ossimString theWebDescription;
+   std::vector<ossimString> theWebObjList;
 
-   const char* getDescription()
+   const char* getWebDescription()
    {
-      return theDescription.c_str();
+      return theWebDescription.c_str();
    }
 
-   int getNumberOfClassNames()
+   int getWebNumberOfClassNames()
    {
-      return (int)theObjList.size();
+      return (int)theWebObjList.size();
    }
 
-   const char* getClassName(int idx)
+   const char* getWebClassName(int idx)
    {
-      if(idx < (int)theObjList.size())
+      if(idx < (int)theWebObjList.size())
       {
-         return theObjList[0].c_str();
+         return theWebObjList[idx].c_str();
       }
       return (const char*)0;
    }
@@ -56,11 +56,11 @@ extern "C"
                                                        ossimSharedObjectInfo** info, 
                                                        const char* options)
    {    
-      myInfo.getDescription = getDescription;
-      myInfo.getNumberOfClassNames = getNumberOfClassNames;
-      myInfo.getClassName = getClassName;
+      myWebInfo.getDescription = getWebDescription;
+      myWebInfo.getNumberOfClassNames = getWebNumberOfClassNames;
+      myWebInfo.getClassName = getWebClassName;
       
-      *info = &myInfo;
+      *info = &myWebInfo;
       ossimKeywordlist kwl;
       kwl.parseString(ossimString(options));
 
@@ -81,7 +81,8 @@ extern "C"
          ossimWebRequestFactoryRegistry::instance()->
          registerFactory(ossimWebPluginRequestFactory::instance());
       }
-      setDescription(theDescription);
+      setWebDescription(theWebDescription);
+      ossimWebPluginRequestFactory::instance()->getTypeNameList(theWebObjList);
    }
    
    /* Note symbols need to be exported on windoze... */ 

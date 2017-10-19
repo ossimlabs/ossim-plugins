@@ -14,23 +14,23 @@
 
 extern "C"
 {
-   ossimSharedObjectInfo  myInfo;
+   ossimSharedObjectInfo  myRegInfo;
 
-   const char* getDescription()
+   const char* getRegDescription()
    {
       return "Reg utility plugin\n\n";
    }
 
-   int getNumberOfClassNames()
+   int getRegNumberOfClassNames()
    {
       return 1;
    }
 
-   const char* getClassName(int idx)
+   const char* getRegClassName(int idx)
    {
       if (idx == 0)
       {
-         return "ossimRegUtil";
+         return "ossimRegTool";
       }
       return (const char*)0;
    }
@@ -38,11 +38,11 @@ extern "C"
    /* Note symbols need to be exported on windoze... */ 
    OSSIM_PLUGINS_DLL void ossimSharedLibraryInitialize(ossimSharedObjectInfo** info)
    {    
-      myInfo.getDescription = getDescription;
-      myInfo.getNumberOfClassNames = getNumberOfClassNames;
-      myInfo.getClassName = getClassName;
+      myRegInfo.getDescription = getRegDescription;
+      myRegInfo.getNumberOfClassNames = getRegNumberOfClassNames;
+      myRegInfo.getClassName = getRegClassName;
       
-      *info = &myInfo;
+      *info = &myRegInfo;
       
       /* Register the utility... */
       ossimToolRegistry::instance()->

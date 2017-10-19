@@ -14,19 +14,19 @@
 
 extern "C"
 {
-   ossimSharedObjectInfo  myInfo;
+   ossimSharedObjectInfo  myPotraceInfo;
 
-   const char* getDescription()
+   const char* getPotraceDescription()
    {
-      return "Potrace Tool plugin\n\n";
+      return "Potrace Tool plugin\n";
    }
 
-   int getNumberOfClassNames()
+   int getPotraceNumberOfClassNames()
    {
       return 1;
    }
 
-   const char* getClassName(int idx)
+   const char* getPotraceClassName(int idx)
    {
       if (idx == 0)
       {
@@ -38,16 +38,15 @@ extern "C"
    /* Note symbols need to be exported on windoze... */ 
    OSSIM_PLUGINS_DLL void ossimSharedLibraryInitialize(ossimSharedObjectInfo** info)
    {    
-      myInfo.getDescription = getDescription;
-      myInfo.getNumberOfClassNames = getNumberOfClassNames;
-      myInfo.getClassName = getClassName;
+      myPotraceInfo.getDescription = getPotraceDescription;
+      myPotraceInfo.getNumberOfClassNames = getPotraceNumberOfClassNames;
+      myPotraceInfo.getClassName = getPotraceClassName;
       
-      *info = &myInfo;
+      *info = &myPotraceInfo;
       
       /* Register the utility... */
       ossimToolRegistry::instance()->
          registerFactory(ossimPotraceToolFactory::instance());
-      
    }
 
    /* Note symbols need to be exported on windoze... */ 

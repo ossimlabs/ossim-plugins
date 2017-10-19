@@ -23,25 +23,25 @@ static void setDescription(ossimString& description)
 
 extern "C"
 {
-   ossimSharedObjectInfo  myInfo;
-   ossimString theDescription;
-   std::vector<ossimString> theObjList;
+   ossimSharedObjectInfo  awsInfo;
+   ossimString awsDescription;
+   std::vector<ossimString> awsObjList;
 
-   const char* getDescription()
+   const char* getAwsDescription()
    {
-      return theDescription.c_str();
+      return awsDescription.c_str();
    }
 
-   int getNumberOfClassNames()
+   int getAwsNumberOfClassNames()
    {
-      return (int)theObjList.size();
+      return (int)awsObjList.size();
    }
 
-   const char* getClassName(int idx)
+   const char* getAwsClassName(int idx)
    {
-      if(idx < (int)theObjList.size())
+      if(idx < (int)awsObjList.size())
       {
-         return theObjList[0].c_str();
+         return awsObjList[idx].c_str();
       }
       return (const char*)0;
    }
@@ -53,18 +53,18 @@ extern "C"
       Aws::SDKOptions options;
       Aws::InitAPI(options);
 
-      myInfo.getDescription = getDescription;
-      myInfo.getNumberOfClassNames = getNumberOfClassNames;
-      myInfo.getClassName = getClassName;
+      awsInfo.getDescription = getAwsDescription;
+      awsInfo.getNumberOfClassNames = getAwsNumberOfClassNames;
+      awsInfo.getClassName = getAwsClassName;
       
-      *info = &myInfo;
+      *info = &awsInfo;
       
       ossim::S3StreamDefaults::loadDefaults();
       /* Register our stream factory... */
       ossim::StreamFactoryRegistry::instance()->
          registerFactory( ossim::AwsStreamFactory::instance() );
 
-      setDescription(theDescription);
+      setDescription(awsDescription);
   }
 
    /* Note symbols need to be exported on windoze... */ 

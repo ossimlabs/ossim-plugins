@@ -24,7 +24,7 @@
 #include <ossim/projection/ossimProjectionFactoryRegistry.h>
 #include <ossim/support_data/ossimInfoFactoryRegistry.h>
 
-static void setDescription(ossimString& description)
+static void setGdalDescription(ossimString& description)
 {
    description = "GDAL Plugin\n\n";
    
@@ -45,22 +45,22 @@ static void setDescription(ossimString& description)
 
 extern "C"
 {
-   ossimSharedObjectInfo  myInfo;
-   ossimString theDescription;
-   std::vector<ossimString> theObjList;
-   const char* getDescription()
+   ossimSharedObjectInfo  gdalInfo;
+   ossimString gdalDescription;
+   std::vector<ossimString> gdalObjList;
+   const char* getGdalDescription()
    {
-      return theDescription.c_str();
+      return gdalDescription.c_str();
    }
-   int getNumberOfClassNames()
+   int getGdalNumberOfClassNames()
    {
-      return (int)theObjList.size();
+      return (int)gdalObjList.size();
    }
-   const char* getClassName(int idx)
+   const char* getGdalClassName(int idx)
    {
-      if(idx < (int)theObjList.size())
+      if(idx < (int)gdalObjList.size())
       {
-         return theObjList[0].c_str();
+         return gdalObjList[idx].c_str();
       }
       return (const char*)0;
    }
@@ -70,11 +70,11 @@ extern "C"
                ossimSharedObjectInfo** info, 
                const char* options)
    {    
-      myInfo.getDescription = getDescription;
-      myInfo.getNumberOfClassNames = getNumberOfClassNames;
-      myInfo.getClassName = getClassName;
+      gdalInfo.getDescription = getGdalDescription;
+      gdalInfo.getNumberOfClassNames = getGdalNumberOfClassNames;
+      gdalInfo.getClassName = getGdalClassName;
       
-      *info = &myInfo;
+      *info = &gdalInfo;
       ossimKeywordlist kwl;
       kwl.parseString(ossimString(options));
 
@@ -101,7 +101,12 @@ extern "C"
      ossimInfoFactoryRegistry::instance()->
        registerFactory(ossimGdalInfoFactory::instance());
 
-     setDescription(theDescription);
+     setGdalDescription(gdalDescription);
+     ossimGdalFactory::instance()->getTypeNameList(gdalObjList);
+     ossimGdalImageWriterFactory::instance()->getTypeNameList(gdalObjList);
+     ossimGdalOverviewBuilderFactory::instance()->getTypeNameList(gdalObjList);
+     ossimGdalProjectionFactory::instance()->getTypeNameList(gdalObjList);
+     ossimGdalObjectFactory::instance()->getTypeNameList(gdalObjList);
   }
 
    /* Note symbols need to be exported on windoze... */ 

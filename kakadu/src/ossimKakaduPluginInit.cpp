@@ -26,7 +26,7 @@
 #include <ossim/projection/ossimProjectionFactoryRegistry.h>
 #include <ossim/imaging/ossimImageGeometryRegistry.h>
 
-static void setDescription(ossimString& description)
+static void setKakaduDescription(ossimString& description)
 {
    description = "Kakadu (j2k) reader / writer plugin\n";
    description += "Kakadu (jpip) reader plugin\n";
@@ -37,25 +37,25 @@ static void setDescription(ossimString& description)
 
 extern "C"
 {
-   ossimSharedObjectInfo  myInfo;
-   ossimString theDescription;
-   std::vector<ossimString> theObjList;
+   ossimSharedObjectInfo  myKakaduInfo;
+   ossimString theKakaduDescription;
+   std::vector<ossimString> theKakaduObjList;
 
-   const char* getDescription()
+   const char* getKakaduDescription()
    {
-      return theDescription.c_str();
+      return theKakaduDescription.c_str();
    }
 
-   int getNumberOfClassNames()
+   int getKakaduNumberOfClassNames()
    {
-      return (int)theObjList.size();
+      return (int)theKakaduObjList.size();
    }
 
-   const char* getClassName(int idx)
+   const char* getKakaduClassName(int idx)
    {
-      if(idx < (int)theObjList.size())
+      if(idx < (int)theKakaduObjList.size())
       {
-         return theObjList[0].c_str();
+         return theKakaduObjList[idx].c_str();
       }
       return (const char*)0;
    }
@@ -65,11 +65,11 @@ extern "C"
                                                        ossimSharedObjectInfo** info, 
                                                        const char* options)
    {    
-      myInfo.getDescription = getDescription;
-      myInfo.getNumberOfClassNames = getNumberOfClassNames;
-      myInfo.getClassName = getClassName;
+      myKakaduInfo.getDescription = getKakaduDescription;
+      myKakaduInfo.getNumberOfClassNames = getKakaduNumberOfClassNames;
+      myKakaduInfo.getClassName = getKakaduClassName;
       
-      *info = &myInfo;
+      *info = &myKakaduInfo;
       ossimKeywordlist kwl;
       kwl.parseString(ossimString(options));
       if(ossimString(kwl.find("reader_factory.location")).downcase() == "front")
@@ -146,7 +146,14 @@ extern "C"
       {
          ossimImageGeometryRegistry::instance()->registerFactory(ossimKakaduJpipImageGeometryFactory::instance());
       }
-      setDescription(theDescription);
+      setKakaduDescription(theKakaduDescription);
+      ossimKakaduReaderFactory::instance()->getTypeNameList(theKakaduObjList);
+      ossimKakaduJpipHandlerFactory::instance()->getTypeNameList(theKakaduObjList);
+      ossimKakaduOverviewBuilderFactory::instance()->getTypeNameList(theKakaduObjList);
+      ossimKakaduWriterFactory::instance()->getTypeNameList(theKakaduObjList);
+      ossimJpipProjectionFactory::instance()->getTypeNameList(theKakaduObjList);
+      ossimKakaduJpipImageGeometryFactory::instance()->getTypeNameList(theKakaduObjList);
+      theKakaduObjList.push_back("ossimKakaduJpipInfo");
    }
    
    /* Note symbols need to be exported on windoze... */ 
