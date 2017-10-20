@@ -15,7 +15,7 @@
 #include <ossim/base/ossimString.h>
 #include <ossim/base/ossimObjectFactoryRegistry.h>
 
-static void setDescription(ossimString& description)
+static void setOpenCVDescription(ossimString& description)
 {
    description = "OpenCV plugin\n\n";
 }
@@ -23,25 +23,25 @@ static void setDescription(ossimString& description)
 
 extern "C"
 {
-   ossimSharedObjectInfo  myInfo;
-   ossimString theDescription;
-   std::vector<ossimString> theObjList;
+   ossimSharedObjectInfo  myOpenCVInfo;
+   ossimString theOpenCVDescription;
+   std::vector<ossimString> theOpenCVObjList;
    
-   const char* getDescription()
+   const char* getOpenCVDescription()
    {
-      return theDescription.c_str();
+      return theOpenCVDescription.c_str();
    }
    
-   int getNumberOfClassNames()
+   int getOpenCVNumberOfClassNames()
    {
-      return (int)theObjList.size();
+      return (int)theOpenCVObjList.size();
    }
    
-   const char* getClassName(int idx)
+   const char* getOpenCVClassName(int idx)
    {
-      if(idx < (int)theObjList.size())
+      if(idx < (int)theOpenCVObjList.size())
       {
-         return theObjList[0].c_str();
+         return theOpenCVObjList[idx].c_str();
       }
       return (const char*)0;
    }
@@ -50,17 +50,18 @@ extern "C"
    OSSIM_PLUGINS_DLL void ossimSharedLibraryInitialize(
       ossimSharedObjectInfo** info)
    {    
-      myInfo.getDescription = getDescription;
-      myInfo.getNumberOfClassNames = getNumberOfClassNames;
-      myInfo.getClassName = getClassName;
+      myOpenCVInfo.getDescription = getOpenCVDescription;
+      myOpenCVInfo.getNumberOfClassNames = getOpenCVNumberOfClassNames;
+      myOpenCVInfo.getClassName = getOpenCVClassName;
       
-      *info = &myInfo;
+      *info = &myOpenCVInfo;
       
      /* Register objects... */
      ossimObjectFactoryRegistry::instance()->
         registerFactory(ossimOpenCvObjectFactory::instance());
       
-      setDescription(theDescription);
+      setOpenCVDescription(theOpenCVDescription);
+      ossimOpenCvObjectFactory::instance()->getTypeNameList(theOpenCVObjList);
    }
    
    /* Note symbols need to be exported on windoze... */ 

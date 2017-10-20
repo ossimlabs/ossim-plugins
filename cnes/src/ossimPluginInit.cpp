@@ -20,7 +20,7 @@ namespace ossimplugins
 {
 
 
-   static void setDescription(ossimString& description)
+   static void setCnesDescription(ossimString& description)
    {
       description = "OSSIM Plugin\n\n";
       std::vector<ossimString> projectionTypes;
@@ -37,22 +37,22 @@ namespace ossimplugins
 
    extern "C"
    {
-      ossimSharedObjectInfo  myInfo;
-      ossimString theDescription;
-      std::vector<ossimString> theObjList;
-      const char* getDescription()
+      ossimSharedObjectInfo  cnesInfo;
+      ossimString cnesDescription;
+      std::vector<ossimString> cnesObjList;
+      const char* getCnesDescription()
       {
-         return theDescription.c_str();
+         return cnesDescription.c_str();
       }
-      int getNumberOfClassNames()
+      int getCnesNumberOfClassNames()
       {
-         return (int)theObjList.size();
+         return (int)cnesObjList.size();
       }
-      const char* getClassName(int idx)
+      const char* getCnesClassName(int idx)
       {
-         if(idx < (int)theObjList.size())
+         if(idx < (int)cnesObjList.size())
          {
-            return theObjList[0].c_str();
+            return cnesObjList[idx].c_str();
          }
          return (const char*)0;
       }
@@ -61,11 +61,11 @@ namespace ossimplugins
       OSSIM_PLUGINS_DLL void ossimSharedLibraryInitialize(
          ossimSharedObjectInfo** info)
       {
-         myInfo.getDescription = getDescription;
-         myInfo.getNumberOfClassNames = getNumberOfClassNames;
-         myInfo.getClassName = getClassName;
+         cnesInfo.getDescription = getCnesDescription;
+         cnesInfo.getNumberOfClassNames = getCnesNumberOfClassNames;
+         cnesInfo.getClassName = getCnesClassName;
 
-         *info = &myInfo;
+         *info = &cnesInfo;
 
          /** Register the readers... */
          ossimImageHandlerRegistry::instance()->
@@ -79,7 +79,9 @@ namespace ossimplugins
          ossimProjectionFactoryRegistry::instance()->
             registerFactoryToFront(ossimPluginProjectionFactory::instance());
 
-         setDescription(theDescription);
+         setCnesDescription(cnesDescription);
+         ossimPluginReaderFactory::instance()->getTypeNameList(cnesObjList);
+         ossimPluginProjectionFactory::instance()->getTypeNameList(cnesObjList);
       }
 
       /* Note symbols need to be exported on windoze... */

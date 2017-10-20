@@ -19,7 +19,7 @@
 #include "ossimMrSidReaderFactory.h"
 #include "ossimMrSidWriterFactory.h"
 
-static void setDescription(ossimString& description)
+static void setMrSidDescription(ossimString& description)
 {
 #ifdef OSSIM_ENABLE_MRSID_WRITE 
    description = "MrSid reader / writer plugin\n\n";
@@ -30,25 +30,25 @@ static void setDescription(ossimString& description)
 
 extern "C"
 {
-   ossimSharedObjectInfo  myInfo;
-   ossimString theDescription;
-   std::vector<ossimString> theObjList;
+   ossimSharedObjectInfo  myMrSidInfo;
+   ossimString theMrSidDescription;
+   std::vector<ossimString> theMrSidObjList;
 
-   const char* getDescription()
+   const char* getMrSidDescription()
    {
-      return theDescription.c_str();
+      return theMrSidDescription.c_str();
    }
 
-   int getNumberOfClassNames()
+   int getMrSidNumberOfClassNames()
    {
-      return (int)theObjList.size();
+      return (int)theMrSidObjList.size();
    }
 
-   const char* getClassName(int idx)
+   const char* getMrSidClassName(int idx)
    {
-      if(idx < (int)theObjList.size())
+      if(idx < (int)theMrSidObjList.size())
       {
-         return theObjList[0].c_str();
+         return theMrSidObjList[idx].c_str();
       }
       return (const char*)0;
    }
@@ -57,23 +57,26 @@ extern "C"
    OSSIM_PLUGINS_DLL void ossimSharedLibraryInitialize(
       ossimSharedObjectInfo** info)
    {    
-      myInfo.getDescription = getDescription;
-      myInfo.getNumberOfClassNames = getNumberOfClassNames;
-      myInfo.getClassName = getClassName;
+      myMrSidInfo.getDescription = getMrSidDescription;
+      myMrSidInfo.getNumberOfClassNames = getMrSidNumberOfClassNames;
+      myMrSidInfo.getClassName = getMrSidClassName;
       
-      *info = &myInfo;
+      *info = &myMrSidInfo;
       
       /* Register the readers... */
       ossimImageHandlerRegistry::instance()->
          registerFactory(ossimMrSidReaderFactory::instance(), false);
+      ossimMrSidReaderFactory::instance()->getTypeNameList(theMrSidObjList);
 
 #ifdef OSSIM_ENABLE_MRSID_WRITE
       /* Register the writers... */
       ossimImageWriterFactoryRegistry::instance()->
          registerFactory(ossimMrSidWriterFactory::instance());
+      ossimMrSidWriterFactory::instance()->getTypeNameList(theMrSidObjList);
 #endif
       
-      setDescription(theDescription);
+      setMrSidDescription(theMrSidDescription);
+
    }
    
    /* Note symbols need to be exported on windoze... */ 

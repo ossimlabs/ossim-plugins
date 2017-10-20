@@ -19,7 +19,7 @@
 // #include "ossimKmlSuperOverlayReaderFactory.h"
 #include "ossimKmlSuperOverlayWriterFactory.h"
 
-static void setDescription(ossimString& description)
+static void setKmlDescription(ossimString& description)
 {
    description = "KmlSuperOverlay writer plugin\n\n";
    // description = "KmlSuperOverlay reader plugin\n\n";
@@ -27,25 +27,25 @@ static void setDescription(ossimString& description)
 
 extern "C"
 {
-   ossimSharedObjectInfo  myInfo;
-   ossimString theDescription;
-   std::vector<ossimString> theObjList;
+   ossimSharedObjectInfo  myKmlInfo;
+   ossimString theKmlDescription;
+   std::vector<ossimString> theKmlObjList;
 
-   const char* getDescription()
+   const char* getKmlDescription()
    {
-      return theDescription.c_str();
+      return theKmlDescription.c_str();
    }
 
-   int getNumberOfClassNames()
+   int getKmlNumberOfClassNames()
    {
-      return (int)theObjList.size();
+      return (int)theKmlObjList.size();
    }
 
-   const char* getClassName(int idx)
+   const char* getKmlClassName(int idx)
    {
-      if(idx < (int)theObjList.size())
+      if(idx < (int)theKmlObjList.size())
       {
-         return theObjList[0].c_str();
+         return theKmlObjList[idx].c_str();
       }
       return (const char*)0;
    }
@@ -54,11 +54,11 @@ extern "C"
    OSSIM_PLUGINS_DLL void ossimSharedLibraryInitialize(
       ossimSharedObjectInfo** info)
    {    
-      myInfo.getDescription = getDescription;
-      myInfo.getNumberOfClassNames = getNumberOfClassNames;
-      myInfo.getClassName = getClassName;
+      myKmlInfo.getDescription = getKmlDescription;
+      myKmlInfo.getNumberOfClassNames = getKmlNumberOfClassNames;
+      myKmlInfo.getClassName = getKmlClassName;
       
-      *info = &myInfo;
+      *info = &myKmlInfo;
 
       /* Register the readers... */
       // ossimImageHandlerRegistry::instance()->
@@ -68,7 +68,10 @@ extern "C"
       ossimImageWriterFactoryRegistry::instance()->
          registerFactory(ossimKmlSuperOverlayWriterFactory::instance());
       
-      setDescription(theDescription);
+      setKmlDescription(theKmlDescription);
+      //ossimKmlSuperOverlayReaderFactory::instance()->getTypeNameList(theKmlObjList);
+      ossimKmlSuperOverlayWriterFactory::instance()->getTypeNameList(theKmlObjList);
+
    }
    
    /* Note symbols need to be exported on windoze... */

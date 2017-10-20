@@ -11,32 +11,32 @@
 #include <ossim/base/ossimString.h>
 #include <ossim/imaging/ossimImageSourceFactoryRegistry.h>
 
-static void setDescription(ossimString& description)
+static void setFftw3Description(ossimString& description)
 {
    description = "FFTW3 Filter plugin\n\n";
 }
 
 extern "C"
 {
-   ossimSharedObjectInfo  myInfo;
-   ossimString theDescription;
-   std::vector<ossimString> theObjList;
+   ossimSharedObjectInfo  fftw3Info;
+   ossimString fftw3Description;
+   std::vector<ossimString> fftw3ObjList;
 
-   const char* getDescription()
+   const char* getFftw3Description()
    {
-      return theDescription.c_str();
+      return fftw3Description.c_str();
    }
 
-   int getNumberOfClassNames()
+   int getFftw3NumberOfClassNames()
    {
-      return (int)theObjList.size();
+      return (int)fftw3ObjList.size();
    }
 
-   const char* getClassName(int idx)
+   const char* getFftw3ClassName(int idx)
    {
-      if(idx < (int)theObjList.size())
+      if(idx < (int)fftw3ObjList.size())
       {
-         return theObjList[0].c_str();
+         return fftw3ObjList[idx].c_str();
       }
       return (const char*)0;
    }
@@ -45,16 +45,18 @@ extern "C"
    OSSIM_PLUGINS_DLL void ossimSharedLibraryInitialize(
       ossimSharedObjectInfo** info)
    {    
-      myInfo.getDescription = getDescription;
-      myInfo.getNumberOfClassNames = getNumberOfClassNames;
-      myInfo.getClassName = getClassName;
+      fftw3ObjList.push_back("ossimFftw3Filter");
+
+      fftw3Info.getDescription = getFftw3Description;
+      fftw3Info.getNumberOfClassNames = getFftw3NumberOfClassNames;
+      fftw3Info.getClassName = getFftw3ClassName;
       
-      *info = &myInfo;
+      *info = &fftw3Info;
       
       /* Register the filter... */
       ossimImageSourceFactoryRegistry::instance()->registerFactory(ossimFftw3Factory::instance());
       
-      setDescription(theDescription);
+      setFftw3Description(fftw3Description);
    }
 
    /* Note symbols need to be exported on windoze... */ 

@@ -26,8 +26,8 @@ CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/src/ossimCsm3Config.h.in
 
 add_subdirectory( src )
 
-IF(BUILD_OSSIM_TESTS)
-   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test ${CMAKE_CURRENT_BINARY_DIR}/test)
-ENDIF()
+#IF(BUILD_OSSIM_TESTS)
+#   add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test ${CMAKE_CURRENT_BINARY_DIR}/test)
+#ENDIF()
 
 

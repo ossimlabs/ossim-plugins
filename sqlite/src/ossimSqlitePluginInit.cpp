@@ -19,7 +19,7 @@
 #include <ossim/imaging/ossimImageWriterFactoryRegistry.h>
 #include <ossim/support_data/ossimInfoFactoryRegistry.h>
 
-static void setDescription(ossimString& description)
+static void setSqliteDescription(ossimString& description)
 {
    description = "GeoPackage reader / writer plugin\n\n";
 }
@@ -27,25 +27,25 @@ static void setDescription(ossimString& description)
 
 extern "C"
 {
-   ossimSharedObjectInfo  myInfo;
-   ossimString theDescription;
-   std::vector<ossimString> theObjList;
+   ossimSharedObjectInfo  mySqliteInfo;
+   ossimString theSqliteDescription;
+   std::vector<ossimString> theSqliteObjList;
 
-   const char* getDescription()
+   const char* getSqliteDescription()
    {
-      return theDescription.c_str();
+      return theSqliteDescription.c_str();
    }
 
-   int getNumberOfClassNames()
+   int getSqliteNumberOfClassNames()
    {
-      return (int)theObjList.size();
+      return (int)theSqliteObjList.size();
    }
 
-   const char* getClassName(int idx)
+   const char* getSqliteClassName(int idx)
    {
-      if(idx < (int)theObjList.size())
+      if(idx < (int)theSqliteObjList.size())
       {
-         return theObjList[0].c_str();
+         return theSqliteObjList[idx].c_str();
       }
       return (const char*)0;
    }
@@ -55,11 +55,11 @@ extern "C"
                                                        ossimSharedObjectInfo** info, 
                                                        const char* /*options*/)
    {    
-      myInfo.getDescription = getDescription;
-      myInfo.getNumberOfClassNames = getNumberOfClassNames;
-      myInfo.getClassName = getClassName;
+      mySqliteInfo.getDescription = getSqliteDescription;
+      mySqliteInfo.getNumberOfClassNames = getSqliteNumberOfClassNames;
+      mySqliteInfo.getClassName = getSqliteClassName;
       
-      *info = &myInfo;
+      *info = &mySqliteInfo;
       
       /* Register the readers... */
       ossimImageHandlerRegistry::instance()->
@@ -73,7 +73,10 @@ extern "C"
       ossimImageWriterFactoryRegistry::instance()->
          registerFactory(ossimSqliteWriterFactory::instance());
       
-      setDescription(theDescription);
+      setSqliteDescription(theSqliteDescription);
+      ossimSqliteReaderFactory::instance()->getTypeNameList(theSqliteObjList);
+      ossimSqliteWriterFactory::instance()->getTypeNameList(theSqliteObjList);
+      theSqliteObjList.push_back("ossimGpkgInfo");
   }
 
    /* Note symbols need to be exported on windoze... */ 

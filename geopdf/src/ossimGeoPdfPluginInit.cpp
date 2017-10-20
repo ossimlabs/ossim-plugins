@@ -19,7 +19,7 @@
 #include "ossimGeoPdfReaderFactory.h"
 #include "ossimGeoPdfInfoFactory.h"
 
-static void setDescription(ossimString& description)
+static void setGeoPdfDescription(ossimString& description)
 {
    description = "GeoPdf reader plugin\n\n";
 }
@@ -27,25 +27,25 @@ static void setDescription(ossimString& description)
 
 extern "C"
 {
-   ossimSharedObjectInfo  myInfo;
-   ossimString theDescription;
-   std::vector<ossimString> theObjList;
+   ossimSharedObjectInfo  myGeoPdfInfo;
+   ossimString theGeoPdfDescription;
+   std::vector<ossimString> theGeoPdfObjList;
 
-   const char* getDescription()
+   const char* getGeoPdfDescription()
    {
-      return theDescription.c_str();
+      return theGeoPdfDescription.c_str();
    }
 
-   int getNumberOfClassNames()
+   int getGeoPdfNumberOfClassNames()
    {
-      return (int)theObjList.size();
+      return (int)theGeoPdfObjList.size();
    }
 
-   const char* getClassName(int idx)
+   const char* getGeoPdfClassName(int idx)
    {
-      if(idx < (int)theObjList.size())
+      if(idx < (int)theGeoPdfObjList.size())
       {
-         return theObjList[0].c_str();
+         return theGeoPdfObjList[idx].c_str();
       }
       return (const char*)0;
    }
@@ -54,11 +54,11 @@ extern "C"
    OSSIM_PLUGINS_DLL void ossimSharedLibraryInitialize(
       ossimSharedObjectInfo** info)
    {    
-      myInfo.getDescription = getDescription;
-      myInfo.getNumberOfClassNames = getNumberOfClassNames;
-      myInfo.getClassName = getClassName;
+      myGeoPdfInfo.getDescription = getGeoPdfDescription;
+      myGeoPdfInfo.getNumberOfClassNames = getGeoPdfNumberOfClassNames;
+      myGeoPdfInfo.getClassName = getGeoPdfClassName;
       
-      *info = &myInfo;
+      *info = &myGeoPdfInfo;
       
       /* Register the readers... */
       ossimImageHandlerRegistry::instance()->
@@ -68,7 +68,9 @@ extern "C"
       ossimInfoFactoryRegistry::instance()->
         registerFactory(ossimGeoPdfInfoFactory::instance());
 
-      setDescription(theDescription);
+      setGeoPdfDescription(theGeoPdfDescription);
+      ossimGeoPdfReaderFactory::instance()->getTypeNameList(theGeoPdfObjList);
+      theGeoPdfObjList.push_back("ossimGeoPdfInfo");
    }
    
    /* Note symbols need to be exported on windoze... */ 

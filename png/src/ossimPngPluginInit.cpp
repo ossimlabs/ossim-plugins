@@ -19,61 +19,66 @@
 #include <ossim/imaging/ossimImageWriterFactoryRegistry.h>
 #include <ossim/imaging/ossimCodecFactoryRegistry.h>
 
-static void setDescription(ossimString& description)
-{
-   description = "PNG reader / writer plugin\n\n";
-}
-
-
 extern "C"
 {
-   ossimSharedObjectInfo  myInfo;
-   ossimString theDescription;
-   std::vector<ossimString> theObjList;
+   static ossimSharedObjectInfo  myPngInfo;
+   static ossimString thePngDescription;
+   static std::vector<ossimString> thePngObjList;
 
-   const char* getDescription()
+   static const char* getPngDescription()
    {
-      return theDescription.c_str();
-   }
-
-   int getNumberOfClassNames()
-   {
-      return (int)theObjList.size();
-   }
-
-   const char* getClassName(int idx)
-   {
-      if(idx < (int)theObjList.size())
+      if (thePngDescription.empty())
       {
-         return theObjList[0].c_str();
+         thePngDescription = "PNG reader / writer plugin.\n";
+      }
+      return thePngDescription.c_str();
+   }
+
+   static int getPngNumberOfClassNames()
+   {
+      return (int)thePngObjList.size();
+   }
+
+   static const char* getPngClassName(int idx)
+   {
+      if(idx < (int)thePngObjList.size())
+      {
+         return thePngObjList[idx].c_str();
       }
       return (const char*)0;
    }
 
-   /* Note symbols need to be exported on windoze... */ 
-   OSSIM_PLUGINS_DLL void ossimSharedLibraryInitialize(
-                                                       ossimSharedObjectInfo** info, 
+   /* Note symbols need to be exported on windoze... */
+   OSSIM_PLUGINS_DLL void ossimSharedLibraryInitialize(ossimSharedObjectInfo** info,
                                                        const char* /*options*/)
-   {    
-      myInfo.getDescription = getDescription;
-      myInfo.getNumberOfClassNames = getNumberOfClassNames;
-      myInfo.getClassName = getClassName;
-      
-      *info = &myInfo;
-      
+   {
+      thePngObjList.push_back("ossimPngReader");
+      thePngObjList.push_back("ossimPngWriter");
+      thePngObjList.push_back("ossimPngCodec");
+
+      myPngInfo.getDescription = getPngDescription;
+      myPngInfo.getNumberOfClassNames = getPngNumberOfClassNames;
+      myPngInfo.getClassName = getPngClassName;
+
+      *info = &myPngInfo;
+
       /* Register the readers... */
       ossimImageHandlerRegistry::instance()->
         registerFactory(ossimPngReaderFactory::instance());
-      
+
       /* Register the writers... */
       ossimImageWriterFactoryRegistry::instance()->
          registerFactory(ossimPngWriterFactory::instance());
-      
+
       ossimCodecFactoryRegistry::instance()->registerFactory(ossimPngCodecFactory::instance());
-      setDescription(theDescription);
+
+      ossimPngReaderFactory::instance()->getTypeNameList(thePngObjList);
+      ossimPngWriterFactory::instance()->getTypeNameList(thePngObjList);
+      ossimPngCodecFactory::instance()->getTypeNameList(thePngObjList);
+
   }
 
-   /* Note symbols need to be exported on windoze... */ 
+   /* Note symbols need to be exported on windoze... */
   OSSIM_PLUGINS_DLL void ossimSharedLibraryFinalize()
   {
      ossimImageHandlerRegistry::instance()->

@@ -17,7 +17,7 @@
 #include <ossim/imaging/ossimImageHandlerRegistry.h>
 #include <ossim/imaging/ossimImageWriterFactoryRegistry.h>
 
-static void setDescription(ossimString& description)
+static void setOpenJpegDescription(ossimString& description)
 {
    description = "Open JPEG (j2k) reader / writer plugin\n\n";
 }
@@ -25,25 +25,25 @@ static void setDescription(ossimString& description)
 
 extern "C"
 {
-   ossimSharedObjectInfo  myInfo;
-   ossimString theDescription;
-   std::vector<ossimString> theObjList;
+   ossimSharedObjectInfo  myOpenJpegInfo;
+   ossimString theOpenJpegDescription;
+   std::vector<ossimString> theOpenJpegObjList;
 
-   const char* getDescription()
+   const char* getOpenJpegDescription()
    {
-      return theDescription.c_str();
+      return theOpenJpegDescription.c_str();
    }
 
-   int getNumberOfClassNames()
+   int getOpenJpegNumberOfClassNames()
    {
-      return (int)theObjList.size();
+      return (int)theOpenJpegObjList.size();
    }
 
-   const char* getClassName(int idx)
+   const char* getOpenJpegClassName(int idx)
    {
-      if(idx < (int)theObjList.size())
+      if(idx < (int)theOpenJpegObjList.size())
       {
-         return theObjList[0].c_str();
+         return theOpenJpegObjList[idx].c_str();
       }
       return (const char*)0;
    }
@@ -52,11 +52,11 @@ extern "C"
    OSSIM_PLUGINS_DLL void ossimSharedLibraryInitialize(
       ossimSharedObjectInfo** info)
    {    
-      myInfo.getDescription = getDescription;
-      myInfo.getNumberOfClassNames = getNumberOfClassNames;
-      myInfo.getClassName = getClassName;
+      myOpenJpegInfo.getDescription = getOpenJpegDescription;
+      myOpenJpegInfo.getNumberOfClassNames = getOpenJpegNumberOfClassNames;
+      myOpenJpegInfo.getClassName = getOpenJpegClassName;
       
-      *info = &myInfo;
+      *info = &myOpenJpegInfo;
       
       /* Register the readers... */
       ossimImageHandlerRegistry::instance()->
@@ -66,7 +66,9 @@ extern "C"
       ossimImageWriterFactoryRegistry::instance()->
          registerFactory(ossimOpjWriterFactory::instance());
       
-      setDescription(theDescription);
+      setOpenJpegDescription(theOpenJpegDescription);
+      ossimOpjReaderFactory::instance()->getTypeNameList(theOpenJpegObjList);
+      ossimOpjWriterFactory::instance()->getTypeNameList(theOpenJpegObjList);
   }
 
    /* Note symbols need to be exported on windoze... */ 

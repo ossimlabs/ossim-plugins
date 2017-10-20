@@ -19,32 +19,32 @@
 #include <ossim/point_cloud/ossimPointCloudHandlerRegistry.h>
 #include <ossim/imaging/ossimImageHandlerRegistry.h>
 
-static void setDescription(ossimString& description)
+static void setPdalDescription(ossimString& description)
 {
    description = "pdal reader / writer plugin\n\n";
 }
 
 extern "C"
 {
-   ossimSharedObjectInfo  myInfo;
-   ossimString theDescription;
-   std::vector<ossimString> theObjList;
+   ossimSharedObjectInfo  myPdalInfo;
+   ossimString thePdalDescription;
+   std::vector<ossimString> thePdalObjList;
 
-   const char* getDescription()
+   const char* getPdalDescription()
    {
-      return theDescription.c_str();
+      return thePdalDescription.c_str();
    }
 
-   int getNumberOfClassNames()
+   int getPdalNumberOfClassNames()
    {
-      return (int)theObjList.size();
+      return (int)thePdalObjList.size();
    }
 
-   const char* getClassName(int idx)
+   const char* getPdalClassName(int idx)
    {
-      if(idx < (int)theObjList.size())
+      if(idx < (int)thePdalObjList.size())
       {
-         return theObjList[0].c_str();
+         return thePdalObjList[idx].c_str();
       }
       return (const char*)0;
    }
@@ -53,20 +53,18 @@ extern "C"
    OSSIM_PLUGINS_DLL void ossimSharedLibraryInitialize(
       ossimSharedObjectInfo** info)
    {    
-      myInfo.getDescription = getDescription;
-      myInfo.getNumberOfClassNames = getNumberOfClassNames;
-      myInfo.getClassName = getClassName;
+      myPdalInfo.getDescription = getPdalDescription;
+      myPdalInfo.getNumberOfClassNames = getPdalNumberOfClassNames;
+      myPdalInfo.getClassName = getPdalClassName;
       
-      *info = &myInfo;
+      *info = &myPdalInfo;
       
       /* Register the readers... */
       ossimPointCloudHandlerRegistry::instance()->
          registerFactory(ossimPdalReaderFactory::instance());
+      ossimPdalReaderFactory::instance()->getTypeNameList(thePdalObjList);
       
-      //ossimImageHandlerRegistry::instance()->
-      //   registerFactory(ossimPdalImageHandlerFactory::instance());
-
-      setDescription(theDescription);
+      setPdalDescription(thePdalDescription);
    }
 
    /* Note symbols need to be exported on windoze... */ 
