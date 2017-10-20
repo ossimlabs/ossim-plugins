@@ -17,7 +17,7 @@ Where OSSIM_INSTALL_PREFIX is the location of the OSSIM/OMAR installation on the
 ## Plugin Development
 
 To add functionality via the plugin scheme, it is necessary to perform the following steps. In this example, we're creating a plugin called `Xxx` that will supply a new reader, namely, `ossimXxxReader`
-1. Copy an existing plugin directory. The "png" plugin is a good example to use as a template.
+1. Copy an existing plugin directory. The "png" plugin is a good example to use as a template as it has multiple classes being registered.
 2. Depending on the type of functionality you'll be adding, rename and edit the corresponding class files. For example, for our new reader, `ossimXxxReader` (derived ossimImageHandler-derived class), refer to ossimPngReader.h/cpp as a starting point.
 3. Every functional class (reader, writer, tool, etc.) needs an accompanying factory that will be registered with the application's registry system. In our example, rename `ossimPngReaderFactory.h/cpp` to `ossimXxxReaderFactory.h/cpp` and edit to reflect your reader class.
 3. Rename `ossimPngPluginInit.cpp` to `ossimXxxPluginInit.cpp` and edit the file. This file contains the special symbols that will be referenced by the run-time to initialize the plugin and register the functionality with the application's object factory registries. Using `Png` as the starting point, This is just replacing "Png" with your plugin's name everywhere in the file. _It is important to keep the names that include "Png" unique, and to leave the other symbols alone._ The symbols that are expected by the run-time (exactly as is) are `ossimSharedLibraryInitialize` and `ossimSharedLibraryFinalize`.
