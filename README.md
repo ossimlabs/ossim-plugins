@@ -4,7 +4,7 @@ Contains plugin libraries for extending OSSIM core functionality.
 ## Description
 Plugins extend OSSIM's core functionality with additional readers, writers, sensor models, high-level "tool" utilities, filters, and codecs. The OSSIM applications (ossim-cli, ossim-info, ossim-chipper, etc.) read a configuration file that contains a list of plugin libraries to load at run-time.
 
-The preferences configuration file name is typically set via the environment variable OSSIM_PREFS_FILE, or via the "-P <filename>" option on most command lines. See the command line options for the application you'll be running to see if that is an option.
+The preferences configuration file name is typically set via the environment variable OSSIM_PREFS_FILE. Alternatively, it can be specified with the `-P <filename>` option on most command lines. 
   
 The preferences for the plugin library specifications in the configuration file follow the format:
 ```
