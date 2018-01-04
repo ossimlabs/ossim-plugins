@@ -1,0 +1,110 @@
+{
+   "parameters": 
+   [
+      {
+         "name": "algorithm",
+         "descr": "Algorithm used for generating tiepoints. This can also be specified one level up in the JSON.",
+         "type": "string",
+         "value": "test-algo"
+      },
+      {
+         "label": "My Custom Param",
+         "name": "myCustomParam",
+         "descr": "Testing readability",
+         "type": "bool",
+         "value": true
+      },
+      {
+         "label": "Correlation Window Size",
+         "name": "corrWindowSize",
+         "descr": "Side size of the correlation kernel to use in computing cross-correlation. Must be odd number.",
+         "type": "uint",
+         "value": 9
+      },
+      {
+         "label": "Peak Threshold",
+         "name": "peakThreshold",
+         "descr": "The minimum cross-correlation value acceptable for a match.",
+         "type": "float",
+         "value": 0.6
+      },
+      {
+         "label": "Max. Residual Diff. Ratio",
+         "name": "maxResMagDiffRatio",
+         "descr": "Used in match-point neighbor consistency check. Represents the maximum ratio (0-1) difference tolerated in residual magnitudes before flagging false match.",
+         "type": "float",
+         "value": 0.1
+      },
+      {
+         "label": "Cosine Max. Residual Angle Diff.",
+         "name": "cosMaxResAngleDiff",
+         "descr": "Used in match-point neighbor consistency check. Represents the cosine of the maximum angle difference (0-1) tolerated between residual azimuths before flagging false match.",
+         "type": "float",
+         "value": 0.985
+      },
+      {
+         "label": "% Consistent Threshold",
+         "name": "percentConsistentThreshold",
+         "descr": "Used in match-point neighbor consistency check. Represents the minimum required percentage (0-100) of the neighbor set that must be deemed consistent before accepting the match.",
+         "type": "uint",
+         "value": 50
+      },
+      {
+         "label": "Min. Number of Consistent Neighbors",
+         "name": "minNumConsistentNeighbors",
+         "descr": "Used in match-point neighbor consistency check. Represents the minimum number of consistent neighbors needed to accept a match.",
+         "type": "uint",
+         "value": 1
+      },
+      {
+         "label": "Number of Features Per File",
+         "name": "numFeaturesPerTile",
+         "descr": "Defines the number of features to identify in the search patch.",
+         "type": "uint",
+         "value": 10
+      },
+      {
+         "label": "Consider Alternate Matches",
+         "name": "considerAltMatches",
+         "descr": "If true, directs the consistency check to also consider secondary matches in neighbors before rejecting a match.",
+         "type": "bool",
+         "value": false
+      },
+      {
+         "label": "Feature Search Tile Size",
+         "name": "featureSearchTileSize",
+         "descr": "Side size o square tile in pixels for searching features.",
+         "type": "uint",
+         "value": 256
+      },
+      {
+         "label": "Diagnotic Level",
+         "name": "diagnosticLevel",
+         "descr": "For engineering output. For minimum verbosity, use 0",
+         "type": "uint",
+         "value": 1
+      },
+      {
+         "label": "Use Tile Grid Layout",
+         "name": "useTileGridLayout",
+         "descr": "If true, directs the feature search patch layout to use grid layout scheme.",
+         "type": "bool",
+         "value": true
+      },
+      {
+         "label": "Search Grid Size",
+         "name": "searchGridSize",
+         "descr": "The number of search tiles to layout along widest dimension of overlap.",
+         "type": "uint",
+         "value": 7
+      },
+      {
+         "label": "Annotated Image Size",
+         "name": "annotatedImageSize",
+         "descr": "For engineering use. Defines the maximum side size of the annotated image being generated (if diagnostic level is appropriate). Leave as 0 to match the REF input image size",
+         "type": "int",
+         "value": 0
+      }
+   ]
+}
+      

@@ -1,0 +1,6 @@
+{ 
+  "service": "autoTiePoint",
+  "method": "getParameters",
+  "algorithm": "crosscorr"
+}
+

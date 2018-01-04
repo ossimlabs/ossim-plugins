@@ -1,0 +1,115 @@
+{
+   "parameters": 
+   [
+      {
+         "label": "Max. Residual Diff. Ratio",
+         "name": "maxResMagDiffRatio",
+         "descr": "Used in match-point neighbor consistency check. Represents the maximum ratio (0-1) difference tolerated in residual magnitudes before flagging false match.",
+         "type": "float",
+         "value": 0.1
+      },
+      {
+         "label": "Min. Vector Residual Diff.",
+         "name": "minVectorResDiff",
+         "descr": "Used in match-point neighbor consistency check. Represents the minimum vector difference between residuals below which they are considered consistent. Used for accepting small but directionally varying neighbor residuals..",
+         "type": "float",
+         "value": 3.0
+      },
+      {
+         "label": "Max. Residual Angle Diff.",
+         "name": "maxResAngleDiff",
+         "descr": "Used in match-point neighbor consistency check. Represents the maximum angle difference (degrees) tolerated between residual azimuths before flagging false match.",
+         "type": "float",
+         "value": 10.0
+      },
+      {
+         "label": "% Consistent Threshold",
+         "name": "percentConsistentThreshold",
+         "descr": "Used in match-point neighbor consistency check. Represents the minimum required percentage (0-100) of the neighbor set that must be deemed consistent before accepting the match.",
+         "type": "uint",
+         "value": 50
+      },
+      {
+         "label": "Min. Number of Consistent Neighbors",
+         "name": "minNumConsistentNeighbors",
+         "descr": "Used in match-point neighbor consistency check. Represents the minimum number of consistent neighbors needed to accept a match.",
+         "type": "uint",
+         "value": 1
+      },
+      {
+         "label": "Number of Tie-points per Tile",
+         "name": "numTiePointsPerTile",
+         "descr": "Caps the number of tie-points, after filtering, to generate per tile.",
+         "type": "uint",
+         "value": 2
+      },
+      {
+         "label": "Number of Features Per Tile",
+         "name": "numFeaturesPerTile",
+         "descr": "Defines the number of features to identify in the search patch.",
+         "type": "uint",
+         "value": 10
+      },
+      {
+         "label": "Consider Alternate Matches",
+         "name": "considerAltMatches",
+         "descr": "If true, directs the consistency check to also consider secondary matches in neighbors before rejecting a match.",
+         "type": "bool",
+         "value": true
+      },
+      {
+         "label": "Do Two-way Feature Search",
+         "name": "doTwoWaySearch",
+         "descr": "If true, features are identified on both images of a pair. Otherwise, features are searched on the first image of the pair.",
+         "type": "bool",
+         "value": false
+      },
+      {
+         "label": "Feature Search Tile Size",
+         "name": "featureSearchTileSize",
+         "descr": "Side size o square tile in pixels for searching features.",
+         "type": "uint",
+         "value": 256
+      },
+      {
+         "label": "Use Tile Grid Layout",
+         "name": "useTileGridLayout",
+         "descr": "If true, directs the feature search patch layout to use grid layout scheme.",
+         "type": "bool",
+         "value": true
+      },
+      {
+         "label": "Search Grid Size",
+         "name": "searchGridSize",
+         "descr": "The number of search tiles to layout along widest dimension of overlap.",
+         "type": "uint",
+         "value": 7
+      },
+      {
+         "label": "Correlation Window Size",
+         "name": "corrWindowSize",
+         "descr": "Side size of the correlation kernel to use in computing cross-correlation.",
+         "type": "uint",
+         "value": 32
+      },
+      {
+         "name": "diagnosticLevel",
+         "descr": "For engineering output. For minimum verbosity, use 0",
+         "type": "uint",
+         "value": 1
+      },
+      {
+         "name": "annotatedImageSize",
+         "descr": "For engineering use. Defines the maximum side size of the annotated image being generated (if diagnostic level is appropriate). Leave as 0 to match the REF input image size",
+         "type": "int",
+         "value": 2048
+      },
+      {
+         "name": "residualMultiplier",
+         "descr": "For engineering use. Factor used to exagerate the magnitude of the residual vectors in the annotated image.",
+         "type": "float",
+         "value": 0
+      }
+   ]
+}
+      
