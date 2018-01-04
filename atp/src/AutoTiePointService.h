@@ -7,9 +7,9 @@
 #ifndef AutoTiePointService_HEADER
 #define AutoTiePointService_HEADER 1
 
-#include <ServiceBase.h>
-#include <PhotoBlock.h>
-#include <AtpConfig.h>
+#include "ServiceBase.h"
+#include "PhotoBlock.h"
+#include "AtpConfig.h"
 #include <vector>
 #include <string>
 #include <memory>

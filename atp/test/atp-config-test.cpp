@@ -4,16 +4,17 @@
 //     See top level LICENSE.txt file for license information
 //
 //**************************************************************************************************
-#include <isa/atp/AtpConfig.h>
+#include "../src/AtpConfig.h"
+#include "../src/correlation/CorrelationAtpGenerator.h"
+#include "../src/TiePoint.h"
+#include "../src/Image.h"
 #include <iostream>
-#include <isa/atp/correlation/CorrelationAtpGenerator.h>
-#include <TiePoint.h>
-#include <Image.h>
 #include <ossim/init/ossimInit.h>
 #include <ossim/base/ossimKeywordlist.h>
 #include <memory>
 
 using namespace std;
+using namespace ATP;
 
 /**************************************************************************************************
  *
@@ -27,7 +28,7 @@ int main(int argc, char** argv)
    ossimInit::instance()->initialize(argc, argv);
 
    // Initialize correlation parameters:
-   ISA::AtpConfig& atpConfig = ISA::AtpConfig::instance();
+   AtpConfig& atpConfig = AtpConfig::instance();
    clog << "\nDump of default common ATP params:"<<endl;
    clog << atpConfig << endl;
 

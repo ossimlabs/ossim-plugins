@@ -12,9 +12,9 @@
 #include <ossim/imaging/ossimImageChain.h>
 #include <ossim/imaging/ossimImageGeometry.h>
 #include <ossim/imaging/ossimAnnotationSource.h>
-#include <AutoTiePoint.h>
-#include <AtpAnnotatedImage.h>
-#include <Image.h>
+#include "AutoTiePoint.h"
+#include "AtpAnnotatedImage.h"
+#include "Image.h"
 #include <vector>
 #include <memory>
 

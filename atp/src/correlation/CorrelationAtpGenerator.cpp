@@ -4,8 +4,8 @@
 //     See top level LICENSE.txt file for license information
 //
 //**************************************************************************************************
-#include <correlation/CorrelationAtpGenerator.h>
-#include <AtpConfig.h>
+#include "CorrelationAtpGenerator.h"
+#include "../AtpConfig.h"
 #include <ossim/imaging/ossimImageRenderer.h>
 #include <ossim/imaging/ossimCacheTileSource.h>
 #include <ossim/base/ossimConnectableObject.h>

@@ -9,7 +9,7 @@
 #define TiePoint_HEADER 1
 
 #include <ossim/base/JsonInterface.h>
-#include <Image.h>
+#include "Image.h"
 #include <ossim/base/ossimDpt.h>
 #include <ossim/imaging/ossimImageHandler.h>
 #include <ossim/matrix/newmat.h>

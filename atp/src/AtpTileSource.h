@@ -7,8 +7,8 @@
 #ifndef AtpTileSource_HEADER
 #define AtpTileSource_HEADER
 
-#include <AtpConfig.h>
-#include <AutoTiePoint.h>
+#include "AtpConfig.h"
+#include "AutoTiePoint.h"
 #include <ossim/base/ossimIrect.h>
 #include <ossim/imaging/ossimImageCombiner.h>
 #include <ossim/imaging/ossimImageHandler.h>

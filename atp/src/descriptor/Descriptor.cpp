@@ -5,8 +5,7 @@
 //
 //**************************************************************************************************
 
-#include <descriptor/Descriptor.h>
-#include <isa/Config.h>
+#include "Descriptor.h"
 #include <opencv2/opencv.hpp>
 #include <opencv2/features2d/features2d.hpp>
 #include <opencv2/highgui/highgui.hpp>

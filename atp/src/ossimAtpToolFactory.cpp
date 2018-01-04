@@ -5,8 +5,8 @@
 //
 //**************************************************************************************************
 
-#include <ossimAtpToolFactory.h>
-#include <ossimAtpTool.h>
+#include "ossimAtpToolFactory.h"
+#include "ossimAtpTool.h"
 #include <ossim/util/ossimToolRegistry.h>
 
 using namespace std;

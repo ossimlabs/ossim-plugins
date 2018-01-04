@@ -12,7 +12,7 @@
 #include <ossim/imaging/ossimImageHandler.h>
 #include <ossim/base/ossimRefPtr.h>
 #include <ossim/util/ossimTool.h>
-#include <AutoTiePointService.h>
+#include "AutoTiePointService.h"
 #include <memory>
 
 namespace ATP

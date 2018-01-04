@@ -7,9 +7,9 @@
 #ifndef ossimCorrelationSource_HEADER
 #define ossimCorrelationSource_HEADER
 
-#include <AutoTiePoint.h>
-#include <AtpConfig.h>
-#include <AtpTileSource.h>
+#include "../AutoTiePoint.h"
+#include "../AtpConfig.h"
+#include "../AtpTileSource.h"
 #include <ossim/base/ossimIrect.h>
 #include <ossim/base/ossimRefPtr.h>
 #include <memory>

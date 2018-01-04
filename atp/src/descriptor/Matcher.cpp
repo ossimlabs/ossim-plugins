@@ -4,7 +4,7 @@
 //     See top level LICENSE.txt file for license information
 //
 //**************************************************************************************************
-#include <descriptor/Matcher.h>
+#include "Matcher.h"
 #include <opencv2/opencv.hpp>
 #include <opencv2/features2d/features2d.hpp>
 #include <opencv2/xfeatures2d.hpp>

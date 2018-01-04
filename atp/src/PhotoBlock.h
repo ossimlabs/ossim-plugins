@@ -11,10 +11,10 @@
 #include <vector>
 #include <memory>
 #include <ossim/base/ossimConstants.h>
-#include <Image.h>
-#include <GroundControlPoint.h>
+#include "Image.h"
+//#include "GroundControlPoint.h"
 #include <ossim/base/JsonInterface.h>
-#include <AutoTiePoint.h>
+#include "AutoTiePoint.h"
 
 namespace ATP
 {

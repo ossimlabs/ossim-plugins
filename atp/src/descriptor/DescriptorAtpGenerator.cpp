@@ -4,11 +4,11 @@
 //     See top level LICENSE.txt file for license information
 //
 //**************************************************************************************************
-#include <descriptor/DescriptorAtpGenerator.h>
-#include <descriptor/DescriptorMatchTileSource.h>
+#include "DescriptorAtpGenerator.h"
+#include "DescriptorMatchTileSource.h"
+#include "../AtpConfig.h"
+#include "../AutoTiePoint.h"
 #include <ossim/base/ossimException.h>
-#include <AtpConfig.h>
-#include <AutoTiePoint.h>
 #include <ossim/imaging/ossimImageHandlerRegistry.h>
 #include <ossim/imaging/ossimImageDataFactory.h>
 #include <ossim/imaging/ossimBandAverageFilter.h>

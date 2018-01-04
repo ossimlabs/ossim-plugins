@@ -7,9 +7,9 @@
 #ifndef CorrelationAtpGenerator_H_
 #define CorrelationAtpGenerator_H_
 
-#include <AtpGeneratorBase.h>
-#include <correlation/ossimCorrelationSource.h>
-#include <AutoTiePoint.h>
+#include "../AtpGeneratorBase.h"
+#include "ossimCorrelationSource.h"
+#include "../AutoTiePoint.h"
 #include <vector>
 
 namespace ATP

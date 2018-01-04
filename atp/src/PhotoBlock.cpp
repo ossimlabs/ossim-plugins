@@ -5,7 +5,7 @@
 //
 //**************************************************************************************************
 
-#include <PhotoBlock.h>
+#include "PhotoBlock.h"
 #include <ossim/base/ossimException.h>
 
 namespace ATP

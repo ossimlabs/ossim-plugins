@@ -8,10 +8,11 @@
 #pragma once
 
 #include <ostream>
+#include <ossim/plugin/ossimPluginConstants.h>
 #include <ossim/base/ossimString.h>
-#include <JsonInterface.h>
-#include <descriptor/Descriptor.h>
-#include <descriptor/Matcher.h>
+#include <ossim/base/JsonInterface.h>
+#include "descriptor/Descriptor.h"
+#include "descriptor/Matcher.h"
 #include <vector>
 #include <map>
 
@@ -25,7 +26,7 @@ class AtpParam;
  * The state is imported and exported via JSON. There are default configuration files that must
  * be part of the install, that are accessed by this class. Custom settings can also be st
  */
-class AtpConfig : public JsonInterface
+class OSSIM_PLUGINS_DLL AtpConfig : public ossim::JsonInterface
 {
 public:
    //! Singleton implementation.

@@ -13,8 +13,8 @@
 #include <ossim/imaging/ossimImageSource.h>
 #include <ossim/imaging/ossimImageGeometry.h>
 #include <ossim/base/ossimIrect.h>
-#include <TiePoint.h>
-#include <MatchPoint.h>
+#include "TiePoint.h"
+#include "MatchPoint.h"
 
 
 namespace ATP

@@ -5,9 +5,8 @@
 //
 //**************************************************************************************************
 
-#include <correlation/ossimCorrelationSource.h>
-#include <AtpConfig.h>
-#include <AtpOpenCV.h>
+#include "ossimCorrelationSource.h"
+#include "../AtpOpenCV.h"
 #include <ossim/imaging/ossimImageData.h>
 #include <ossim/base/ossimKeywordlist.h>
 #include <ossim/base/ossimConstants.h>

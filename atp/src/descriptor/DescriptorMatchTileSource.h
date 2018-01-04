@@ -7,8 +7,8 @@
 #ifndef DescriptorMatchTileSource_HEADER
 #define DescriptorMatchTileSource_HEADER
 
-#include <AtpTileSource.h>
-#include <AtpConfig.h>
+#include "../AtpTileSource.h"
+#include "../AtpConfig.h"
 #include <ossim/base/ossimIrect.h>
 #include <ossim/imaging/ossimImageCombiner.h>
 #include <memory>

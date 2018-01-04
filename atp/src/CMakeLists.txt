@@ -1,4 +1,3 @@
-PROJECT(ossim-atp-plugin)
 set(LIB_NAME ossim_atp_plugin)
 
 cmake_minimum_required(VERSION 2.8)

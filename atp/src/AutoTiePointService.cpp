@@ -7,13 +7,11 @@
 
 
 
-#include <AutoTiePointService.h>
+#include "AutoTiePointService.h"
 #include <math.h>
-#include <PhotoBlock.h>
-#include <SessionManager.h>
-#include <Session.h>
-#include <correlation/CorrelationAtpGenerator.h>
-#include <descriptor/DescriptorAtpGenerator.h>
+#include "PhotoBlock.h"
+#include "correlation/CorrelationAtpGenerator.h"
+#include "descriptor/DescriptorAtpGenerator.h"
 #include <json/json.h>
 #include <ossim/base/ossimException.h>
 #include <ossim/base/ossimGpt.h>
@@ -152,9 +150,9 @@ void AutoTiePointService::getAlgorithms()
    algoList[0]["name"]        = "crosscorr";
    algoList[0]["description"] = "Matching by cross-correlation of raster patches";
    algoList[0]["label"]       = "Cross Correlation";
-   //algoList[1]["name"]        = "descriptor";
-   //algoList[1]["description"] = "Matching by feature descriptors";
-   //algoList[1]["label"]       = "Descriptor";
+   algoList[1]["name"]        = "descriptor";
+   algoList[1]["description"] = "Matching by feature descriptors";
+   algoList[1]["label"]       = "Descriptor";
    //algoList[2]["name"]        = "nasa";
    //algoList[2]["description"] = "Tiepoint extraction using NASA tool.";
    //algoList[2]["label"]       = "NASA";

@@ -5,11 +5,10 @@
 //
 //**************************************************************************************************
 
-#include <descriptor/DescriptorMatchTileSource.h>
-#include <descriptor/Descriptor.h>
-#include <descriptor/Matcher.h>
-#include <AtpConfig.h>
-#include <AtpOpenCV.h>
+#include "DescriptorMatchTileSource.h"
+#include "Descriptor.h"
+#include "Matcher.h"
+#include "../AtpOpenCV.h"
 #include <ossim/imaging/ossimImageData.h>
 #include <ossim/base/ossimConstants.h>
 #include <ossim/imaging/ossimImageDataFactory.h>

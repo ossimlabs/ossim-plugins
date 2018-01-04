@@ -8,7 +8,7 @@
 #define DescriptorAtpGenerator_H_
 
 #include <ossim/base/ossimConstants.h>
-#include <AtpGeneratorBase.h>
+#include "../AtpGeneratorBase.h"
 #include <ossim/base/ossimRefPtr.h>
 
 namespace ATP // Namespace for all ossim-isa classes

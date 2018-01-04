@@ -5,14 +5,14 @@
 //
 //**************************************************************************************************
 
-#include <ossimAtpTool.h>
+#include "ossimAtpTool.h"
+#include "AutoTiePointService.h"
 #include <ossim/base/ossimArgumentParser.h>
 #include <ossim/base/ossimApplicationUsage.h>
 #include <ossim/base/ossimKeywordNames.h>
 #include <ossim/base/ossimException.h>
 #include <ossim/base/ossimNotify.h>
 #include <ossim/base/ossimException.h>
-#include <AutoTiePointService.h>
 #include <json/json.h>
 #include <iostream>
 #include <memory>
