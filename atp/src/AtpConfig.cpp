@@ -326,7 +326,7 @@ bool AtpConfig::readConfig(const string& cn)
       // First establish the directory location of the default config files:
       ossimFilename shareDir = ossimPreferences::instance()->
          preferencesKWL().findKey( std::string( "ossim_share_directory" ) );
-      shareDir.append("/atp");
+      shareDir += "/atp";
       if (!shareDir.isDir())
          throw ossimException("Nonexistent share drive provided for config files.");
 
