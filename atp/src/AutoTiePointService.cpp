@@ -9,7 +9,6 @@
 
 #include "AutoTiePointService.h"
 #include <math.h>
-#include "PhotoBlock.h"
 #include "correlation/CorrelationAtpGenerator.h"
 #include "descriptor/DescriptorAtpGenerator.h"
 #include <json/json.h>

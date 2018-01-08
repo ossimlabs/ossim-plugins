@@ -11,15 +11,21 @@
 #include <ossim/plugin/ossimPluginConstants.h>
 #include <ossim/imaging/ossimImageHandler.h>
 #include <ossim/base/ossimRefPtr.h>
+#include <ossim/base/JsonInterface.h>
 #include <ossim/util/ossimTool.h>
-#include "AutoTiePointService.h"
+#include "PhotoBlock.h"
 #include <memory>
 
 namespace ATP
 {
-class OSSIM_DLL ossimAtpTool : public ossimTool
+class OSSIM_DLL ossimAtpTool : public ossimTool,
+                               public ossim::JsonInterface
+
 {
 public:
+   enum Algorithm { ALGO_UNASSIGNED=0, CROSSCORR, DESCRIPTOR, NASA };
+   enum Method { METHOD_UNASSIGNED=0, GET_ALGO_LIST, GET_PARAMS, GENERATE };
+
    static const char* DESCRIPTION;
 
    ossimAtpTool();
@@ -30,22 +36,35 @@ public:
 
    virtual bool initialize(ossimArgumentParser& ap);
 
-   virtual void initialize(const std::string& json_query);
-
    virtual bool execute();
 
    virtual ossimString getClassName() const { return "ossimAtpTool"; }
 
    virtual void getKwlTemplate(ossimKeywordlist& kwl);
 
+   virtual void loadJSON(const Json::Value& json);
+
+   virtual void saveJSON(Json::Value& json) const { json = m_responseJSON; }
+
 private:
+   void getAlgorithms();
+   void getParameters();
+   void generate();
+
+   /**
+    * When the ATP generator works with image pairs (crosscorr and descriptor), This method is
+    * used to loop over all image pairs and assemble the final tiepoint list for all */
+   void doPairwiseMatching();
+
    std::istream* m_inputStream;
    std::ostream* m_outputStream;
    bool m_verbose;
    bool m_featureBased;
-   std::shared_ptr<AutoTiePointService> m_service;
-   std::string m_jsonRequest;
-
+   Algorithm m_algorithm;
+   Method m_method;
+   std::string m_configuration;
+   Json::Value m_responseJSON;
+   std::shared_ptr<PhotoBlock> m_photoBlock;
 };
 }
 #endif /* #ifndef ossimAtpTool_HEADER */
