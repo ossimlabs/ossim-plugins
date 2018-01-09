@@ -1,0 +1,39 @@
+{
+   "parameters": [
+      {
+         "name": "algorithm",
+         "descr": "Algorithm used for generating tiepoints. This can also be specified one level up in the JSON.",
+         "type": "string",
+         "value": "descriptor"
+      },
+      {
+         "label": "Descriptor",
+         "name": "descriptor",
+         "descr": "Type of descriptor being used. DYLAN: Need to replace uints with human readable.",
+         "type": "uint",
+         "value": 0
+      },
+      {
+         "label": "Matcher",
+         "name": "matcher",
+         "descr": "Type of matcher being used. DYLAN: Need to replace uints with human readable.",
+         "type": "uint",
+         "value": 0
+      },
+      {
+         "label": "Error Function",
+         "name": "errorFunction",
+         "descr": "DYLAN: Add description here. Will be seen by user in browser GUI.",
+         "type": "int",
+         "value": 0
+      },
+      {
+         "label": "K",
+         "name": "k",
+         "descr": "DYLAN: Add description here. Will be seen by user in browser GUI.",
+         "type": "float",
+         "value": 0.04
+      }
+   ]
+}
+      

@@ -1,0 +1,17 @@
+{
+   "parameters": [
+      {
+         "name": "algorithm",
+         "descr": "Algorithm used for generating tiepoints. This can also be specified one level up in the JSON.",
+         "type": "string",
+         "value": "nasa"
+      },
+      {
+         "name": "NOT_YET_IMPLEMENTED",
+         "descr": "NOT_YET_IMPLEMENTED",
+         "type": "string",
+         "value": "NOT_YET_IMPLEMENTED"
+      }
+   ]
+}
+      

@@ -1,0 +1,40 @@
+{ 
+  "service": "autoTiePoint",
+  "method": "generate",
+  "algorithm": "crosscorr",
+  "photoblock" : {
+      "images" : [
+         {
+            "entryIndex" : 0,
+            "filename" : "/data/Stereo/test/sub/ref.tif",
+            "imageId" : "19JUL15WV030800015JUL19101909-P1BS_R1C1-056263760010_01_P001                    "
+         },
+         {
+            "entryIndex" : 0,
+            "filename" : "/data/Stereo/test/sub/cmp.tif",
+            "imageId" : "19JUL15WV030800015JUL19102002-P1BS_R1C1-056263760010_01_P001                    "
+         }
+      ]
+   },
+  "parameters": {
+    "numFeaturesPerTile": 20,
+    "maxPercentResMagDiff": 0.1,
+    "maxResAngleDiff": 10,
+    "percentConsistentThreshold": 0.5,
+    "minNumConsistentNeighbors": 1,
+    "maxNeighborsToCull": 0,
+    "maxNumPeaks": 2,
+    "peakThreshold": 0.5,
+    "correlationMethod": "CV_TM_CCOEFF_NORMED",
+    "corrWindowSize": 31,
+    "corrStepSize": 1,
+    "useFeatureMode": "true",
+    "useTileGridLayout": "true",
+    "altPeaksConsidered": "true",
+    "featureSearchTileSize": 256,
+    "searchGridSize": 5,
+    "minNumTiles": 15,
+    "diagnosticLevel": 1
+  }
+}
+
