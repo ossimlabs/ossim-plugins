@@ -90,7 +90,7 @@
          "name": "corrWindowSize",
          "descr": "Side size of the correlation kernel to use in computing cross-correlation.",
          "type": "uint",
-         "value": 32
+         "value": 15
       },
       {
          "name": "diagnosticLevel",
@@ -102,13 +102,13 @@
          "name": "annotatedImageSize",
          "descr": "For engineering use. Defines the maximum side size of the annotated image being generated (if diagnostic level is appropriate). Leave as 0 to match the REF input image size",
          "type": "int",
-         "value": 2048
+         "value": 0
       },
       {
          "name": "residualMultiplier",
          "descr": "For engineering use. Factor used to exagerate the magnitude of the residual vectors in the annotated image.",
          "type": "float",
-         "value": 0
+         "value": 1.0
       }
    ]
 }
