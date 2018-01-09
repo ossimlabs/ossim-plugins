@@ -36,10 +36,11 @@ const char* ossimAtpTool::DESCRIPTION =
       "communicate requests and results.";
 
 ossimAtpTool::ossimAtpTool()
-: m_inputStream (0),
-  m_outputStream (0),
+: m_outputStream (0),
   m_verbose (false),
-  m_featureBased (true)
+  m_featureBased (true),
+  m_algorithm (ALGO_UNASSIGNED),
+  m_method (METHOD_UNASSIGNED)
 {
 }
 
@@ -96,16 +97,24 @@ bool ossimAtpTool::initialize(ossimArgumentParser& ap)
 
    if ( ap.read("-i", sp1))
    {
-      ifstream* s = new ifstream (ts1);
-      if (s->fail())
+      ifstream s (ts1);
+      if (s.fail())
       {
          CFATAL<<__FILE__<<" Could not open input file <"<<ts1<<">";
          return false;
       }
-      m_inputStream = s;
+      try
+      {
+         Json::Value queryJson;
+         s >> queryJson;
+         loadJSON(queryJson);
+      }
+      catch (exception& e)
+      {
+         ossimNotify(ossimNotifyLevel_FATAL)<<__FILE__<<" Could not parse input JSON <"<<ts1<<">";
+         return false;
+      }
    }
-   else
-      m_inputStream = &cin;
 
    if ( ap.read("-o", sp1))
    {
@@ -199,13 +208,6 @@ bool ossimAtpTool::execute()
 
    try
    {
-      // Read input:
-      Json::Value queryRoot;
-      (*m_inputStream) >> queryRoot;
-
-      // Call actual service and get response:
-      loadJSON(queryRoot);
-
       switch (m_method)
       {
       case GET_ALGO_LIST:
@@ -232,12 +234,6 @@ bool ossimAtpTool::execute()
    }
 
    // close any open file streams:
-   ifstream* si = dynamic_cast<ifstream*>(m_inputStream);
-   if (si)
-   {
-      si->close();
-      delete si;
-   }
    ofstream* so = dynamic_cast<ofstream*>(m_outputStream);
    if (so)
    {

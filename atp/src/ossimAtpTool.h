@@ -11,16 +11,13 @@
 #include <ossim/plugin/ossimPluginConstants.h>
 #include <ossim/imaging/ossimImageHandler.h>
 #include <ossim/base/ossimRefPtr.h>
-#include <ossim/base/JsonInterface.h>
 #include <ossim/util/ossimTool.h>
 #include "PhotoBlock.h"
 #include <memory>
 
 namespace ATP
 {
-class OSSIM_DLL ossimAtpTool : public ossimTool,
-                               public ossim::JsonInterface
-
+class OSSIM_DLL ossimAtpTool : public ossimTool
 {
 public:
    enum Algorithm { ALGO_UNASSIGNED=0, CROSSCORR, DESCRIPTOR, NASA };
@@ -56,7 +53,6 @@ private:
     * used to loop over all image pairs and assemble the final tiepoint list for all */
    void doPairwiseMatching();
 
-   std::istream* m_inputStream;
    std::ostream* m_outputStream;
    bool m_verbose;
    bool m_featureBased;
