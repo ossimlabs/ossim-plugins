@@ -225,12 +225,14 @@ bool ossimAtpTool::execute()
       }
 
       // Serialize JSON object for return:
-      (*m_outputStream) << m_responseJSON;
+      if (m_outputStream)
+         (*m_outputStream) << m_responseJSON;
    }
    catch(ossimException &e)
    {
       CFATAL<<"Exception: "<<e.what()<<endl;
-      *m_outputStream<<"{ \"ERROR\": \"" << e.what() << "\" }\n"<<endl;
+      if (m_outputStream)
+         *m_outputStream<<"{ \"ERROR\": \"" << e.what() << "\" }\n"<<endl;
    }
 
    // close any open file streams:
