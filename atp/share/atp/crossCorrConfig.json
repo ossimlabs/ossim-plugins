@@ -1,0 +1,67 @@
+{
+   "parameters": [
+      {
+         "name": "algorithm",
+         "descr": "Algorithm used for generating tiepoints. This can also be specified one level up in the JSON.",
+         "type": "string",
+         "value": "crosscorr"
+      },
+      {
+         "label": "Use Feature Mode",
+         "name": "useFeatureMode",
+         "descr": "Directs the algorithm to search for features first then compute correlations around those features only.",
+         "type": "bool",
+         "value": true
+      },
+      {
+         "label": "Peak Threshold",
+         "name": "peakThreshold",
+         "descr": "The minimum cross-correlation value acceptable for a match.",
+         "type": "float",
+         "value": 0.7
+      },
+      {
+         "label": "Min Feature Strength",
+         "name": "minFeatureStrength",
+         "descr": "OpenCV minimum strength (quality) value for accepting features.",
+         "type": "float",
+         "value": 0.01
+      },
+      {
+         "label": "Max Number Correlation Peaks.",
+         "name": "maxNumPeaksPerFeature",
+         "descr": "Max number of correlation peaks to consider per feature.",
+         "type": "uint",
+         "value": 3
+      },
+      {
+         "label": "Correlation Method",
+         "name": "correlationMethod",
+         "descr": "OpenCV correlation method to use for matching. ",
+         "type": "uint",
+         "value": 5
+      },
+      {
+         "label": "Resampling Method",
+         "name": "resamplingMethod",
+         "descr": "Selects the type of resampler to use for reprojection. Can be ",
+         "type": "string",
+         "value": ["cubic", "bilinear", "nearest_neighbor", "box", "gaussian"]
+      },
+      {
+         "label": "Use Harris Corner Detector",
+         "name": "useHarrisCorner",
+         "descr": "Instructs OpenCV to use the Harris corner detector for locating features. ",
+         "type": "bool",
+         "value": false
+      },
+      {
+         "label": "Harris k-factor",
+         "name": "harrisKFactor",
+         "descr": "Harris corner detector k-factor. ",
+         "type": "float",
+         "value": 0.04
+      }
+   ]
+}
+      

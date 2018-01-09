@@ -15,6 +15,7 @@ include(OssimUtilities)
 
 
 OPTION(OSSIM_INSTALL_PLUGINS_WITH_VERSION "Set to ON to build OSSIM's plugins to install with a version prefix like ossim-<version>/plugins.  Use OFF to not add a version and make it ossim/plugins." OFF)
+OPTION(BUILD_ATP_PLUGIN "Set to ON to build OSSIM's atp plugin.  Use OFF to skip this plugin." OFF)
 OPTION(BUILD_AWS_PLUGIN "Set to ON to build OSSIM's aws plugin.  Use OFF to skip this plugin." OFF)
 OPTION(BUILD_CNES_PLUGIN "Set to ON to build OSSIM's CNES that depend only on ossim.  Use OFF to skip this plugin." OFF)
 OPTION(BUILD_FFTW3_PLUGIN "Set to ON to build OSSIM's fftw3 plugin.  Use OFF to skip this plugin." OFF)
@@ -48,6 +49,10 @@ include_directories(${OSSIM_INCLUDE_DIR})
 
 SET(BUILD_OSSIM_FRAMEWORKS "OFF")
 SET(OSSIM_PLUGIN_LINK_TYPE "SHARED")
+
+if(BUILD_ATP_PLUGIN)
+   add_subdirectory(atp)
+endif(BUILD_ATP_PLUGIN)
 
 if(BUILD_AWS_PLUGIN)
    add_subdirectory(aws)
