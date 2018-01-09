@@ -175,9 +175,9 @@ void ossimAtpTool::loadJSON(const Json::Value& queryRoot)
    // Assign enum data member used throughout the service:
    if (algorithm == "crosscorr")
       m_algorithm = CROSSCORR;
-   else if (method == "descriptor")
+   else if (algorithm == "descriptor")
       m_algorithm = DESCRIPTOR;
-   else if (method == "nasa")
+   else if (algorithm == "nasa")
       m_algorithm = NASA;
    else
       m_algorithm = ALGO_UNASSIGNED;
