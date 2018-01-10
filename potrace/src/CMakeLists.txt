@@ -7,14 +7,6 @@ include(OssimUtilities)
 
 set(requiredLibs)
 
-find_package(ossim)
-if(OSSIM_FOUND)
-   include_directories( ${OSSIM_INCLUDE_DIR} )
-   set( requiredLibs ${requiredLibs} ${OSSIM_LIBRARIES} )
-else(OSSIM_FOUND)
-   message(FATAL_ERROR "Could not find ossim")
-endif(OSSIM_FOUND)
-
 file(GLOB_RECURSE OSSIMPLUGIN_SRCS *.cpp *.c)
 file(GLOB_RECURSE OSSIMPLUGIN_HEADERS *.h)
 
