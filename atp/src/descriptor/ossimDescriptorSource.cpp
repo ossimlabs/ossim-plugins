@@ -13,7 +13,6 @@
 #include <ossim/imaging/ossimImageDataFactory.h>
 #include <ossim/projection/ossimSensorModel.h>
 
-//#include <opencv2/highgui/highgui_c.h>
 #include <opencv2/opencv.hpp>
 #include <opencv2/features2d/features2d.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -63,14 +62,18 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
    {
       // try to initialize
       initialize();
-      if(!m_tile.get())
+      if(!m_tile.get()){
+         clog << MODULE << " ERROR: could not initialize tile\n";
          return m_tile;
+      }
    }
 
 
    // Make sure there are at least two images as input.
-   if(getNumberOfInputs() < 2)
+   if(getNumberOfInputs() < 2){
+      clog << MODULE << " ERROR: wrong number of inputs " << getNumberOfInputs() << " when expecting at least 2 \n";
       return 0;
+   }
 
    string sid(""); // Leave blank to have it auto-assigned by CorrelationTiePoint constructor
 
@@ -87,17 +90,20 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
       if(lowY > corners[i].y) lowY = corners[i].y;
       if(highY < corners[i].y) highY = corners[i].y;
    }
-   ossimIrect boundsOfCMP(lowX-10,lowY-10,highX-lowX+20,highY-lowY+20);
-
+   ossimIrect boundsOfCMP(lowX-10,lowY-10,highX+20,highY+20);
 
    // Retrieve both the ref and cmp image data
    ref_tile = ref_source->getTile(tileRect, resLevel);
-   if (ref_tile->getDataObjectStatus() == OSSIM_EMPTY)
+   if (ref_tile->getDataObjectStatus() == OSSIM_EMPTY){
+      clog << MODULE << " ERROR: could not get REF tile with rect " << tileRect << "\n";
       return m_tile;
+   }
 
    cmp_tile = cmp_source->getTile(boundsOfCMP, resLevel);
-   if (cmp_tile->getDataObjectStatus() == OSSIM_EMPTY)
+   if (cmp_tile->getDataObjectStatus() == OSSIM_EMPTY){
+      clog << MODULE << " ERROR: could not get CMP tile with rect " << boundsOfCMP << "\n";
       return m_tile;
+   }
 
    m_tile = ref_tile;
 
@@ -105,8 +111,8 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
    // Convert both into OpenCV Mat objects using the Ipl image.
    IplImage* refImage = convertToIpl32(ref_tile.get());
    IplImage* cmpImage = convertToIpl32(cmp_tile.get());
-   cv::Mat trainImg = cv::cvarrToMat(refImage);
-   cv::Mat queryImg = cv::cvarrToMat(cmpImage);
+   cv::Mat queryImg = cv::cvarrToMat(refImage);
+   cv::Mat trainImg = cv::cvarrToMat(cmpImage);
 
 
    // Get the KeyPoints using appropriate descriptor.
@@ -119,22 +125,53 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
    transform(descriptorType.begin(), descriptorType.end(), descriptorType.begin(),::toupper);
    if(descriptorType == "AKAZE"){
       cv::Ptr<cv::AKAZE> detector = cv::AKAZE::create();
-      detector->detectAndCompute(trainImg, cv::noArray(), kpA, desA);
-      detector->detectAndCompute(queryImg, cv::noArray(), kpB, desB);
+      detector->detectAndCompute(queryImg, cv::noArray(), kpA, desA);
+      detector->detectAndCompute(trainImg, cv::noArray(), kpB, desB);
    } else if(descriptorType == "KAZE"){
       cv::Ptr<cv::KAZE> detector = cv::KAZE::create();
-      detector->detectAndCompute(trainImg, cv::noArray(), kpA, desA);
-      detector->detectAndCompute(queryImg, cv::noArray(), kpB, desB);
+      detector->detectAndCompute(queryImg, cv::noArray(), kpA, desA);
+      detector->detectAndCompute(trainImg, cv::noArray(), kpB, desB);
+   } else if(descriptorType == "ORB"){
+
+      // For some reason orb wants multiple channel mats so fake it.
+      if (queryImg.channels() == 1) {
+         std::vector<cv::Mat> channels;
+         channels.push_back(queryImg);
+         channels.push_back(queryImg);
+         channels.push_back(queryImg);
+         cv::merge(channels, queryImg);
+      }
+
+      if (trainImg.channels() == 1) {
+         std::vector<cv::Mat> channels;
+         channels.push_back(trainImg);
+         channels.push_back(trainImg);
+         channels.push_back(trainImg);
+         cv::merge(channels, trainImg);
+      }
+
+      cv::Ptr<cv::ORB> detector = cv::ORB::create();
+      detector->detectAndCompute(queryImg, cv::noArray(), kpA, desA);
+      detector->detectAndCompute(trainImg, cv::noArray(), kpB, desB);
    } else if(descriptorType == "SURF"){
+
+      queryImg.convertTo(queryImg, CV_8U);
+      trainImg.convertTo(trainImg, CV_8U);
+
       cv::Ptr<cv::xfeatures2d::SURF> detector = cv::xfeatures2d::SURF::create();
-      detector->detectAndCompute(trainImg, cv::noArray(), kpA, desA);
-      detector->detectAndCompute(queryImg, cv::noArray(), kpB, desB);
+      detector->detectAndCompute(queryImg, cv::noArray(), kpA, desA);
+      detector->detectAndCompute(trainImg, cv::noArray(), kpB, desB);
    } else if(descriptorType == "SIFT"){
+
+      queryImg.convertTo(queryImg, CV_8U);
+      trainImg.convertTo(trainImg, CV_8U);
+
       cv::Ptr<cv::xfeatures2d::SIFT> detector = cv::xfeatures2d::SIFT::create();
-      detector->detectAndCompute(trainImg, cv::noArray(), kpA, desA);
-      detector->detectAndCompute(queryImg, cv::noArray(), kpB, desB);
+      detector->detectAndCompute(queryImg, cv::noArray(), kpA, desA);
+      detector->detectAndCompute(trainImg, cv::noArray(), kpB, desB);
    } else {
       std::clog << MODULE << " WARNING: No such descriptor as " << descriptorType << "\n";
+      return m_tile;
    }
 
 
@@ -144,6 +181,7 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
 
       std::string matcherType = config.getParameter("matcher").asString();
       uint k = config.getParameter("k").asUint();
+      if (kpA.size() < k) k = kpA.size();
       transform(matcherType.begin(), matcherType.end(), matcherType.begin(),::toupper);
 
       if(matcherType == "FLANN") {
@@ -153,8 +191,10 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
          matcher.knnMatch(desA, desB, weakMatchs, k);
       } else if(matcherType == "BF"){
          std::clog << MODULE << " WARNING: BF NOT YET IMPLEMENTED\n";
+         return m_tile;
       } else {
          std::clog << MODULE << " WARNING: No such matcher as " << matcherType << "\n";
+         return m_tile;
       }
    }
 
@@ -173,25 +213,24 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
    for(size_t i = 0; i < weakMatchs.size(); ++i){
       std::vector<cv::DMatch> temp;
       for(size_t j = 0; j < weakMatchs[i].size(); ++j){
-         if(weakMatchs[i][j].distance < ((maxDistance-leastDistance)*.2+leastDistance))
+        // if(weakMatchs[i][j].distance < ((maxDistance-leastDistance)*.2+leastDistance))
             temp.push_back(weakMatchs[i][j]);
       }
       if(temp.size()>0) strongMatches.push_back(temp);
    }
 
-
    // Convert the openCV match points to something Atp could understand.
    for (size_t i = 0; i < strongMatches.size(); ++i) {
       shared_ptr<AutoTiePoint> atp (new AutoTiePoint(this, sid));
-      cv::KeyPoint cv_A = kpA[(strongMatches[i][0]).trainIdx];
-      cv::KeyPoint cv_B = kpB[(strongMatches[i][0]).queryIdx];
+      cv::KeyPoint cv_A = kpA[(strongMatches[i][0]).queryIdx];
+      cv::KeyPoint cv_B;
 
-      atp->setRefViewPt(ossimDpt(tileRect.ul().x + cv_A.pt.x, tileRect.ul().y + cv_A.pt.y));
+      atp->setRefImagePt(ossimDpt(tileRect.ul().x + cv_A.pt.x, tileRect.ul().y + cv_A.pt.y));
 
       // Create the match points
       for (size_t j = 0; j < strongMatches[i].size(); ++j){
-         cv_B = kpB[(strongMatches[i][j]).queryIdx];
-         atp->addViewMatch(ossimDpt(boundsOfCMP.ul().x + cv_B.pt.x, boundsOfCMP.ul().y + cv_B.pt.y), static_cast<double>(maxDistance-(strongMatches[i][j].distance))/maxDistance);
+         cv_B = kpB[(strongMatches[i][j]).trainIdx];
+         atp->addImageMatch(ossimDpt(boundsOfCMP.ul().x + cv_B.pt.x, boundsOfCMP.ul().y + cv_B.pt.y), static_cast<double>(maxDistance-(strongMatches[i][j].distance))/maxDistance);
       }
 
       m_tiePoints.push_back(atp);
