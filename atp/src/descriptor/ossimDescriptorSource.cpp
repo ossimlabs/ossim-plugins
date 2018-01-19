@@ -213,7 +213,7 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
    for(size_t i = 0; i < weakMatchs.size(); ++i){
       std::vector<cv::DMatch> temp;
       for(size_t j = 0; j < weakMatchs[i].size(); ++j){
-        // if(weakMatchs[i][j].distance < ((maxDistance-leastDistance)*.2+leastDistance))
+         if(weakMatchs[i][j].distance < ((maxDistance-leastDistance)*.2+leastDistance))
             temp.push_back(weakMatchs[i][j]);
       }
       if(temp.size()>0) strongMatches.push_back(temp);
