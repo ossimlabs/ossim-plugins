@@ -1,6 +1,7 @@
 {
    "parameters": [
       {
+         "label": "Algorithm",
          "name": "algorithm",
          "descr": "Algorithm used for generating tiepoints. This can also be specified one level up in the JSON.",
          "type": "string",
