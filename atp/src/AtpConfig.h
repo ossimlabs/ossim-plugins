@@ -11,8 +11,6 @@
 #include <ossim/plugin/ossimPluginConstants.h>
 #include <ossim/base/ossimString.h>
 #include <ossim/base/JsonInterface.h>
-#include "descriptor/Descriptor.h"
-#include "descriptor/Matcher.h"
 #include <vector>
 #include <map>
 

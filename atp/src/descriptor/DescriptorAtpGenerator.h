@@ -8,6 +8,7 @@
 #define DescriptorAtpGenerator_H_
 
 #include <ossim/base/ossimConstants.h>
+#include "ossimDescriptorSource.h"
 #include "../AtpGeneratorBase.h"
 #include <ossim/base/ossimRefPtr.h>
 

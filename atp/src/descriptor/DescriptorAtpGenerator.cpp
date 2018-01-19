@@ -5,9 +5,7 @@
 //
 //**************************************************************************************************
 #include "DescriptorAtpGenerator.h"
-#include "DescriptorMatchTileSource.h"
 #include "../AtpConfig.h"
-#include "../AutoTiePoint.h"
 #include <ossim/base/ossimException.h>
 #include <ossim/imaging/ossimImageHandlerRegistry.h>
 #include <ossim/imaging/ossimImageDataFactory.h>
@@ -44,9 +42,10 @@ void DescriptorAtpGenerator::initialize()
    AtpConfig& config = AtpConfig::instance();
 
    // Add the CorrelationSource filter to the REF chain, then add the CMP image to the correlator:
-   m_atpTileSource = new DescriptorMatchTileSource;
-   m_atpTileSource->connectMyInputTo(m_refChain.get());
-   m_atpTileSource->connectMyInputTo(m_cmpChain.get());
+   vector<ossimRefPtr<ossimConnectableObject> > inputs;
+   inputs.push_back(m_refChain.get());
+   inputs.push_back(m_cmpChain.get());
+   m_atpTileSource = new ossimDescriptorSource(inputs);
    m_atpTileSource->setViewGeom(m_viewGeom.get());
 
    // Adjust AOI for half-width of correlation window:
@@ -55,7 +54,6 @@ void DescriptorAtpGenerator::initialize()
    ossimIpt last_pos(m_aoiView.lr().x - patch_center, m_aoiView.lr().y - patch_center);
    m_aoiView.set_ul(first_pos);
    m_aoiView.set_lr(last_pos);
-
 }
 
 } // End of namespace ATP
