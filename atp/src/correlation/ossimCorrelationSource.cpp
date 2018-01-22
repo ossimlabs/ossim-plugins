@@ -31,6 +31,12 @@ ossimCorrelationSource::ossimCorrelationSource(ossimConnectableObject::Connectab
    initialize();
 }
 
+ossimCorrelationSource::ossimCorrelationSource(AtpGeneratorBase* generator)
+: AtpTileSource(generator),
+  m_nominalCmpPatchSize(0)
+{
+}
+
 ossimCorrelationSource::~ossimCorrelationSource()
 {
 }

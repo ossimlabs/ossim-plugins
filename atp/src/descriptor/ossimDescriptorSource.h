@@ -28,6 +28,7 @@ class OSSIMDLLEXPORT ossimDescriptorSource : public AtpTileSource
 public:
    ossimDescriptorSource();
    ossimDescriptorSource(ossimConnectableObject::ConnectableObjectList& inputSources);
+   ossimDescriptorSource(AtpGeneratorBase* generator);
 
    virtual ~ossimDescriptorSource();
 
@@ -35,12 +36,6 @@ public:
 
    virtual ossimRefPtr<ossimImageData> getTile(const ossimIrect& origin, ossim_uint32 rLevel=0);
 
-protected:
-  ossimRefPtr<ossimImageData> ref_tile;
-  ossimRefPtr<ossimImageData> cmp_tile;
-  ossimRefPtr<ossimImageSource> ref_source;
-  ossimRefPtr<ossimImageSource> cmp_source;
-  ossimRefPtr<ossimImageViewProjectionTransform> m_A2BXform;
 };
 }
 #endif /* #ifndef ossimDescriptorSource_HEADER */

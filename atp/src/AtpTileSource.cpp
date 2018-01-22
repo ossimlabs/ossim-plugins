@@ -29,6 +29,23 @@ AtpTileSource::AtpTileSource(ossimConnectableObject::ConnectableObjectList& inpu
 {
 }
 
+AtpTileSource::AtpTileSource(AtpGeneratorBase* generator)
+:  m_generator(generator),
+   m_maxResidualMagnitude(0)
+{
+   theComputeFullResBoundsFlag = true;
+   if (m_generator)
+   {
+      connectMyInputTo(0, m_generator->m_refChain.get());
+      connectMyInputTo(1, m_generator->m_cmpChain.get());
+
+      m_refIVT = m_generator->m_refIVT;
+      m_cmpIVT = m_generator->m_cmpIVT;
+   }
+   addListener((ossimConnectableObjectListener*)this);
+   initialize();
+}
+
 void AtpTileSource::initialize()
 {
    ossimImageCombiner::initialize();
@@ -42,16 +59,19 @@ void AtpTileSource::initialize()
    m_cmpChain = (ossimImageSource*) getInput(1);
 
    // Need an IVT for each chain. They may already have one:
-   ossimTypeNameVisitor vref ("ossimImageRenderer");
-   m_refChain->accept(vref);
-   ossimImageRenderer* r = vref.getObjectAs<ossimImageRenderer>();
-   if (r)
-      m_refIVT = dynamic_cast<ossimImageViewProjectionTransform*>(r->getImageViewTransform());
-   ossimTypeNameVisitor vcmp ("ossimImageRenderer");
-   m_cmpChain->accept(vcmp);
-   r = vcmp.getObjectAs<ossimImageRenderer>();
-   if (r)
-      m_cmpIVT = dynamic_cast<ossimImageViewProjectionTransform*>(r->getImageViewTransform());
+   if (!m_refIVT && !m_cmpIVT)
+   {
+      ossimTypeNameVisitor vref ("ossimImageRenderer");
+      m_refChain->accept(vref);
+      ossimImageRenderer* r = vref.getObjectAs<ossimImageRenderer>();
+      if (r)
+         m_refIVT = dynamic_cast<ossimImageViewProjectionTransform*>(r->getImageViewTransform());
+      ossimTypeNameVisitor vcmp ("ossimImageRenderer");
+      m_cmpChain->accept(vcmp);
+      r = vcmp.getObjectAs<ossimImageRenderer>();
+      if (r)
+         m_cmpIVT = dynamic_cast<ossimImageViewProjectionTransform*>(r->getImageViewTransform());
+   }
 }
 
 void AtpTileSource::allocate()

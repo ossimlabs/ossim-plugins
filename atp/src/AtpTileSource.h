@@ -9,6 +9,7 @@
 
 #include "AtpConfig.h"
 #include "AutoTiePoint.h"
+#include "AtpGeneratorBase.h"
 #include <ossim/base/ossimIrect.h>
 #include <ossim/imaging/ossimImageCombiner.h>
 #include <ossim/imaging/ossimImageHandler.h>
@@ -32,6 +33,7 @@ class OSSIMDLLEXPORT AtpTileSource : public ossimImageCombiner
 public:
    AtpTileSource();
    AtpTileSource(ossimConnectableObject::ConnectableObjectList& inputSources);
+   AtpTileSource(AtpGeneratorBase* generator);
 
    virtual ~AtpTileSource() {}
 
@@ -67,6 +69,7 @@ protected:
    virtual void allocate();
    ossimImageHandler* getImageHandler(ossimRefPtr<ossimImageSource>& chain);
 
+   std::shared_ptr<AtpGeneratorBase> m_generator;
    ossimRefPtr<ossimImageSource> m_refChain;
    ossimRefPtr<ossimImageSource> m_cmpChain;
    ossimRefPtr<ossimImageViewProjectionTransform> m_refIVT;

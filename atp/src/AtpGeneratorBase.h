@@ -8,10 +8,12 @@
 #define AtpGeneratorBase_H_
 
 #include <ossim/base/ossimFilename.h>
-#include <ossim/base/ossimPolyArea2d.h>
+#include <ossim/base/ossimFilename.h>
+#include <ossim/base/ossimRefPtr.h>
 #include <ossim/imaging/ossimImageChain.h>
 #include <ossim/imaging/ossimImageGeometry.h>
 #include <ossim/imaging/ossimAnnotationSource.h>
+#include <ossim/projection/ossimImageViewProjectionTransform.h>
 #include "AutoTiePoint.h"
 #include "AtpAnnotatedImage.h"
 #include "Image.h"
@@ -30,6 +32,8 @@ namespace ATP
 class AtpGeneratorBase : public std::enable_shared_from_this<AtpGeneratorBase>
 
 {
+   friend class AtpTileSource;
+
 public:
    AtpGeneratorBase();
 
@@ -78,9 +82,12 @@ protected:
 
    /**
     * Constructs the processing chain for the input image according to the needs of the generator.
+    * As a convenience, the image-to-common view IVT is initialized
     */
-   virtual ossimRefPtr<ossimImageChain> constructChain(std::shared_ptr<Image> image,
-                                                       std::vector<ossimDpt>& validVertices);
+   virtual ossimRefPtr<ossimImageChain>
+   constructChain(std::shared_ptr<Image> image,
+                  ossimRefPtr<ossimImageViewProjectionTransform>& ivt,
+                  std::vector<ossimDpt>& validVertices);
 
    //! Finds optimum layout of patches within the intersect area for feature search.
    void layoutSearchTileRects(ossimPolygon& overlapPoly);
@@ -97,6 +104,8 @@ protected:
    ossimRefPtr<AtpTileSource> m_atpTileSource;
    ossimRefPtr<ossimImageChain> m_refChain;
    ossimRefPtr<ossimImageChain> m_cmpChain;
+   ossimRefPtr<ossimImageViewProjectionTransform> m_refIVT;
+   ossimRefPtr<ossimImageViewProjectionTransform> m_cmpIVT;
    ossimRefPtr<ossimImageGeometry> m_viewGeom;
    ossimIrect m_aoiView;
    std::vector<double> m_bandWeights;

@@ -69,13 +69,14 @@ void AtpGeneratorBase::initialize()
 
    // Establish image processing chains:
    vector<ossimDpt> refVertices, cmpVertices;
-   m_refChain = constructChain(m_refImage, refVertices);
-   m_cmpChain = constructChain(m_cmpImage, cmpVertices);
+   m_refChain = constructChain(m_refImage, m_refIVT, refVertices);
+   m_cmpChain = constructChain(m_cmpImage, m_cmpIVT, cmpVertices);
    if (!m_refChain || !m_cmpChain)
    {
       ossimNotify(ossimNotifyLevel_FATAL)<<MODULE<<"Null input chain(s)."<<endl;
       return;
    }
+
 
    if (AtpConfig::instance().diagnosticLevel(1))
    {
@@ -104,9 +105,9 @@ void AtpGeneratorBase::initialize()
 
    if (AtpConfig::instance().diagnosticLevel(3))
    {
-      m_annotatedRefImage = new AtpAnnotatedImage(m_refChain, m_aoiView);
+      m_annotatedRefImage = new AtpAnnotatedImage(m_refChain, m_refIVT, m_aoiView);
       m_annotatedRefImage->setImageName("annotatedRef.tif");
-      m_annotatedCmpImage = new AtpAnnotatedImage(m_cmpChain, m_aoiView);
+      m_annotatedCmpImage = new AtpAnnotatedImage(m_cmpChain, m_cmpIVT, m_aoiView);
       m_annotatedCmpImage->setImageName("annotatedCmp.tif");
    }
 
@@ -130,8 +131,10 @@ void AtpGeneratorBase::initialize()
    ossimElevManager::instance()->setUseGeoidIfNullFlag(true);
 }
 
-ossimRefPtr<ossimImageChain> AtpGeneratorBase::constructChain(shared_ptr<Image> image,
-                                                              vector<ossimDpt>& validVertices)
+ossimRefPtr<ossimImageChain>
+AtpGeneratorBase::constructChain(shared_ptr<Image> image,
+                                 ossimRefPtr<ossimImageViewProjectionTransform>& ivt,
+                                 vector<ossimDpt>& validVertices)
 {
    static const char* MODULE="AtpGeneratorBase::constructChain()  ";
    AtpConfig& config = AtpConfig::instance();
@@ -201,7 +204,7 @@ ossimRefPtr<ossimImageChain> AtpGeneratorBase::constructChain(shared_ptr<Image> 
          gsd.x = gsd.y;
       ossimGpt proj_origin;
       image_geom->getTiePoint(proj_origin, false);
-      ossimUtmProjection* proj = new ossimUtmProjection;
+      ossimUtmProjection* proj = new ossimUtmProjection();
       proj->setOrigin(proj_origin);
       proj->setMetersPerPixel(gsd);
       proj->setUlTiePoints(proj_origin);
@@ -248,8 +251,7 @@ ossimRefPtr<ossimImageChain> AtpGeneratorBase::constructChain(shared_ptr<Image> 
 
    // The image vertices are necessarily in image space coordinates. Need to transform to a common
    // "view" space before determining the overlap polygon:
-   ossimRefPtr<ossimImageViewProjectionTransform> ivt =
-         new ossimImageViewProjectionTransform(image_geom.get(), m_viewGeom.get());
+   ivt = new ossimImageViewProjectionTransform(image_geom.get(), m_viewGeom.get());
    ossimDpt ipt, vpt;
    for (size_t i=0; i<validVertices.size(); ++i)
    {
@@ -258,6 +260,7 @@ ossimRefPtr<ossimImageChain> AtpGeneratorBase::constructChain(shared_ptr<Image> 
       validVertices[i] = vpt;
    }
 
+   // Create a renderer even if it won't be used, just
    return chain;
 }
 

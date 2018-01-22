@@ -12,6 +12,7 @@
 #include <ossim/imaging/ossimImageChain.h>
 #include <ossim/imaging/ossimImageGeometry.h>
 #include <ossim/imaging/ossimAnnotationSource.h>
+#include <ossim/projection/ossimImageViewProjectionTransform.h>
 #include "AutoTiePoint.h"
 #include "Image.h"
 #include <vector>
@@ -27,7 +28,9 @@ class AtpAnnotatedImage : public ossimImageChain
 
 {
 public:
-   AtpAnnotatedImage(ossimRefPtr<ossimImageChain>& sourceChain, const ossimDrect& aoi);
+   AtpAnnotatedImage(ossimRefPtr<ossimImageChain>& sourceChain,
+                     ossimRefPtr<ossimImageViewProjectionTransform>& ivt,
+                     const ossimDrect& aoi);
    ~AtpAnnotatedImage();
 
    void setImageName(const std::string& name) { m_annFilename = name; }

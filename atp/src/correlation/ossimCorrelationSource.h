@@ -28,6 +28,7 @@ class OSSIMDLLEXPORT ossimCorrelationSource : public AtpTileSource
 public:
    ossimCorrelationSource();
    ossimCorrelationSource(ossimConnectableObject::ConnectableObjectList& inputSources);
+   ossimCorrelationSource(AtpGeneratorBase* generator);
 
    virtual ~ossimCorrelationSource();
 

@@ -18,7 +18,6 @@
 #include <ossim/imaging/ossimIndexToRgbLutFilter.h>
 #include <ossim/imaging/ossimVertexExtractor.h>
 #include <ossim/projection/ossimUtmProjection.h>
-#include <ossim/projection/ossimImageViewProjectionTransform.h>
 #include <ossim/elevation/ossimElevManager.h>
 #include <ossim/base/ossimDpt.h>
 #include <ossim/imaging/ossimLinearStretchRemapper.h>
@@ -36,6 +35,7 @@ using namespace std;
 namespace ATP
 {
 AtpAnnotatedImage::AtpAnnotatedImage(ossimRefPtr<ossimImageChain>& sourceChain,
+                                     ossimRefPtr<ossimImageViewProjectionTransform>& ivt,
                                      const ossimDrect& aoi)
 :   m_annFilename("annotated.tif")
 {
@@ -47,6 +47,21 @@ AtpAnnotatedImage::AtpAnnotatedImage(ossimRefPtr<ossimImageChain>& sourceChain,
 //   mosaic->connectMyInputTo(m_cmpChain.get());
 //   m_annChain->add(mosaic.get());
    add(sourceChain.get()); // just use ref image.
+
+   // Insure there is a renderer to output to a common view space:
+   ossimTypeNameVisitor vref ("ossimImageRenderer");
+   sourceChain->accept(vref);
+   ossimImageRenderer* r = vref.getObjectAs<ossimImageRenderer>();
+   if (!r)
+   {
+      ossimImageRenderer* renderer = new ossimImageRenderer;
+      add(renderer);
+      renderer->setImageViewTransform(ivt.get());
+
+      // Add cache after resampler:
+      ossimCacheTileSource* cache = new ossimCacheTileSource();
+      add(cache);
+   }
 
    // The ref chain is necessarily single band. Need to map to RGB:
    ossimRefPtr<ossimBandSelector> band_selector = new ossimBandSelector;
@@ -60,6 +75,7 @@ AtpAnnotatedImage::AtpAnnotatedImage(ossimRefPtr<ossimImageChain>& sourceChain,
    // Add the graphics annotation source:
    m_annSource = new ossimAnnotationSource;
    add(m_annSource.get());
+
    initialize();
 
    // Keep track of the view geometry's image size to scale output when writing annotated chain:

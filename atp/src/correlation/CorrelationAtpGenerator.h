@@ -32,6 +32,7 @@ public:
 protected:
    virtual void initialize();
    ossimRefPtr<ossimImageChain> constructChain(shared_ptr<Image> image,
+                                               ossimRefPtr<ossimImageViewProjectionTransform>& ivt,
                                                vector<ossimDpt>& validVertices);
 
    ossimIpt m_tileInterval;
