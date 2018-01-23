@@ -51,6 +51,7 @@ void DescriptorAtpGenerator::initialize()
 //   ossimIpt last_pos(m_aoiView.lr().x - patch_center, m_aoiView.lr().y - patch_center);
 //   m_aoiView.set_ul(first_pos);
 //   m_aoiView.set_lr(last_pos);
+   m_atpTileSource->initialize();
 }
 
 } // End of namespace ATP
