@@ -225,27 +225,15 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
       }
    }
 
-   std::vector< std::vector<cv::DMatch> > strongMatches;
-   for(size_t i = 0; i < weakMatchs.size(); ++i)
-   {
-      std::vector<cv::DMatch> temp;
-      for(size_t j = 0; j < weakMatchs[i].size(); ++j)
-      {
-         if(weakMatchs[i][j].distance < ((maxDistance-leastDistance)*.2+leastDistance))
-            temp.push_back(weakMatchs[i][j]);
-      }
-      if(temp.size()>0) strongMatches.push_back(temp);
-   }
-
    // Sort the matches in order of strength (i.e., confidence) using stl map:
    map<double, shared_ptr<AutoTiePoint> > tpMap;
 
    // Convert the openCV match points to something Atp could understand.
    string sid(""); // Leave blank to have it auto-assigned by CorrelationTiePoint constructor
-   for (size_t i = 0; i < strongMatches.size(); ++i)
+   for (size_t i = 0; i < weakMatchs.size(); ++i)
    {
       shared_ptr<AutoTiePoint> atp (new AutoTiePoint(this, sid));
-      cv::KeyPoint cv_A = kpA[(strongMatches[i][0]).queryIdx];
+      cv::KeyPoint cv_A = kpA[(weakMatchs[i][0]).queryIdx];
       cv::KeyPoint cv_B;
 
       ossimDpt refImgPt (refRect.ul().x + cv_A.pt.x, refRect.ul().y + cv_A.pt.y);
@@ -253,11 +241,11 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
 
       // Create the match points
       double strength = 0;
-      for (size_t j = 0; j < strongMatches[i].size(); ++j)
+      for (size_t j = 0; j < weakMatchs[i].size(); ++j)
       {
-         cv_B = kpB[(strongMatches[i][j]).trainIdx];
+         cv_B = kpB[(weakMatchs[i][j]).trainIdx];
          ossimDpt cmpImgPt (cmpRect.ul().x + cv_B.pt.x, cmpRect.ul().y + cv_B.pt.y);
-         double strength_j = 1.0 - (strongMatches[i][j].distance-leastDistance)/maxDistance;
+         double strength_j = 1.0 - (weakMatchs[i][j].distance-leastDistance)/maxDistance;
          if (strength_j > strength)
             strength = strength_j;
          atp->addImageMatch(cmpImgPt, strength_j);
@@ -270,7 +258,7 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
    }
 
    if (config.diagnosticLevel(2))
-      clog<<MODULE<<"Before filtering, num matches in tile = "<<strongMatches.size()<<endl;
+      clog<<MODULE<<"Before filtering, num matches in tile = "<<weakMatchs.size()<<endl;
 
    // Now skim off the best matches and copy them to the list being returned:
    unsigned int N = config.getParameter("numFeaturesPerTile").asUint();
