@@ -262,7 +262,9 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
             strength = strength_j;
          atp->addImageMatch(cmpImgPt, strength_j);
       }
-      tpMap.insert(pair<double, shared_ptr<AutoTiePoint> >(strength, atp));
+
+      // Insert into sorted map using one's complement as key since in ascending order:
+      tpMap.insert(pair<double, shared_ptr<AutoTiePoint> >(1.0-strength, atp));
 
       sid.clear();
    }
