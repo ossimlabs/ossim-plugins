@@ -59,7 +59,8 @@ void Image::loadJSON(const Json::Value& json_node)
    // Parse JSON. Filename is required:
    if (json_node.isMember("filename"))
    {
-      m_filename = json_node["filename"].asString();
+      ossimFilename imageFile = json_node["filename"].asString();
+      m_filename = imageFile.expand(); // allow embedded environment variables
    }
    else
    {
@@ -96,7 +97,7 @@ void Image::saveJSON(Json::Value& json_node) const
 {
    json_node.clear();
    json_node["imageId"] = m_imageId;
-   json_node["filename"] = m_filename;
+   json_node["filename"] = m_filename.string();
    json_node["entryIndex"] = m_entryIndex;
 
    if (m_modelName.size())

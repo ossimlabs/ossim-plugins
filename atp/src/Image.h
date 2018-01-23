@@ -12,6 +12,7 @@
 #include <string>
 #include <ossim/base/ossimGpt.h>
 #include <ossim/base/ossimConstants.h>
+#include <ossim/base/ossimFilename.h>
 #include <ossim/matrix/newmat.h>
 #include <ossim/base/JsonInterface.h>
 #include <ossim/projection/ossimSensorModel.h>
@@ -68,7 +69,7 @@ public:
 
 private:
    std::string m_imageId;
-   std::string m_filename;
+   ossimFilename m_filename;
    unsigned int m_entryIndex;
    unsigned int m_activeBand;
    std::string m_modelName;
