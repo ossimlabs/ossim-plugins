@@ -440,7 +440,9 @@ bool ossimCorrelationSource::OpenCVCorrelation(std::shared_ptr<AutoTiePoint> atp
    {
       // The peaks are in order by greatest correlation value. Send the best to the CTP:
       multimap<float, ossimIpt, greater<float> >::iterator peak = peaks_map.begin();
-      unsigned int maxNumPeaks = AtpConfig::instance().getParameter("maxNumPeaksPerFeature").asUint();
+      unsigned int maxNumPeaks = AtpConfig::instance().getParameter("maxNumMatchesPerFeature").asUint();
+      if (config.paramExists("maxNumPeaksPerFeature")) // support legacy keywords
+         maxNumPeaks = config.getParameter("maxNumPeaksPerFeature").asUint();
       for (unsigned int i = 0; (i < maxNumPeaks) && (peak != peaks_map.end()); i++)
       {
          cmpPeakLocV = peak->second;

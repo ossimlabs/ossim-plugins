@@ -20,9 +20,6 @@
 
 namespace ATP
 {
-static const int DEFAULT_CMP_PATCH_SIZING_FACTOR = 2;
-static const double DEFAULT_NOMINAL_POSITION_ERROR = 50; // meters
-
 ossimDescriptorSource::ossimDescriptorSource()
 {
 }
@@ -180,11 +177,13 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
    }
 
    // Get the DPoints using the appropriate matcher.
-   std::vector< std::vector<cv::DMatch> > weakMatchs;
+   std::vector< std::vector<cv::DMatch> > matches;
    if(!(desA.empty() || desB.empty()))
    {
       std::string matcherType = config.getParameter("matcher").asString();
-      uint k = config.getParameter("k").asUint();
+      uint k = config.getParameter("maxNumMatchesPerFeature").asUint();
+      if (config.paramExists("k")) // support legacy keywords
+         k = config.getParameter("k").asUint();
       if (kpA.size() < k)
          k = kpA.size();
       transform(matcherType.begin(), matcherType.end(), matcherType.begin(),::toupper);
@@ -196,7 +195,7 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
          if(desB.type()!=CV_32F)
             desB.convertTo(desB, CV_32F);
          cv::FlannBasedMatcher matcher;
-         matcher.knnMatch(desA, desB, weakMatchs, k);
+         matcher.knnMatch(desA, desB, matches, k);
       }
       else if(matcherType == "BF")
       {
@@ -214,14 +213,14 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
    int maxDistance = 0;
 
    // Find the highest distance to compute the relative confidence of each match
-   for (size_t i = 0; i < weakMatchs.size(); ++i)
+   for (size_t i = 0; i < matches.size(); ++i)
    {
-      for (size_t j = 0; j < weakMatchs[i].size(); ++j)
+      for (size_t j = 0; j < matches[i].size(); ++j)
       {
-         if (leastDistance > weakMatchs[i][j].distance)
-            leastDistance = weakMatchs[i][j].distance;
-         if (maxDistance < weakMatchs[i][j].distance)
-            maxDistance = weakMatchs[i][j].distance;
+         if (leastDistance > matches[i][j].distance)
+            leastDistance = matches[i][j].distance;
+         if (maxDistance < matches[i][j].distance)
+            maxDistance = matches[i][j].distance;
       }
    }
 
@@ -230,10 +229,10 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
 
    // Convert the openCV match points to something Atp could understand.
    string sid(""); // Leave blank to have it auto-assigned by CorrelationTiePoint constructor
-   for (size_t i = 0; i < weakMatchs.size(); ++i)
+   for (size_t i = 0; i < matches.size(); ++i)
    {
       shared_ptr<AutoTiePoint> atp (new AutoTiePoint(this, sid));
-      cv::KeyPoint cv_A = kpA[(weakMatchs[i][0]).queryIdx];
+      cv::KeyPoint cv_A = kpA[(matches[i][0]).queryIdx];
       cv::KeyPoint cv_B;
 
       ossimDpt refImgPt (refRect.ul().x + cv_A.pt.x, refRect.ul().y + cv_A.pt.y);
@@ -241,11 +240,11 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
 
       // Create the match points
       double strength = 0;
-      for (size_t j = 0; j < weakMatchs[i].size(); ++j)
+      for (size_t j = 0; j < matches[i].size(); ++j)
       {
-         cv_B = kpB[(weakMatchs[i][j]).trainIdx];
+         cv_B = kpB[(matches[i][j]).trainIdx];
          ossimDpt cmpImgPt (cmpRect.ul().x + cv_B.pt.x, cmpRect.ul().y + cv_B.pt.y);
-         double strength_j = 1.0 - (weakMatchs[i][j].distance-leastDistance)/maxDistance;
+         double strength_j = 1.0 - (matches[i][j].distance-leastDistance)/maxDistance;
          if (strength_j > strength)
             strength = strength_j;
          atp->addImageMatch(cmpImgPt, strength_j);
@@ -258,7 +257,7 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
    }
 
    if (config.diagnosticLevel(2))
-      clog<<MODULE<<"Before filtering, num matches in tile = "<<weakMatchs.size()<<endl;
+      clog<<MODULE<<"Before filtering, num matches in tile = "<<matches.size()<<endl;
 
    // Now skim off the best matches and copy them to the list being returned:
    unsigned int N = config.getParameter("numFeaturesPerTile").asUint();

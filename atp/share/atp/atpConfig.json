@@ -1,4 +1,6 @@
 {
+   "Notes_to_Developer": "Deprecated or superceded parameters can be flagged so that the user is notified on the console by starting its description here with the word `DEPRECATED` (in caps).",
+   
    "parameters": 
    [
       {
@@ -72,6 +74,13 @@
          "value": 1024
       },
       {
+         "label": "Feature Search Tile Margin",
+         "name": "featureSearchTileMargin",
+         "descr": "Margin (in pixels) to add to the feature search tile specification to account for descriptor sampling size. Only meaningful when searchGridSize=0 (contiguous tiles).",
+         "type": "uint",
+         "value": 48
+      },
+      {
          "label": "Use Tile Grid Layout",
          "name": "useTileGridLayout",
          "descr": "If true, directs the feature search patch layout to use grid layout scheme.",
@@ -81,7 +90,7 @@
       {
          "label": "Search Grid Size",
          "name": "searchGridSize",
-         "descr": "The number of search tiles to layout along widest dimension of overlap.",
+         "descr": "The number of search tiles to layout along widest dimension of overlap. Set to 0 for contiguous tiles.",
          "type": "uint",
          "value": 7
       },
@@ -97,6 +106,13 @@
          "descr": "For engineering output. For minimum verbosity, use 0",
          "type": "uint",
          "value": 1
+      },
+      {
+         "label": "Max Number of Matches per Feature.",
+         "name": "maxNumMatchesPerFeature",
+         "descr": "Max number of matches to consider per keypoint/feature.",
+         "type": "uint",
+         "value": 3
       },
       {
          "name": "annotatedImageSize",

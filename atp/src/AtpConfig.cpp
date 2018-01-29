@@ -434,6 +434,12 @@ void AtpConfig::loadJSON(const Json::Value& json_node)
                   "nonexistent parameter <"<< members[i] << ">. Ignoring request."<<endl;
             continue;
          }
+         if (p.descr().contains("DEPRECATED"))
+         {
+            ossimNotify(ossimNotifyLevel_WARN)<<"AtpConfig::loadJSON()  Parameter "<<p.name()
+                  <<" "<<p.descr()<<endl;
+            continue;
+         }
 
          // Create a full JSON representation of the named parameter from the default list, replace
          // its value, and recreate the parameter from the updated full JSON:

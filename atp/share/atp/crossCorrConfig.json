@@ -30,7 +30,7 @@
       {
          "label": "Max Number Correlation Peaks.",
          "name": "maxNumPeaksPerFeature",
-         "descr": "Max number of correlation peaks to consider per feature.",
+         "descr": "DEPRECATED. Use \"maxNumMatchesPerFeature\" instead.",
          "type": "uint",
          "value": 3
       },

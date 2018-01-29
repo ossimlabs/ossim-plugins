@@ -8,14 +8,14 @@
          "value": "descriptor"
       },
       {
-         "label": "Descriptor",
+         "label": "OpenCV Descriptor",
          "name": "descriptor",
          "descr": "Type of descriptor being used. DYLAN: Need to replace uints with human readable.",
          "type": "string",
          "value": "AKAZE"
       },
       {
-         "label": "Matcher",
+         "label": "OpenCV Keypoint Descriptor Matcher",
          "name": "matcher",
          "descr": "Type of matcher being used. DYLAN: Need to replace uints with human readable.",
          "type": "string",
@@ -31,7 +31,7 @@
       {
          "label": "K",
          "name": "k",
-         "descr": "Number of correlating match points tried in compare image for each point in refernce image.",
+         "descr": "DEPRECATED. Use \"maxNumMatchesPerFeature\" instead.",
          "type": "uint",
          "value": 1
       }
