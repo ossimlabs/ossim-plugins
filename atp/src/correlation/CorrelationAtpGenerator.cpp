@@ -12,6 +12,7 @@
 #include <ossim/base/ossimStringProperty.h>
 
 using namespace std;
+using namespace ossim;
 
 #define DEBUG_ATP
 

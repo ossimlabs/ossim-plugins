@@ -13,8 +13,8 @@
 #include <ossim/imaging/ossimImageGeometry.h>
 #include <ossim/imaging/ossimAnnotationSource.h>
 #include <ossim/projection/ossimImageViewProjectionTransform.h>
+#include <ossim/reg/Image.h>
 #include "AutoTiePoint.h"
-#include "Image.h"
 #include <vector>
 #include <memory>
 

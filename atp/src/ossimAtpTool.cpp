@@ -24,6 +24,7 @@
 #include <sstream>
 
 using namespace std;
+using namespace ossim;
 
 #define CINFO  ossimNotify(ossimNotifyLevel_INFO)
 #define CWARN  ossimNotify(ossimNotifyLevel_WARN)
@@ -340,7 +341,7 @@ void ossimAtpTool::doPairwiseMatching()
          // Generate tie points using A for features:
          generator->setRefImage(imageA);
          generator->setCmpImage(imageB);
-         ATP::AtpList tpList;
+         TiePointList tpList;
          generator->generateTiePointList(tpList);
          m_photoBlock->addTiePoints(tpList);
 

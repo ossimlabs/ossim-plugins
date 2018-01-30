@@ -19,3 +19,7 @@ add_executable(atp-test atp-test.cpp )
 set_target_properties(atp-test PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 target_link_libraries( atp-test ${requiredLibs} )
 
+add_executable(atp-test2 atp-test2.cpp )
+set_target_properties(atp-test2 PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+target_link_libraries( atp-test2 ${requiredLibs} )
+

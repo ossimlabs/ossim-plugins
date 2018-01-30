@@ -14,6 +14,7 @@
 #include <ossim/base/ossimConstants.h>
 
 using namespace std;
+using namespace ossim;
 
 namespace ATP
 {

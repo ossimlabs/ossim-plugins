@@ -11,8 +11,8 @@
 #include <ossim/plugin/ossimPluginConstants.h>
 #include <ossim/imaging/ossimImageHandler.h>
 #include <ossim/base/ossimRefPtr.h>
+#include <ossim/reg/PhotoBlock.h>
 #include <ossim/util/ossimTool.h>
-#include "PhotoBlock.h"
 #include <memory>
 
 namespace ATP
@@ -60,7 +60,7 @@ private:
    Method m_method;
    std::string m_configuration;
    Json::Value m_responseJSON;
-   std::shared_ptr<PhotoBlock> m_photoBlock;
+   std::shared_ptr<ossim::PhotoBlock> m_photoBlock;
 };
 }
 #endif /* #ifndef ossimAtpTool_HEADER */

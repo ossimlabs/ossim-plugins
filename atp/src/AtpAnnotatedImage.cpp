@@ -113,8 +113,6 @@ void AtpAnnotatedImage::annotateResiduals(AtpList& atpList, int r, int g, int b)
 
    AtpConfig& config = AtpConfig::instance();
    double residualMultiplier = config.getParameter("residualMultiplier").asFloat();
-   if (residualMultiplier < 1)
-      residualMultiplier = 1.0;
 
    ossimDpt refPt, cmpPt, residual;
    for (size_t i=0; i<atpList.size(); ++i)
