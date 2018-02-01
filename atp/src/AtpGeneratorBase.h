@@ -14,9 +14,9 @@
 #include <ossim/imaging/ossimImageGeometry.h>
 #include <ossim/imaging/ossimAnnotationSource.h>
 #include <ossim/projection/ossimImageViewProjectionTransform.h>
+#include <ossim/reg/Image.h>
 #include "AutoTiePoint.h"
 #include "AtpAnnotatedImage.h"
-#include "Image.h"
 #include <vector>
 #include <memory>
 
@@ -39,8 +39,8 @@ public:
 
    virtual ~AtpGeneratorBase();
 
-   void setRefImage(std::shared_ptr<Image> ref_image);
-   void setCmpImage(std::shared_ptr<Image> cmp_image);
+   void setRefImage(std::shared_ptr<ossim::Image> ref_image);
+   void setCmpImage(std::shared_ptr<ossim::Image> cmp_image);
 
    /**
     * When the input images are multiband, the bands must be combined into a single-band image.
@@ -54,7 +54,7 @@ public:
     * TODO: Currently, ATP generation only works with pair-wise matching. Eventually it should
     * support N-way matching with an arbitrary number of input images.
     */
-   virtual bool generateTiePointList(AtpList& tpList);
+   virtual bool generateTiePointList(ossim::TiePointList& tpList);
 
    /**
     * For engineering use. Renders relevant tiepoint data to disk file(s). Optionally
@@ -85,7 +85,7 @@ protected:
     * As a convenience, the image-to-common view IVT is initialized
     */
    virtual ossimRefPtr<ossimImageChain>
-   constructChain(std::shared_ptr<Image> image,
+   constructChain(std::shared_ptr<ossim::Image> image,
                   ossimRefPtr<ossimImageViewProjectionTransform>& ivt,
                   std::vector<ossimDpt>& validVertices);
 
@@ -99,8 +99,8 @@ protected:
    void pruneList(AtpList& tpList);
 
 
-   std::shared_ptr<Image> m_refImage;
-   std::shared_ptr<Image> m_cmpImage;
+   std::shared_ptr<ossim::Image> m_refImage;
+   std::shared_ptr<ossim::Image> m_cmpImage;
    ossimRefPtr<AtpTileSource> m_atpTileSource;
    ossimRefPtr<ossimImageChain> m_refChain;
    ossimRefPtr<ossimImageChain> m_cmpChain;

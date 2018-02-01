@@ -5,9 +5,9 @@
 //
 //**************************************************************************************************
 
-#include "ossimAtpTool.h"
+#include "ossimDemTool.h"
+#include "ossimDemToolConfig.h"
 #include <math.h>
-#include "correlation/CorrelationAtpGenerator.h"
 #include "descriptor/DescriptorAtpGenerator.h"
 #include <ossim/base/ossimException.h>
 #include <ossim/base/ossimGpt.h>
@@ -18,6 +18,7 @@
 #include <ossim/base/ossimException.h>
 #include <ossim/base/ossimNotify.h>
 #include <ossim/base/ossimException.h>
+#include <ossim/util/ossimToolRegistry.h>
 #include <cstdlib>
 #include <iostream>
 #include <memory>
@@ -30,26 +31,23 @@ using namespace ossim;
 #define CWARN  ossimNotify(ossimNotifyLevel_WARN)
 #define CFATAL ossimNotify(ossimNotifyLevel_FATAL)
 
-namespace ATP
-{
-const char* ossimAtpTool::DESCRIPTION =
-      "Provides automatic tiepoint generation functionality. This tool uses JSON format to "
+const char* ossimDemTool::DESCRIPTION =
+      "Provides DEM generation functionality. This tool uses JSON format to "
       "communicate requests and results.";
 
-ossimAtpTool::ossimAtpTool()
+ossimDemTool::ossimDemTool()
 : m_outputStream (0),
   m_verbose (false),
-  m_featureBased (true),
   m_algorithm (ALGO_UNASSIGNED),
   m_method (METHOD_UNASSIGNED)
 {
 }
 
-ossimAtpTool::~ossimAtpTool()
+ossimDemTool::~ossimDemTool()
 {
 }
 
-void ossimAtpTool::setUsage(ossimArgumentParser& ap)
+void ossimDemTool::setUsage(ossimArgumentParser& ap)
 {
    // Add global usage options. Don't include ossimChipProcUtil options as not appropriate.
    ossimTool::setUsage(ap);
@@ -57,26 +55,26 @@ void ossimAtpTool::setUsage(ossimArgumentParser& ap)
    // Set the general usage:
    ossimApplicationUsage* au = ap.getApplicationUsage();
    ossimString usageString = ap.getApplicationName();
-   usageString += " atp [options] \n\n";
+   usageString += " dem [options] \n\n";
    usageString +=
-         "Accesses automatic tiepoint generation functionality given JSON request on stdin (or input file if\n"
+         "Accesses DEM generation functionality given JSON request on stdin (or input file if\n"
          "-i specified). The response JSON is output to stdout unless -o option is specified.\n";
    au->setCommandLineUsage(usageString);
 
    // Set the command line options:
    au->addCommandLineOption("--algorithms",
-         "List available auto-tie-point algorithms");
+         "List available DEM generation algorithms");
    au->addCommandLineOption("-i <filename>",
          "Reads request JSON from the input file specified instead of stdin.");
    au->addCommandLineOption("-o <filename>",
          "Outputs response JSON to the output file instead of stdout.");
    au->addCommandLineOption("--parameters",
-         "List all ATP parameters with default values.");
+         "List all algorithm parameters with default values.");
    au->addCommandLineOption("-v",
          "Verbose. All non-response (debug) output to stdout is enabled.");
 }
 
-bool ossimAtpTool::initialize(ossimArgumentParser& ap)
+bool ossimDemTool::initialize(ossimArgumentParser& ap)
 {
    string ts1;
    ossimArgumentParser::ossimParameter sp1(ts1);
@@ -133,10 +131,10 @@ bool ossimAtpTool::initialize(ossimArgumentParser& ap)
    return true;
 }
 
-void ossimAtpTool::loadJSON(const Json::Value& queryRoot)
+void ossimDemTool::loadJSON(const Json::Value& queryRoot)
 {
    ostringstream xmsg;
-   xmsg<<"ossimAtpTool::loadJSON()  ";
+   xmsg<<"ossimDemTool::loadJSON()  ";
 
    // Fetch the desired method from the JSON if provided, otherwise rely on command line options:
    m_method = GENERATE;
@@ -147,39 +145,24 @@ void ossimAtpTool::loadJSON(const Json::Value& queryRoot)
       m_method = GET_PARAMS;
 
    // Fetch the desired algorithm or configuration:
-   AtpConfig& config = AtpConfig::instance();
+   JsonConfig& config = ossimDemToolConfig::instance();
    string algorithm = queryRoot["algorithm"].asString();
    if (algorithm.empty())
-   {
-      // An optional field specifies a configuration that contains the base-name of a custom
-      // parameters JSON file including algorithm type. Read that if specified:
-      m_configuration = queryRoot["configuration"].asString();
-      if (!m_configuration.empty())
-      {
-         if (!config.readConfig(m_configuration))
-         {
-            xmsg << "Fatal error trying to read default ATP configuration for selected "
-                  "configuration <"<<m_configuration<<">";
-            throw ossimException(xmsg.str());
-         }
-         algorithm = config.getParameter("algorithm").asString();
-      }
-   }
+      algorithm = "asp"; // default for now
+
    // Otherwise read the algorithm's default config params from the system:
-   else if (!config.readConfig(algorithm))
-   {
-      xmsg << "Fatal error trying to read default ATP configuration for selected algorithm <"
-            <<algorithm<<">";
-      throw ossimException(xmsg.str());
-   }
+//   if (!config.readConfig(algorithm))
+//   {
+//      xmsg << "Fatal error trying to read default DEM genererator configuration for selected algorithm <"
+//            <<algorithm<<">";
+//      throw ossimException(xmsg.str());
+//   }
 
    // Assign enum data member used throughout the service:
-   if (algorithm == "crosscorr")
-      m_algorithm = CROSSCORR;
-   else if (algorithm == "descriptor")
-      m_algorithm = DESCRIPTOR;
-   else if (algorithm == "nasa")
-      m_algorithm = NASA;
+   if (algorithm == "asp")
+      m_algorithm = ASP;
+   else if (algorithm == "omg")
+      m_algorithm = OMG;
    else
       m_algorithm = ALGO_UNASSIGNED;
 
@@ -203,7 +186,7 @@ void ossimAtpTool::loadJSON(const Json::Value& queryRoot)
    }
 }
 
-bool ossimAtpTool::execute()
+bool ossimDemTool::execute()
 {
    ostringstream xmsg;
 
@@ -218,7 +201,15 @@ bool ossimAtpTool::execute()
          getParameters();
          break;
       case GENERATE:
-         generate();
+         if (m_algorithm == ASP)
+            doASP();
+         if (m_algorithm == OMG)
+            doOMG();
+         else
+         {
+            m_responseJSON["status"] = "failed";
+            m_responseJSON["report"] = "Unsupported algorthm requested for DEM generation.";
+         }
          break;
       default:
          xmsg << "Fatal: No method selected prior to execute being called. I don't know what to do!";
@@ -247,64 +238,76 @@ bool ossimAtpTool::execute()
    return true;
 }
 
-void ossimAtpTool::getKwlTemplate(ossimKeywordlist& kwl)
+void ossimDemTool::getKwlTemplate(ossimKeywordlist& kwl)
 {
 }
 
-void ossimAtpTool::getAlgorithms()
+void ossimDemTool::getAlgorithms()
 {
    m_responseJSON.clear();
 
    Json::Value algoList;
-   algoList[0]["name"]        = "crosscorr";
-   algoList[0]["description"] = "Matching by cross-correlation of raster patches";
-   algoList[0]["label"]       = "Cross Correlation";
-   algoList[1]["name"]        = "descriptor";
-   algoList[1]["description"] = "Matching by feature descriptors";
-   algoList[1]["label"]       = "Descriptor";
-   //algoList[2]["name"]        = "nasa";
-   //algoList[2]["description"] = "Tiepoint extraction using NASA tool.";
-   //algoList[2]["label"]       = "NASA";
+   algoList[0]["name"]        = "asp";
+   algoList[0]["description"] = "NASA Ames Stereo Pipeline";
+   algoList[0]["name"]        = "omg";
+   algoList[0]["description"] = "OSSIM/MSP Generator";
 
    m_responseJSON["algorithms"] = algoList;
 }
 
-void ossimAtpTool::getParameters()
+void ossimDemTool::getParameters()
 {
    m_responseJSON.clear();
-
    Json::Value params;
-   AtpConfig::instance().saveJSON(params);
-
+   ossimDemToolConfig::instance().saveJSON(params);
    m_responseJSON["parameters"] = params;
-
 }
 
-void ossimAtpTool::generate()
+void ossimDemTool::doASP()
 {
+   static const char* MODULE = "ossimDemTool::doASP()  ";
    ostringstream xmsg;
-   xmsg<<"ossimAtpTool::generate()  ";
+   xmsg<<MODULE;
 
-   switch (m_algorithm)
+
+   xmsg << "ASP NOT YET IMPLEMENTED.";
+   throw ossimException(xmsg.str());
+
+
+
+   if (!m_photoBlock || (m_photoBlock->getImageList().size() < 2))
    {
-   case CROSSCORR:
-   case DESCRIPTOR:
-      doPairwiseMatching();
-      break;
-   case NASA:
-      xmsg << "NASA Algorithm not yet implemented!";
-      throw ossimException(xmsg.str());
-      break;
-   case ALGO_UNASSIGNED:
-   default:
-      xmsg << "Fatal: No algorithm selected prior to execute being called. I don't know what to do!";
+      xmsg << "No photoblock has been declared or it has less than two images. Cannot perform ATP.";
       throw ossimException(xmsg.str());
    }
+
+   // First obtain list of images from photoblock:
+   std::vector<shared_ptr<Image> >& imageList = m_photoBlock->getImageList();
+   int numImages = (int) imageList.size();
+   int numPairs = (numImages * (numImages-1))/2; // triangular number assumes all overlap
+   for (int i=0; i<(numImages-1); i++)
+   {
+      shared_ptr<Image> imageA = imageList[i];
+
+      // Establish existence of RPB, and create it if not available:
+      ossimFilename rpcFile (imageA->getFilename());
+      rpcFile.setExtension("RPB");
+      if (!rpcFile.isReadable())
+      {
+
+      }
+      for (int j=i+1; j<numImages; j++)
+      {
+         shared_ptr<Image> imageB = imageList[j];
+
+      }
+   }
+
 }
 
-void ossimAtpTool::doPairwiseMatching()
+void ossimDemTool::doOMG()
 {
-   static const char* MODULE = "ossimAtpTool::doPairwiseMatching()  ";
+   static const char* MODULE = "ossimDemTool::doOMG()  ";
    ostringstream xmsg;
    xmsg<<MODULE;
 
@@ -314,66 +317,15 @@ void ossimAtpTool::doPairwiseMatching()
       throw ossimException(xmsg.str());
    }
 
-   shared_ptr<AtpGeneratorBase> generator;
+   // OMG uses the ATP plugin:
+   ossimRefPtr<ossimTool> tool = ossimToolRegistry::instance()->createTool("ossimAtpTool") ;
 
-   // First obtain list of images from photoblock:
-   std::vector<shared_ptr<Image> >& imageList = m_photoBlock->getImageList();
-   int numImages = (int) imageList.size();
-   int numPairs = (numImages * (numImages-1))/2; // triangular number assumes all overlap
-   for (int i=0; i<(numImages-1); i++)
-   {
-      shared_ptr<Image> imageA = imageList[i];
-      for (int j=i+1; j<numImages; j++)
-      {
-         shared_ptr<Image> imageB = imageList[j];
+   // Create JSON to perform needed ATP:
 
-         // Instantiate the ATP generator for this pair:
-         if (m_algorithm == CROSSCORR)
-            generator.reset(new CorrelationAtpGenerator());
-         else if (m_algorithm == DESCRIPTOR)
-            generator.reset(new DescriptorAtpGenerator());
-         else if (m_algorithm == NASA)
-         {
-            xmsg << "NASA algorithm not yet supported. Cannot perform ATP.";
-            throw ossimException(xmsg.str());
-         }
+   // Use dense points to do intersections to generate point cloud
 
-         // Generate tie points using A for features:
-         generator->setRefImage(imageA);
-         generator->setCmpImage(imageB);
-         TiePointList tpList;
-         generator->generateTiePointList(tpList);
-         m_photoBlock->addTiePoints(tpList);
-
-         if (AtpConfig::instance().diagnosticLevel(2))
-            clog<<"Completed pairwise match for pair "<<i<<"-"<<j<<endl;
-
-         // Now reverse CMP and REF to find possible additional features on B:
-         bool doTwoWaySearch = AtpConfig::instance().getParameter("doTwoWaySearch").asBool();
-         if (doTwoWaySearch)
-         {
-            generator->setRefImage(imageB);
-            generator->setCmpImage(imageA);
-            tpList.clear();
-            generator->generateTiePointList(tpList);
-            m_photoBlock->addTiePoints(tpList);
-
-            if (AtpConfig::instance().diagnosticLevel(2))
-               clog<<"Completed pairwise match for pair "<<j<<"-"<<i<<endl;
-         }
-      }
-   }
-
-   // Save list to photoblock JSON:
-   Json::Value pbJson;
-   m_photoBlock->saveJSON(pbJson);
-   m_responseJSON["photoblock"] = pbJson;
-
-   if (AtpConfig::instance().diagnosticLevel(1))
-      clog<<"\n"<<MODULE<<"Total TPs found = "<<m_photoBlock->getTiePointList().size()<<endl;
+   // Convert point cloud to DEM
 }
 
-
-}
 
 

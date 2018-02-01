@@ -32,6 +32,7 @@
 #include <map>
 
 using namespace std;
+using namespace ossim;
 
 #define DEBUG_ATP
 
@@ -279,7 +280,7 @@ void AtpGeneratorBase::writeTiePointList(ostream& out, const AtpList& tpList)
    }
 }
 
-bool AtpGeneratorBase::generateTiePointList(AtpList& atpList)
+bool AtpGeneratorBase::generateTiePointList(TiePointList& atpList)
 {
    const char* MODULE = "AtpGeneratorBase::generateTiePointList()  ";
    initialize();
@@ -399,21 +400,32 @@ void AtpGeneratorBase::layoutSearchTileRects(ossimPolygon& intersectPoly)
    int aoiWidth = aoiRect.width();
    int aoiHeight = aoiRect.height();
 
-   // Determine optimal X-direction space between tiles (actually between corresponding UL corners)
+   // Determine optimal X and Y-direction space between tiles (actually between corresponding
+   // UL corners)
    int gridSize = (int) config.getParameter("searchGridSize").asUint();
-   for (int nx=gridSize; nx>1; nx--)
+   if (gridSize == 0)
    {
-      dx = (int) floor(aoiWidth/nx);
-      if (dx >= side_length)
-         break;
-   }
+      // Check for overlap requirement to account for sampling kernel width:
+      int marginSize = (int) config.getParameter("featureSearchTileMargin").asUint();
 
-   // Determine optimal Y-direction space between tiles:
-   for (int ny=gridSize; ny>1; ny--)
+      // No gridsize indicates contiguous tiles (full coverage, usually for DEM generation ATPs:
+      dx = side_length-marginSize;
+      dy = side_length-marginSize;
+   }
+   else
    {
-      dy = (int) floor(aoiHeight/ny);
-      if (dy >= side_length)
-         break;
+      for (int nx=gridSize; nx>1; nx--)
+      {
+         dx = (int) floor(aoiWidth/nx);
+         if (dx >= side_length)
+            break;
+      }
+      for (int ny=gridSize; ny>1; ny--)
+      {
+         dy = (int) floor(aoiHeight/ny);
+         if (dy >= side_length)
+            break;
+      }
    }
 
    // Create tile rects now that the intervals are known:
@@ -437,7 +449,7 @@ void AtpGeneratorBase::layoutSearchTileRects(ossimPolygon& intersectPoly)
    }
 
    // Don't bother with less than N boxes, just make the entire intersection a search patch:
-   if (m_searchTileRects.size() < 4)
+   if (gridSize && (m_searchTileRects.size() < 4))
    {
       m_searchTileRects.clear();
       m_searchTileRects.push_back(m_aoiView);
@@ -457,9 +469,14 @@ void AtpGeneratorBase::filterBadMatches(AtpList& tpList)
 {
    const char* MODULE = "AtpGeneratorBase::filterBadPeaks()  ";
 
-   // Can't filter without neighbors, so remove all just in case they are bad:
+   // Check for consistency check override:
    AtpConfig& config = AtpConfig::instance();
-   if (tpList.size() < config.getParameter("minNumConsistentNeighbors").asUint())
+   unsigned int minNumConsistent = config.getParameter("minNumConsistentNeighbors").asUint();
+   if (minNumConsistent == 0)
+      return;
+
+   // Can't filter without neighbors, so remove all just in case they are bad:
+   if (tpList.size() < minNumConsistent)
    {
       tpList.clear();
       return;

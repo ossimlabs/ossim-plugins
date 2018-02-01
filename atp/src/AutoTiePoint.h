@@ -13,7 +13,7 @@
 #include <ossim/imaging/ossimImageSource.h>
 #include <ossim/imaging/ossimImageGeometry.h>
 #include <ossim/base/ossimIrect.h>
-#include "TiePoint.h"
+#include <ossim/reg/TiePoint.h>
 #include "MatchPoint.h"
 
 
@@ -27,7 +27,7 @@ class AtpTileSource;
  * be computed without referencing image ids, etc. TODO: Eventually need to generalize to permit
  * N-way auto-tiepoints, at which point it should merge with TiePoint base class.
  */
-class AutoTiePoint : public TiePoint
+class AutoTiePoint : public ossim::TiePoint
 {
 public:
    AutoTiePoint ();

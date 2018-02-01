@@ -14,28 +14,29 @@
 #include <vector>
 #include <map>
 
-namespace ATP
-{
 /**
  * Singleton class maintaining parameters affecting the automatic tie point generation.
  * The state is imported and exported via JSON. There are default configuration files that must
  * be part of the install, that are accessed by this class. Custom settings can also be st
  */
-class OSSIM_PLUGINS_DLL AtpConfig : public ossim::JsonConfig
+class OSSIM_PLUGINS_DLL ossimDemToolConfig : public ossim::JsonConfig
 {
 public:
    //! Singleton implementation.
-   static AtpConfig& instance();
+   static ossimDemToolConfig& instance();
 
    //! Destructor
-   virtual ~AtpConfig();
+   virtual ~ossimDemToolConfig();
 
    bool readConfig(const std::string& configName="");
 
+   //! Convenience method returns TRUE if the currently set diagnostic level is <= level
+   bool diagnosticLevel(unsigned int level) const;
+
 private:
-   AtpConfig();
-   AtpConfig(const AtpConfig& /*hide_this*/) {}
+   ossimDemToolConfig();
+   ossimDemToolConfig(const ossimDemToolConfig& /*hide_this*/) {}
 
 };
 
-}
+

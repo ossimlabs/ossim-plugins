@@ -5,29 +5,27 @@
 //
 //**************************************************************************************************
 
-#ifndef ossimAtpTool_HEADER
-#define ossimAtpTool_HEADER 1
+#ifndef ossimDemTool_HEADER
+#define ossimDemTool_HEADER 1
 
 #include <ossim/plugin/ossimPluginConstants.h>
 #include <ossim/imaging/ossimImageHandler.h>
 #include <ossim/base/ossimRefPtr.h>
-#include <ossim/reg/PhotoBlock.h>
 #include <ossim/util/ossimTool.h>
+#include <ossim/reg/PhotoBlock.h>
 #include <memory>
 
-namespace ATP
-{
-class OSSIM_DLL ossimAtpTool : public ossimTool
+class OSSIM_DLL ossimDemTool : public ossimTool
 {
 public:
-   enum Algorithm { ALGO_UNASSIGNED=0, CROSSCORR, DESCRIPTOR, NASA };
+   enum Algorithm { ALGO_UNASSIGNED=0, ASP, OMG };
    enum Method { METHOD_UNASSIGNED=0, GET_ALGO_LIST, GET_PARAMS, GENERATE };
 
    static const char* DESCRIPTION;
 
-   ossimAtpTool();
+   ossimDemTool();
 
-   virtual ~ossimAtpTool();
+   virtual ~ossimDemTool();
 
    virtual void setUsage(ossimArgumentParser& ap);
 
@@ -35,7 +33,7 @@ public:
 
    virtual bool execute();
 
-   virtual ossimString getClassName() const { return "ossimAtpTool"; }
+   virtual ossimString getClassName() const { return "ossimDemTool"; }
 
    virtual void getKwlTemplate(ossimKeywordlist& kwl);
 
@@ -46,21 +44,17 @@ public:
 private:
    void getAlgorithms();
    void getParameters();
-   void generate();
 
-   /**
-    * When the ATP generator works with image pairs (crosscorr and descriptor), This method is
-    * used to loop over all image pairs and assemble the final tiepoint list for all */
-   void doPairwiseMatching();
+   void doASP();
+   void doOMG();
 
    std::ostream* m_outputStream;
    bool m_verbose;
-   bool m_featureBased;
    Algorithm m_algorithm;
    Method m_method;
    std::string m_configuration;
    Json::Value m_responseJSON;
    std::shared_ptr<ossim::PhotoBlock> m_photoBlock;
 };
-}
-#endif /* #ifndef ossimAtpTool_HEADER */
+
+#endif /* #ifndef ossimDemTool_HEADER */
