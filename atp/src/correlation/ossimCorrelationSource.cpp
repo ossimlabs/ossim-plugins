@@ -12,7 +12,6 @@
 #include <ossim/base/ossimConstants.h>
 #include <ossim/imaging/ossimImageDataFactory.h>
 #include <ossim/projection/ossimSensorModel.h>
-#include <opencv2/highgui/highgui_c.h>
 
 namespace ATP
 {
