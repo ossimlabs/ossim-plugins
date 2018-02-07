@@ -7,12 +7,11 @@
 
 #include "ossimDemToolConfig.h"
 
-#include "AtpOpenCV.h"
 #include <ossim/base/ossimCommon.h>
 #include <ossim/base/ossimException.h>
 #include <ossim/base/ossimPreferences.h>
-#include <opencv2/features2d/features2d.hpp>
 #include <memory>
+#include <ossim/base/ossimNotify.h>
 
 using namespace std;
 using namespace ossim;
@@ -93,4 +92,3 @@ bool ossimDemToolConfig::readConfig(const string& cn)
    return true;
 }
 
-}

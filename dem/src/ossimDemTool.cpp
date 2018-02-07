@@ -8,7 +8,6 @@
 #include "ossimDemTool.h"
 #include "ossimDemToolConfig.h"
 #include <math.h>
-#include "descriptor/DescriptorAtpGenerator.h"
 #include <ossim/base/ossimException.h>
 #include <ossim/base/ossimGpt.h>
 #include <ossim/base/ossimEcefPoint.h>
@@ -19,6 +18,7 @@
 #include <ossim/base/ossimNotify.h>
 #include <ossim/base/ossimException.h>
 #include <ossim/util/ossimToolRegistry.h>
+#include <ossim/projection/ossimRpcSolver.h>
 #include <cstdlib>
 #include <iostream>
 #include <memory>
@@ -144,19 +144,13 @@ void ossimDemTool::loadJSON(const Json::Value& queryRoot)
    else if (method == "getParameters")
       m_method = GET_PARAMS;
 
+   m_outputDemFile = queryRoot["filename"].asString();
+
    // Fetch the desired algorithm or configuration:
    JsonConfig& config = ossimDemToolConfig::instance();
    string algorithm = queryRoot["algorithm"].asString();
    if (algorithm.empty())
       algorithm = "asp"; // default for now
-
-   // Otherwise read the algorithm's default config params from the system:
-//   if (!config.readConfig(algorithm))
-//   {
-//      xmsg << "Fatal error trying to read default DEM genererator configuration for selected algorithm <"
-//            <<algorithm<<">";
-//      throw ossimException(xmsg.str());
-//   }
 
    // Assign enum data member used throughout the service:
    if (algorithm == "asp")
@@ -200,7 +194,8 @@ bool ossimDemTool::execute()
       case GET_PARAMS:
          getParameters();
          break;
-      case GENERATE:
+         case GENERATE:
+         // Establish server-side output filename:
          if (m_algorithm == ASP)
             doASP();
          if (m_algorithm == OMG)
@@ -269,17 +264,15 @@ void ossimDemTool::doASP()
    ostringstream xmsg;
    xmsg<<MODULE;
 
-
-   xmsg << "ASP NOT YET IMPLEMENTED.";
-   throw ossimException(xmsg.str());
-
-
-
    if (!m_photoBlock || (m_photoBlock->getImageList().size() < 2))
    {
       xmsg << "No photoblock has been declared or it has less than two images. Cannot perform ATP.";
       throw ossimException(xmsg.str());
    }
+
+   // Start the ASP command ine:
+   ostringstream cmd;
+   cmd<<"stereo";
 
    // First obtain list of images from photoblock:
    std::vector<shared_ptr<Image> >& imageList = m_photoBlock->getImageList();
@@ -287,22 +280,27 @@ void ossimDemTool::doASP()
    int numPairs = (numImages * (numImages-1))/2; // triangular number assumes all overlap
    for (int i=0; i<(numImages-1); i++)
    {
-      shared_ptr<Image> imageA = imageList[i];
-
       // Establish existence of RPB, and create it if not available:
-      ossimFilename rpcFile (imageA->getFilename());
+      shared_ptr<Image> imageA = imageList[i];
+      ossimFilename imageFile(imageA->getFilename());
+      ossimFilename rpcFile(imageFile);
       rpcFile.setExtension("RPB");
-      if (!rpcFile.isReadable())
-      {
-
+      if (!rpcFile.isReadable()) {
+         ossimRpcSolver rpcSolver;
+         rpcSolver.solve(imageFile);
       }
-      for (int j=i+1; j<numImages; j++)
-      {
-         shared_ptr<Image> imageB = imageList[j];
-
-      }
+      cmd<<" "<<imageFile;
    }
 
+   // Establish output DEM name:
+   if (m_outputDemFile.empty())
+   {
+      m_outputDemFile = "asp-dem-";
+      m_outputDemFile.appendTimestamp();
+      m_outputDemFile.setExtension("tif");
+   }
+
+   cmd<<" "<<m_outputDemFile<<ends;
 }
 
 void ossimDemTool::doOMG()

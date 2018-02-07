@@ -25,6 +25,8 @@ public:
 
    ossimDemTool();
 
+   ossimDemTool(Algorithm m_algorithm);
+
    virtual ~ossimDemTool();
 
    virtual void setUsage(ossimArgumentParser& ap);
@@ -52,9 +54,9 @@ private:
    bool m_verbose;
    Algorithm m_algorithm;
    Method m_method;
-   std::string m_configuration;
    Json::Value m_responseJSON;
    std::shared_ptr<ossim::PhotoBlock> m_photoBlock;
+   ossimFilename m_outputDemFile;
 };
 
 #endif /* #ifndef ossimDemTool_HEADER */
