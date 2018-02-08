@@ -1,12 +1,6 @@
 {
    "parameters": [
       {
-         "name": "algorithm",
-         "descr": "Algorithm used for generating tiepoints. This can also be specified one level up in the JSON.",
-         "type": "string",
-         "value": "crosscorr"
-      },
-      {
          "label": "Use Feature Mode",
          "name": "useFeatureMode",
          "descr": "Directs the algorithm to search for features first then compute correlations around those features only.",
