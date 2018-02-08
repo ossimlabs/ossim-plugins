@@ -10,23 +10,18 @@
       {
          "label": "OpenCV Descriptor",
          "name": "descriptor",
-         "descr": "Type of descriptor being used. DYLAN: Need to replace uints with human readable.",
+         "descr": "Type of descriptor being used.",
          "type": "string",
-         "value": "AKAZE"
+         "value": "AKAZE",
+         "allowedValues": ["AKAZE", "KAZE", "ORB", "SURF", "SIFT"]
       },
       {
          "label": "OpenCV Keypoint Descriptor Matcher",
          "name": "matcher",
-         "descr": "Type of matcher being used. DYLAN: Need to replace uints with human readable.",
+         "descr": "Type of matcher being used. ",
          "type": "string",
-         "value": "FLANN"
-      },
-      {
-         "label": "Error Function",
-         "name": "errorFunction",
-         "descr": "Error function used with brute force matching.",
-         "type": "string",
-         "value": "NORM_L2"
+         "value": "FLANN",
+         "allowedValues": ["FLANN"]
       },
       {
          "label": "K",
