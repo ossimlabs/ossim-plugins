@@ -4,6 +4,13 @@
    "parameters": 
    [
       {
+         "name": "algorithm",
+         "descr": "Algorithm used for generating tiepoints. This can also be specified one level up in the JSON.",
+         "type": "string",
+         "value": "crosscorr",
+         "allowedValues": ["crosscorr", "descriptor"]
+      },
+      {
          "label": "Max. Residual Diff. Ratio",
          "name": "maxResMagDiffRatio",
          "descr": "Used in match-point neighbor consistency check. Represents the maximum ratio (0-1) difference tolerated in residual magnitudes before flagging false match.",
