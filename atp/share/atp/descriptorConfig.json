@@ -1,13 +1,6 @@
 {
    "parameters": [
       {
-         "label": "Algorithm",
-         "name": "algorithm",
-         "descr": "Algorithm used for generating tiepoints. This can also be specified one level up in the JSON.",
-         "type": "string",
-         "value": "descriptor"
-      },
-      {
          "label": "OpenCV Descriptor",
          "name": "descriptor",
          "descr": "Type of descriptor being used.",
