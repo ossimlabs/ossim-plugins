@@ -1,0 +1,6 @@
+{ 
+  "service": "dem",
+  "method": "generateDem",
+  "algorithm": "asp"
+}
+

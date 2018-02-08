@@ -26,7 +26,8 @@ ossimDemToolConfig::ossimDemToolConfig()
 {
 
    // Register the ISA-common parameters in the params map:
-   readConfig();
+   //TODO:
+   // readConfig();
 }
    
 ossimDemToolConfig::~ossimDemToolConfig()
@@ -85,7 +86,7 @@ bool ossimDemToolConfig::readConfig(const string& cn)
    }
    catch (ossimException& e)
    {
-      ossimNotify(ossimNotifyLevel_WARN)<<"ossimDemConfig::readConfig():  Could not open/parse "
+      ossimNotify(ossimNotifyLevel_WARN)<<"ossimDemToolConfig::readConfig():  Could not open/parse "
             "config file at <"<< configFilename << ">. Error: "<<e.what()<<endl;
       return false;
    }

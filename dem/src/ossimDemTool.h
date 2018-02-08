@@ -27,21 +27,21 @@ public:
 
    ossimDemTool(Algorithm m_algorithm);
 
-   virtual ~ossimDemTool();
+   ~ossimDemTool() override;
 
-   virtual void setUsage(ossimArgumentParser& ap);
+   void setUsage(ossimArgumentParser& ap) override;
 
-   virtual bool initialize(ossimArgumentParser& ap);
+   bool initialize(ossimArgumentParser& ap) override;
 
-   virtual bool execute();
+   bool execute() override;
 
-   virtual ossimString getClassName() const { return "ossimDemTool"; }
+   ossimString getClassName() const override { return "ossimDemTool"; }
 
-   virtual void getKwlTemplate(ossimKeywordlist& kwl);
+   void getKwlTemplate(ossimKeywordlist& kwl) override;
 
-   virtual void loadJSON(const Json::Value& json);
+   void loadJSON(const Json::Value& json) override;
 
-   virtual void saveJSON(Json::Value& json) const { json = m_responseJSON; }
+   void saveJSON(Json::Value& json) const override { json = m_responseJSON; }
 
 private:
    void getAlgorithms();

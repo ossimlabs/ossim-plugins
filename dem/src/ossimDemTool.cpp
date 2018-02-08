@@ -273,7 +273,6 @@ void ossimDemTool::doASP()
    // Start the ASP command ine:
    ostringstream cmd;
    cmd<<"stereo";
-
    // First obtain list of images from photoblock:
    std::vector<shared_ptr<Image> >& imageList = m_photoBlock->getImageList();
    int numImages = (int) imageList.size();
@@ -283,13 +282,26 @@ void ossimDemTool::doASP()
       // Establish existence of RPB, and create it if not available:
       shared_ptr<Image> imageA = imageList[i];
       ossimFilename imageFile(imageA->getFilename());
-      ossimFilename rpcFile(imageFile);
-      rpcFile.setExtension("RPB");
-      if (!rpcFile.isReadable()) {
+      ossimFilename rpcFilename(imageFile);
+      rpcFilename.setExtension("RPB");
+      if (!rpcFilename.isReadable())
+      {
          ossimRpcSolver rpcSolver;
-         rpcSolver.solve(imageFile);
+         if (!rpcSolver.solve(imageFile))
+         {
+            xmsg << "Error encountered in solving for RPC coefficients..";
+            throw ossimException(xmsg.str());
+         }
+
+         ossimRefPtr<ossimRpcModel> rpcModel = rpcSolver.getRpcModel();
+         ofstream rpbFile (rpcFilename.string());
+         if (rpbFile.fail() || !rpcModel->toRPB(rpbFile))
+         {
+            xmsg << "Error encountered writing RPC to file <"<<rpcFilename<<">.";
+            throw ossimException(xmsg.str());
+         }
       }
-      cmd<<" "<<imageFile;
+      cmd<<"Generated RPC for "<<imageFile;
    }
 
    // Establish output DEM name:
