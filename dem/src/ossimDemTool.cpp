@@ -7,22 +7,14 @@
 
 #include "ossimDemTool.h"
 #include "ossimDemToolConfig.h"
-#include <math.h>
-#include <ossim/base/ossimException.h>
-#include <ossim/base/ossimGpt.h>
-#include <ossim/base/ossimEcefPoint.h>
-#include <ossim/base/ossimArgumentParser.h>
 #include <ossim/base/ossimApplicationUsage.h>
-#include <ossim/base/ossimKeywordNames.h>
-#include <ossim/base/ossimException.h>
-#include <ossim/base/ossimNotify.h>
-#include <ossim/base/ossimException.h>
 #include <ossim/util/ossimToolRegistry.h>
 #include <ossim/projection/ossimRpcSolver.h>
-#include <cstdlib>
-#include <iostream>
-#include <memory>
-#include <sstream>
+#include <ossim/base/ossimPreferences.h>
+#include <ossim/point_cloud/ossimGenericPointCloudHandler.h>
+#include <ossim/point_cloud/ossimPointCloudImageHandler.h>
+#include <ossim/imaging/ossimImageFileWriter.h>
+#include <ossim/imaging/ossimImageWriterFactoryRegistry.h>
 
 using namespace std;
 using namespace ossim;
@@ -39,8 +31,31 @@ ossimDemTool::ossimDemTool()
 : m_outputStream (0),
   m_verbose (false),
   m_algorithm (ALGO_UNASSIGNED),
-  m_method (METHOD_UNASSIGNED)
+  m_method (METHOD_UNASSIGNED),
+  m_postSpacing (0),
+  m_postSpacingUnits (UNITS_UNASSIGNED)
 {
+   // Read the default DEM extraction parameters:
+   Json::Value configJson;
+   ossimFilename configFilename ("omgConfig.json");
+   ossimFilename shareDir = ossimPreferences::instance()->
+           preferencesKWL().findKey( std::string( "ossim_share_directory" ) );
+   shareDir += "/atp"; // TODO: Consolidate tool configs
+   if (!shareDir.isDir())
+      throw ossimException("Nonexistent share drive provided for config files.");
+
+   configFilename.setPath(shareDir);
+   ifstream configJsonStream (configFilename.string());
+   if (configJsonStream.fail())
+   {
+      ossimNotify(ossimNotifyLevel_WARN) << __FILE__ << " Bad file open or parse of config file <"
+                                         << configFilename << ">. Ignoring." << endl;
+   }
+   else
+   {
+      configJsonStream >> configJson;
+      loadJSON(configJson);
+   }
 }
 
 ossimDemTool::~ossimDemTool()
@@ -117,6 +132,7 @@ bool ossimDemTool::initialize(ossimArgumentParser& ap)
 
    if ( ap.read("-o", sp1))
    {
+
       ofstream* s = new ofstream (ts1);
       if (s->fail())
       {
@@ -160,13 +176,18 @@ void ossimDemTool::loadJSON(const Json::Value& queryRoot)
    else
       m_algorithm = ALGO_UNASSIGNED;
 
-   // If parameters were provided in the JSON payload, have the config override the defaults:
-   const Json::Value& parameters = queryRoot["parameters"];
-   if (!parameters.isNull())
-      config.loadJSON(parameters);
+   if (queryRoot.isMember("postSpacing"))
+      m_postSpacing = queryRoot["postSpacing"].asDouble();
 
-   if (config.diagnosticLevel(2))
-      clog<<"\nATP configuration after loading:\n"<<config<<endl;
+
+   // If parameters were provided in the JSON payload, have the config override the defaults:
+   m_parameters = queryRoot["parameters"];
+   m_atpParameters = queryRoot["atpParameters"];
+   //if (!m_parameters.isNull())
+   //   config.loadJSON(m_parameters);
+
+   //if (config.diagnosticLevel(2))
+   //   clog<<"\nDEM configuration after loading:\n"<<config<<endl;
 
    if (m_method == GENERATE)
    {
@@ -272,22 +293,25 @@ void ossimDemTool::doASP()
 
    // Start the ASP command ine:
    ostringstream cmd;
-   cmd<<"stereo";
+   string cmdPath (getenv("NGTASP_BIN_DIR"));
+   cmd<<cmdPath<<"/stereo";
+
    // First obtain list of images from photoblock:
    std::vector<shared_ptr<Image> >& imageList = m_photoBlock->getImageList();
+   std::vector<ossimFilename> rpcFilenameList;
    int numImages = (int) imageList.size();
    int numPairs = (numImages * (numImages-1))/2; // triangular number assumes all overlap
-   for (int i=0; i<(numImages-1); i++)
+   for (int i=0; i<numImages; i++)
    {
       // Establish existence of RPB, and create it if not available:
-      shared_ptr<Image> imageA = imageList[i];
-      ossimFilename imageFile(imageA->getFilename());
-      ossimFilename rpcFilename(imageFile);
+      shared_ptr<Image> image = imageList[i];
+      ossimFilename imageFilename (image->getFilename());
+      ossimFilename rpcFilename(imageFilename);
       rpcFilename.setExtension("RPB");
       if (!rpcFilename.isReadable())
       {
          ossimRpcSolver rpcSolver;
-         if (!rpcSolver.solve(imageFile))
+         if (!rpcSolver.solve(imageFilename))
          {
             xmsg << "Error encountered in solving for RPC coefficients..";
             throw ossimException(xmsg.str());
@@ -301,18 +325,29 @@ void ossimDemTool::doASP()
             throw ossimException(xmsg.str());
          }
       }
-      cmd<<"Generated RPC for "<<imageFile;
+      cout<<"Generated RPC for "<<imageFilename<<endl;
+      rpcFilenameList.emplace_back(rpcFilename);
+      cmd << " " <<imageFilename;
    }
 
-   // Establish output DEM name:
+   // Loop to add model filenames to the command line:
+   for (const auto &rpcFilename : rpcFilenameList)
+      cmd << " " <<rpcFilename;
+
+   // Establish output DEM directory name:
    if (m_outputDemFile.empty())
    {
-      m_outputDemFile = "asp-dem-";
+      m_outputDemFile = "asp-result";
       m_outputDemFile.appendTimestamp();
-      m_outputDemFile.setExtension("tif");
    }
 
    cmd<<" "<<m_outputDemFile<<ends;
+   cout << "\nSpawning command: "<<cmd.str()<<endl;
+   if (system(cmd.str().c_str()))
+   {
+      xmsg << "Error encountered running DEM generation command.";
+      throw ossimException(xmsg.str());
+   }
 }
 
 void ossimDemTool::doOMG()
@@ -328,13 +363,85 @@ void ossimDemTool::doOMG()
    }
 
    // OMG uses the ATP plugin:
-   ossimRefPtr<ossimTool> tool = ossimToolRegistry::instance()->createTool("ossimAtpTool") ;
+   ossimRefPtr<ossimTool> atpTool = ossimToolRegistry::instance()->createTool("ossimAtpTool") ;
+   if (!atpTool)
+   {
+      xmsg << "OMG algorithm requires the ATP plugin but plugin not found in registry.";
+      throw ossimException(xmsg.str());
+   }
 
-   // Create JSON to perform needed ATP:
+   // Pass along any user parameter modifications to the ATP tool:
+   Json::Value atpJson;
+   atpJson["algorithm"] = "crosscorr";
+   atpJson["method"] = "generate";
+   m_photoBlock->saveJSON(atpJson["photoblock"]);
+   atpJson["parameters"] = m_atpParameters;
+   atpTool->loadJSON(atpJson);
+
+   // Generate dense tiepoint field:
+   atpTool->execute();
+   Json::Value omgJson;
+   atpTool->saveJSON(omgJson);
 
    // Use dense points to do intersections to generate point cloud
+   m_photoBlock->loadJSON(omgJson);
+   int num_tiepoints = m_photoBlock->getTiePointList().size();
+
+   // Get instance of MSP tool for performing n-way intersection:
+   ossimRefPtr<ossimTool> mspTool = ossimToolRegistry::instance()->createTool("ossimMspTool") ;
+   if (!mspTool)
+   {
+      xmsg << "OMG algorithm requires the MSP plugin but plugin not found in registry.";
+      throw ossimException(xmsg.str());
+   }
+
+   // Prepare the JSON used to communicate with the mensuration tool and kick off bulk mensuration:
+   omgJson["service"] = "mensuration";
+   omgJson["method"] = "pointExtraction";
+   omgJson["outputCoordinateSystem"] = "ecf";
+   mspTool->loadJSON(omgJson);
+   mspTool->execute();
+   Json::Value mspJson;
+   mspTool->saveJSON(mspJson);
+
+   // Save resulting geo point to point cloud:
+   const Json::Value& observations = mspJson["mensurationReport"];
+   vector<ossimEcefPoint> pointCloud;
+   for (const auto &observation : observations)
+   {
+      ossimEcefPoint ecfPt(observation["x"].asDouble(),
+                           observation["y"].asDouble(),
+                           observation["z"].asDouble());
+      pointCloud.emplace_back(ecfPt);
+   }
 
    // Convert point cloud to DEM
+   ossimRefPtr<ossimGenericPointCloudHandler> pch = new ossimGenericPointCloudHandler(pointCloud);
+   ossimRefPtr<ossimPointCloudImageHandler> pcih = new ossimPointCloudImageHandler;
+   pcih->setPointCloudHandler(pch.get());
+   ossimImageSource* lastSource = pcih.get();
+
+   // TODO: Need to set up output projection to match desired GSD and units
+
+   // TODO: Need smart interpolation resampling to fill in the nulls
+   // lastSource = resampler...
+
+   // Set up the writer and output the DEM:
+   ossimRefPtr<ossimImageFileWriter> writer =
+           ossimImageWriterFactoryRegistry::instance()->createWriter(m_outputDemFile);
+   if (!writer)
+   {
+      xmsg << "Error encountered creating writer object given filename <"<<m_outputDemFile<<">.";
+      throw ossimException(xmsg.str());
+   }
+   writer->connectMyInputTo(0, lastSource);
+   if (!writer->execute())
+   {
+      xmsg << "Error encountered writing DEM file.";
+      throw ossimException(xmsg.str());
+   }
+
+   // Need to populate response JSON with product filepath and statistics
 }
 
 

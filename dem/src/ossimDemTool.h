@@ -20,12 +20,11 @@ class OSSIM_DLL ossimDemTool : public ossimTool
 public:
    enum Algorithm { ALGO_UNASSIGNED=0, ASP, OMG };
    enum Method { METHOD_UNASSIGNED=0, GET_ALGO_LIST, GET_PARAMS, GENERATE };
+   enum Units { UNITS_UNASSIGNED=0, METERS, DEGREES };
 
    static const char* DESCRIPTION;
 
    ossimDemTool();
-
-   ossimDemTool(Algorithm m_algorithm);
 
    ~ossimDemTool() override;
 
@@ -57,6 +56,10 @@ private:
    Json::Value m_responseJSON;
    std::shared_ptr<ossim::PhotoBlock> m_photoBlock;
    ossimFilename m_outputDemFile;
+   double m_postSpacing;
+   Units m_postSpacingUnits;
+   Json::Value m_parameters;
+   Json::Value m_atpParameters;
 };
 
 #endif /* #ifndef ossimDemTool_HEADER */
