@@ -1,6 +1,34 @@
 {
    "parameters": [
       {
+         "label": "Number of Tie-points per Tile",
+         "name": "numTiePointsPerTile",
+         "descr": "Caps the number of tie-points, after filtering, to generate per tile.",
+         "type": "uint",
+         "value": 1
+      },
+      {
+         "label": "Min. Number of Consistent Neighbors",
+         "name": "minNumConsistentNeighbors",
+         "descr": "Used in match-point neighbor consistency check. Represents the minimum number of consistent neighbors needed to accept a match.",
+         "type": "uint",
+         "value": 3
+      },
+      {
+         "label": "Feature Search Tile Size",
+         "name": "featureSearchTileSize",
+         "descr": "Side size o square tile in pixels for searching features.",
+         "type": "uint",
+         "value": 128
+      },
+      {
+         "label": "Search Grid Size",
+         "name": "searchGridSize",
+         "descr": "The number of search tiles to layout along widest dimension of overlap. Set to 0 for contiguous tiles.",
+         "type": "uint",
+         "value": 15
+      },
+      {
          "label": "OpenCV Descriptor",
          "name": "descriptor",
          "descr": "Type of descriptor being used.",

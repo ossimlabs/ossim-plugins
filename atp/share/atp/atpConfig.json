@@ -132,6 +132,18 @@
          "descr": "For engineering use. Factor used to exagerate the magnitude of the residual vectors in the annotated image.",
          "type": "float",
          "value": 1.0
+      },
+      {
+         "name": "filterChain",
+         "descr": "Experimental. Specifies the image processing chain to apply after the image handler.",
+         "type": "string",
+         "value": "None"
+      },
+      {
+         "name": "viewGSD",
+         "descr": "Experimental. Specifies the view-space resolution in meters/pixel.",
+         "type": "float",
+         "value": 0.0
       }
    ]
 }

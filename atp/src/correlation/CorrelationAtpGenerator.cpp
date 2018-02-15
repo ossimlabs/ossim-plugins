@@ -69,8 +69,8 @@ CorrelationAtpGenerator::constructChain(shared_ptr<Image> image,
    renderer->setProperty(p);
 
    // Add cache after resampler:
-   ossimCacheTileSource* cache = new ossimCacheTileSource();
-   chain->add(cache);
+   ossimRefPtr<ossimCacheTileSource> cache = new ossimCacheTileSource();
+   chain->add(cache.get());
 
    if (AtpConfig::instance().diagnosticLevel(3))
    {

@@ -6,9 +6,7 @@
 //**************************************************************************************************
 
 #include <ossim/util/ossimToolRegistry.h>
-
 #include "ossimDemToolFactory.h"
-#include "ossimDemTool.h"
 
 using namespace std;
 
@@ -35,7 +33,7 @@ ossimTool* ossimDemToolFactory::createTool(const std::string& argName) const
    ossimString utilName (argName);
    utilName.downcase();
 
-   if ((utilName == "registration") || (argName == "ossimRegUtil"))
+   if ((utilName == "dem") || (argName == "ossimDemTool"))
       return new ossimDemTool;
 
    return 0;
@@ -43,7 +41,7 @@ ossimTool* ossimDemToolFactory::createTool(const std::string& argName) const
 
 void ossimDemToolFactory::getCapabilities(std::map<std::string, std::string>& capabilities) const
 {
-   capabilities.insert(pair<string, string>("registration", ossimDemTool::DESCRIPTION));
+   capabilities.insert(pair<string, string>("dem", ossimDemTool::DESCRIPTION));
 }
 
 std::map<std::string, std::string> ossimDemToolFactory::getCapabilities() const
@@ -55,5 +53,5 @@ std::map<std::string, std::string> ossimDemToolFactory::getCapabilities() const
 
 void ossimDemToolFactory::getTypeNameList(vector<ossimString>& typeList) const
 {
-   typeList.push_back("ossimRegUtil");
+   typeList.push_back("ossimDemTool");
 }

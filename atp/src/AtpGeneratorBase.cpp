@@ -194,15 +194,28 @@ AtpGeneratorBase::constructChain(shared_ptr<Image> image,
       remapper->setOutputScalarType(OSSIM_UINT8);
    }
 
+   // Finally, add a cache to the input chain:
+   ossimRefPtr<ossimCacheTileSource> cache = new ossimCacheTileSource();
+   chain->add(cache.get());
+
+   // Check for specified GSD in config parameters (experimental):
+   double viewGsd = config.getParameter("viewGSD").asFloat();
+
    // Set up a common view geometry, even if derived class works exclusively in image space.
    ossimRefPtr<ossimImageGeometry> image_geom = handler->getImageGeometry();
    if (!m_viewGeom)
    {
-      ossimDpt gsd(image_geom->getMetersPerPixel());
-      if (gsd.x > gsd.y)
-         gsd.y = gsd.x;
+      ossimDpt gsd;
+      if (!ossim::isnan(viewGsd) && (viewGsd != 0.0))
+         gsd = ossimDpt(viewGsd, viewGsd);
       else
-         gsd.x = gsd.y;
+      {
+         gsd = image_geom->getMetersPerPixel();
+         if (gsd.x > gsd.y)
+            gsd.y = gsd.x;
+         else
+            gsd.x = gsd.y;
+      }
       ossimGpt proj_origin;
       image_geom->getTiePoint(proj_origin, false);
       ossimUtmProjection* proj = new ossimUtmProjection();
@@ -261,7 +274,6 @@ AtpGeneratorBase::constructChain(shared_ptr<Image> image,
       validVertices[i] = vpt;
    }
 
-   // Create a renderer even if it won't be used, just
    return chain;
 }
 
@@ -345,7 +357,8 @@ bool AtpGeneratorBase::generateTiePointList(TiePointList& atpList)
    if (config.diagnosticLevel(3))
    {
       m_annotatedRefImage->write();
-      m_annotatedCmpImage->write();
+      if (config.diagnosticLevel(5))
+         m_annotatedCmpImage->write();
    }
    return true;
 }

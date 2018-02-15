@@ -7,18 +7,16 @@
 
 #include "ossimDescriptorSource.h"
 #include "../AtpOpenCV.h"
-#include <ossim/imaging/ossimImageData.h>
-#include <ossim/base/ossimKeywordlist.h>
-#include <ossim/base/ossimConstants.h>
 #include <ossim/imaging/ossimImageDataFactory.h>
-#include <ossim/projection/ossimSensorModel.h>
+#include <ossim/base/ossimSortedVector.h>
 
-#include <opencv2/opencv.hpp>
-#include <opencv2/features2d/features2d.hpp>
 #include <opencv2/xfeatures2d.hpp>
 
 namespace ATP
 {
+static const int DEFAULT_CMP_PATCH_SIZING_FACTOR = 2;
+static const double DEFAULT_NOMINAL_POSITION_ERROR = 50; // meters
+
 ossimDescriptorSource::ossimDescriptorSource()
 {
 }
@@ -43,6 +41,37 @@ void ossimDescriptorSource::initialize()
    // Base class initializes ref and cmp chain datat members and associated IVTs. Subsequent call
    // to base class setViewGeom() will initialize the associated IVTs:
    AtpTileSource::initialize();
+
+   m_nominalCmpPatchSize = 0.0;
+   unsigned int refPatchSize = AtpConfig::instance().getParameter("corrWindowSize").asUint(); // min distance between points
+   m_nominalCmpPatchSize = DEFAULT_CMP_PATCH_SIZING_FACTOR*refPatchSize;
+
+   if (m_refIVT && m_cmpIVT)
+   {
+      ossimDpt gsd = m_refIVT->getOutputMetersPerPixel();
+      double nominalGsd = (gsd.x + gsd.y)/2.0;
+
+      // Fetch the CE90 of both images to determine cmp image search patch size:
+      ossimSensorModel* ref_sm = dynamic_cast<ossimSensorModel*>(
+              m_refIVT->getImageGeometry()->getProjection());
+      ossimSensorModel* cmp_sm = dynamic_cast<ossimSensorModel*>(
+              m_cmpIVT->getImageGeometry()->getProjection());
+      if (ref_sm && cmp_sm)
+      {
+         double ref_ce = ref_sm->getNominalPosError();
+         double cmp_ce = cmp_sm->getNominalPosError();
+         double total_error = ref_ce + cmp_ce; // meters -- being conservative here and not doing rss
+         ossimDpt gsd = m_refIVT->getOutputMetersPerPixel();
+         double nominalGsd = (gsd.x + gsd.y)/2.0;
+         double searchSizePixels = 2.0*total_error/nominalGsd;
+         m_nominalCmpPatchSize = refPatchSize + searchSizePixels;
+      }
+      else
+      {
+         double searchSizePixels = 2.0*DEFAULT_NOMINAL_POSITION_ERROR/nominalGsd;
+         m_nominalCmpPatchSize = refPatchSize + searchSizePixels;
+      }
+   }
 }
 
 ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& tileRect,
@@ -52,7 +81,7 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
    AtpConfig& config = AtpConfig::instance();
 
    if (config.diagnosticLevel(2))
-      clog<<"\n\n"<< MODULE << " -- tileRect: "<<tileRect<<endl;
+      ossimNotify(ossimNotifyLevel_INFO)<<"\n\n"<< MODULE << " -- tileRect: "<<tileRect<<endl;
    m_tiePoints.clear();
 
    if(!m_tile.get())
@@ -60,7 +89,7 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
       // try to initialize
       initialize();
       if(!m_tile.get()){
-         clog << MODULE << " ERROR: could not initialize tile\n";
+         ossimNotify(ossimNotifyLevel_INFO) << MODULE << " ERROR: could not initialize tile\n";
          return m_tile;
       }
    }
@@ -68,7 +97,7 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
    // Make sure there are at least two images as input.
    if(getNumberOfInputs() < 2)
    {
-      clog << MODULE << " ERROR: wrong number of inputs " << getNumberOfInputs() << " when expecting at least 2 \n";
+      ossimNotify(ossimNotifyLevel_INFO) << MODULE << " ERROR: wrong number of inputs " << getNumberOfInputs() << " when expecting at least 2 \n";
       return 0;
    }
 
@@ -77,12 +106,13 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
    // into image space for both ref and cmp images:
    ossimIrect refRect (m_refIVT->getViewToImageBounds(tileRect));
    ossimIrect cmpRect (m_cmpIVT->getViewToImageBounds(tileRect));
+   cmpRect.expand(ossimIpt(m_nominalCmpPatchSize, m_nominalCmpPatchSize));
 
    // Retrieve both the ref and cmp image data
    ossimRefPtr<ossimImageData> ref_tile = m_refChain->getTile(refRect, resLevel);
    if (ref_tile->getDataObjectStatus() == OSSIM_EMPTY)
    {
-      clog << MODULE << " ERROR: could not get REF tile with rect " << refRect << "\n";
+      ossimNotify(ossimNotifyLevel_WARN) << MODULE << " ERROR: could not get REF tile with rect " << refRect << "\n";
       return m_tile;
    }
    if (config.diagnosticLevel(5))
@@ -92,7 +122,7 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
    ossimRefPtr<ossimImageData> cmp_tile = m_cmpChain->getTile(cmpRect, resLevel);
    if (cmp_tile->getDataObjectStatus() == OSSIM_EMPTY)
    {
-      clog << MODULE << " ERROR: could not get CMP tile with rect " << cmpRect << "\n";
+      ossimNotify(ossimNotifyLevel_WARN) << MODULE << " ERROR: could not get CMP tile with rect " << cmpRect << "\n";
       return m_tile;
    }
    if (config.diagnosticLevel(5))
@@ -107,72 +137,144 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
    cv::Mat trainImg = cv::cvarrToMat(cmpImage);
 
    // Get the KeyPoints using appropriate descriptor.
-   std::vector<cv::KeyPoint> kpA;
-   std::vector<cv::KeyPoint> kpB;
+   ossimSortedVector<cv::KeyPoint> kpA;
+   ossimSortedVector<cv::KeyPoint> kpB;
    cv::Mat desA;
    cv::Mat desB;
 
-   std::string descriptorType = config.getParameter("descriptor").asString();
-   transform(descriptorType.begin(), descriptorType.end(), descriptorType.begin(),::toupper);
+   ossimString descriptorType (config.getParameter("descriptor").asString());
+   descriptorType.upcase();
+
+#if 1
+   // Search for features and compute descriptors for all:
+   cv::Ptr<cv::Feature2D> detector;
    if(descriptorType == "AKAZE")
    {
-      cv::Ptr<cv::AKAZE> detector = cv::AKAZE::create();
-      detector->detectAndCompute(queryImg, cv::noArray(), kpA, desA);
-      detector->detectAndCompute(trainImg, cv::noArray(), kpB, desB);
+      detector = cv::AKAZE::create();
    }
    else if(descriptorType == "KAZE")
    {
-      cv::Ptr<cv::KAZE> detector = cv::KAZE::create();
-      detector->detectAndCompute(queryImg, cv::noArray(), kpA, desA);
-      detector->detectAndCompute(trainImg, cv::noArray(), kpB, desB);
+      detector = cv::KAZE::create();
    }
    else if(descriptorType == "ORB")
    {
       // For some reason orb wants multiple channel mats so fake it.
-      if (queryImg.channels() == 1)
-      {
-         std::vector<cv::Mat> channels;
-         channels.push_back(queryImg);
-         channels.push_back(queryImg);
-         channels.push_back(queryImg);
-         cv::merge(channels, queryImg);
-      }
+      //if (queryImg.channels() == 1)
+      //{
+      //   std::vector<cv::Mat> channels;
+      //   channels.push_back(queryImg);
+      //   channels.push_back(queryImg);
+      //   channels.push_back(queryImg);
+      //   cv::merge(channels, queryImg);
+      //}
+      //
+      //if (trainImg.channels() == 1)
+      //{
+      //   std::vector<cv::Mat> channels;
+      //   channels.push_back(trainImg);
+      //   channels.push_back(trainImg);
+      //   channels.push_back(trainImg);
+      //   cv::merge(channels, trainImg);
+      //}
 
-      if (trainImg.channels() == 1)
-      {
-         std::vector<cv::Mat> channels;
-         channels.push_back(trainImg);
-         channels.push_back(trainImg);
-         channels.push_back(trainImg);
-         cv::merge(channels, trainImg);
-      }
-
-      cv::Ptr<cv::ORB> detector = cv::ORB::create();
-      detector->detectAndCompute(queryImg, cv::noArray(), kpA, desA);
-      detector->detectAndCompute(trainImg, cv::noArray(), kpB, desB);
+      detector = cv::ORB::create();
    }
    else if(descriptorType == "SURF")
    {
-      queryImg.convertTo(queryImg, CV_8U);
-      trainImg.convertTo(trainImg, CV_8U);
-
-      cv::Ptr<cv::xfeatures2d::SURF> detector = cv::xfeatures2d::SURF::create();
-      detector->detectAndCompute(queryImg, cv::noArray(), kpA, desA);
-      detector->detectAndCompute(trainImg, cv::noArray(), kpB, desB);
+      detector = cv::xfeatures2d::SURF::create();
    }
    else if(descriptorType == "SIFT")
    {
-      queryImg.convertTo(queryImg, CV_8U);
-      trainImg.convertTo(trainImg, CV_8U);
-
-      cv::Ptr<cv::xfeatures2d::SIFT> detector = cv::xfeatures2d::SIFT::create();
-      detector->detectAndCompute(queryImg, cv::noArray(), kpA, desA);
-      detector->detectAndCompute(trainImg, cv::noArray(), kpB, desB);
+      detector = cv::xfeatures2d::SIFT::create();
    }
    else
    {
-      std::clog << MODULE << " WARNING: No such descriptor as " << descriptorType << "\n";
+      ossimNotify(ossimNotifyLevel_WARN) << MODULE << " WARNING: No such descriptor as " << descriptorType << "\n";
       return m_tile;
+   }
+
+   detector->detectAndCompute(queryImg, cv::noArray(), kpA, desA);
+   detector->detectAndCompute(trainImg, cv::noArray(), kpB, desB);
+
+#else
+   // Separate detect and compute to limit the number of features for which descriptors are
+   // computed... Instantiate feature detector and descriptor algo:
+   cv::Ptr<cv::Feature2D> detector;
+   if(descriptorType == "AKAZE")
+      detector = cv::AKAZE::create();
+   else if(descriptorType == "KAZE")
+      detector = cv::KAZE::create();
+   else if(descriptorType == "ORB")
+   {
+      //// For some reason orb wants multiple channel mats so fake it.
+      //if (queryImg.channels() == 1)
+      //{
+      //   std::vector<cv::Mat> channels;
+      //   channels.push_back(queryImg);
+      //   channels.push_back(queryImg);
+      //   channels.push_back(queryImg);
+      //   cv::merge(channels, queryImg);
+      //}
+      //
+      //if (trainImg.channels() == 1)
+      //{
+      //   std::vector<cv::Mat> channels;
+      //   channels.push_back(trainImg);
+      //   channels.push_back(trainImg);
+      //   channels.push_back(trainImg);
+      //   cv::merge(channels, trainImg);
+      //}
+
+      detector = cv::ORB::create();
+   }
+   else if(descriptorType == "SURF")
+      detector = cv::xfeatures2d::SURF::create();
+   else if(descriptorType == "SIFT")
+      detector = cv::xfeatures2d::SIFT::create();
+   else
+   {
+      ossimNotify(ossimNotifyLevel_WARN) << MODULE << " WARNING: No such descriptor as " << descriptorType << "\n";
+      return m_tile;
+   }
+
+   // Perform detection:
+   detector->detect(queryImg, kpA);
+   detector->detect(trainImg, kpB);
+
+   cout << "\nDETECT:\n  kpA.size = "<<kpA.size() << endl;
+   cout << "  kpb.size = "<<kpA.size() << endl;
+
+   // Limit strongest detections to max number of features per tile on query image:
+   unsigned int maxNumFeatures = config.getParameter("numFeaturesPerTile").asUint();
+   cout << "\n numFeatures= "<<maxNumFeatures << endl;
+   if (kpA.size() > maxNumFeatures)
+   {
+      sort(kpA.begin(), kpA.end(), sortFunc);
+      kpA.resize(maxNumFeatures);
+   }
+
+   //if (kpB.size() > maxNumFeatures)
+   //{
+   //   sort(kpB.begin(), kpB.end(), sortFunc);
+   //   kpB.resize(maxNumFeatures);
+   //}
+   //cout << "\nTRIM:\n  kpA.size = "<<kpA.size() << endl;
+   //cout << "  kpb.size = "<<kpA.size() << endl;
+
+   // Now perform descriptor computations on remaining features:
+   detector->compute(queryImg, kpA, desA);
+   detector->compute(trainImg, kpB, desB);
+   cout << "\nCOMPUTE:\n  desA.size = "<<desA.size() << endl;
+   cout << "  desB.size = "<<desB.size() << endl;
+
+#endif
+
+   if (config.diagnosticLevel(4))
+   {
+      ossimNotify(ossimNotifyLevel_INFO) << "\nDETECT:\n  kpA.size = " << kpA.size() << endl;
+      ossimNotify(ossimNotifyLevel_INFO) << "  kpb.size = " << kpA.size() << endl;
+      ossimNotify(ossimNotifyLevel_INFO) << "\nCOMPUTE:\n  desA.size = " << desA.size() << endl;
+      ossimNotify(ossimNotifyLevel_INFO) << "  desB.size = " << desB.size() << endl;
    }
 
    // Get the DPoints using the appropriate matcher.
@@ -198,12 +300,12 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
       }
       else if(matcherType == "BF")
       {
-         std::clog << MODULE << " WARNING: BF NOT YET IMPLEMENTED\n";
+         ossimNotify(ossimNotifyLevel_WARN) << MODULE << " BF NOT YET IMPLEMENTED\n";
          return m_tile;
       }
       else
       {
-         std::clog << MODULE << " WARNING: No such matcher as " << matcherType << "\n";
+         ossimNotify(ossimNotifyLevel_WARN) << MODULE << " WARNING: No such matcher as " << matcherType << "\n";
          return m_tile;
       }
    }
@@ -256,7 +358,7 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
    }
 
    if (config.diagnosticLevel(2))
-      clog<<MODULE<<"Before filtering, num matches in tile = "<<matches.size()<<endl;
+      ossimNotify(ossimNotifyLevel_INFO)<<MODULE<<"Before filtering, num matches in tile = "<<matches.size()<<endl;
 
    // Now skim off the best matches and copy them to the list being returned:
    unsigned int N = config.getParameter("numFeaturesPerTile").asUint();
@@ -270,7 +372,7 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
    }
 
    if (config.diagnosticLevel(2))
-      clog<<MODULE<<"After capping to max num features ("<<N<<"), num TPs in tile = "<<n<<endl;
+      ossimNotify(ossimNotifyLevel_INFO)<<MODULE<<"After capping to max num features ("<<N<<"), num TPs in tile = "<<n<<endl;
 
    return m_tile;
 }
