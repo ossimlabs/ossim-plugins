@@ -13,6 +13,8 @@
 #include <ossim/base/ossimIrect.h>
 #include <ossim/base/ossimRefPtr.h>
 #include <memory>
+#include <opencv2/opencv.hpp>
+
 namespace ATP
 {
 //*************************************************************************************************
@@ -36,6 +38,14 @@ public:
 
    virtual ossimRefPtr<ossimImageData> getTile(const ossimIrect& origin, ossim_uint32 rLevel=0);
 
+private:
+   struct SortFunc
+   {
+      bool operator()(cv::KeyPoint lhs, cv::KeyPoint rhs)
+      { return (lhs.response > rhs.response); };
+   } sortFunc;
+
+   unsigned int m_nominalCmpPatchSize;
 };
 }
 #endif /* #ifndef ossimDescriptorSource_HEADER */
