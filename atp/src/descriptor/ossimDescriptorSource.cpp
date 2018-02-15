@@ -8,7 +8,6 @@
 #include "ossimDescriptorSource.h"
 #include "../AtpOpenCV.h"
 #include <ossim/imaging/ossimImageDataFactory.h>
-#include <ossim/base/ossimSortedVector.h>
 
 #include <opencv2/xfeatures2d.hpp>
 
@@ -137,8 +136,8 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
    cv::Mat trainImg = cv::cvarrToMat(cmpImage);
 
    // Get the KeyPoints using appropriate descriptor.
-   ossimSortedVector<cv::KeyPoint> kpA;
-   ossimSortedVector<cv::KeyPoint> kpB;
+   vector<cv::KeyPoint> kpA;
+   vector<cv::KeyPoint> kpB;
    cv::Mat desA;
    cv::Mat desB;
 
