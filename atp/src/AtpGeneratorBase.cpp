@@ -5,10 +5,8 @@
 //
 //**************************************************************************************************
 #include "AtpGeneratorBase.h"
-#include "AutoTiePoint.h"
 #include "AtpConfig.h"
 #include "AtpTileSource.h"
-#include <ossim/base/ossimPolygon.h>
 #include <ossim/imaging/ossimImageHandlerRegistry.h>
 #include <ossim/imaging/ossimImageDataFactory.h>
 #include <ossim/imaging/ossimBandSelector.h>
@@ -16,20 +14,13 @@
 #include <ossim/imaging/ossimScalarRemapper.h>
 #include <ossim/imaging/ossimCacheTileSource.h>
 #include <ossim/imaging/ossimTiffWriter.h>
-#include <ossim/imaging/ossimMeanMedianFilter.h>
 #include <ossim/imaging/ossimIndexToRgbLutFilter.h>
 #include <ossim/imaging/ossimVertexExtractor.h>
 #include <ossim/projection/ossimUtmProjection.h>
-#include <ossim/projection/ossimImageViewProjectionTransform.h>
 #include <ossim/elevation/ossimElevManager.h>
-#include <ossim/base/ossimDpt.h>
 #include <ossim/imaging/ossimLinearStretchRemapper.h>
-#include <ossim/imaging/ossimImageSourceSequencer.h>
-#include <ossim/imaging/ossimAnnotationLineObject.h>
 #include <ossim/imaging/ossimAnnotationFontObject.h>
-#include <ossim/imaging/ossimTwoColorView.h>
-#include <cmath>
-#include <map>
+#include <ossim/imaging/ossimHistogramRemapper.h>
 
 using namespace std;
 using namespace ossim;
@@ -70,8 +61,8 @@ void AtpGeneratorBase::initialize()
 
    // Establish image processing chains:
    vector<ossimDpt> refVertices, cmpVertices;
-   m_refChain = constructChain(m_refImage, m_refIVT, refVertices);
-   m_cmpChain = constructChain(m_cmpImage, m_cmpIVT, cmpVertices);
+   m_refChain = constructChain(m_refImage, m_refIVT);
+   m_cmpChain = constructChain(m_cmpImage, m_cmpIVT);
    if (!m_refChain || !m_cmpChain)
    {
       ossimNotify(ossimNotifyLevel_FATAL)<<MODULE<<"Null input chain(s)."<<endl;
@@ -87,6 +78,8 @@ void AtpGeneratorBase::initialize()
    }
 
    // Establish the actual overlap polygon and set AOI as its bounding rect:
+   getValidVertices(m_refChain, m_refIVT, refVertices);
+   getValidVertices(m_cmpChain, m_cmpIVT, cmpVertices);
    ossimPolyArea2d refPoly (refVertices);
    ossimPolyArea2d cmpPoly (cmpVertices);
    ossimPolyArea2d overlapPoly (refPoly & cmpPoly);
@@ -134,13 +127,12 @@ void AtpGeneratorBase::initialize()
 
 ossimRefPtr<ossimImageChain>
 AtpGeneratorBase::constructChain(shared_ptr<Image> image,
-                                 ossimRefPtr<ossimImageViewProjectionTransform>& ivt,
-                                 vector<ossimDpt>& validVertices)
+                                 ossimRefPtr<ossimImageViewProjectionTransform>& ivt)
 {
-   static const char* MODULE="AtpGeneratorBase::constructChain()  ";
-   AtpConfig& config = AtpConfig::instance();
+   static const char *MODULE = "AtpGeneratorBase::constructChain()  ";
+   AtpConfig &config = AtpConfig::instance();
 
-   ossimImageHandlerRegistry* factory = ossimImageHandlerRegistry::instance();
+   ossimImageHandlerRegistry *factory = ossimImageHandlerRegistry::instance();
    ossimRefPtr<ossimImageHandler> handler = factory->open(image->getFilename());
    if (!handler)
       return NULL;
@@ -157,15 +149,27 @@ AtpGeneratorBase::constructChain(shared_ptr<Image> image,
    handler->setImageID(imageId);
    image->setImageId(imageId);
 
-   if (config.diagnosticLevel(3))
+   if (config.diagnosticLevel(5))
    {
       ossimIrect vuRect;
       handler->getImageGeometry()->getBoundingRect(vuRect);
-      clog<<MODULE<<"m_aoiView: "<<vuRect<<endl;;
+      clog << MODULE << "m_aoiView: " << vuRect << endl;;
    }
 
    ossimRefPtr<ossimImageChain> chain = new ossimImageChain;
    chain->add(handler.get());
+
+   // Add histogram (experimental)
+   ossimRefPtr<ossimHistogramRemapper> histo_remapper = new ossimHistogramRemapper();
+   chain->add(histo_remapper.get());
+   histo_remapper->setStretchMode(ossimHistogramRemapper::LINEAR_AUTO_MIN_MAX);
+   ossimRefPtr<ossimMultiResLevelHistogram> histogram = handler->getImageHistogram();
+   if (!histogram)
+   {
+      handler->buildHistogram();
+      histogram = handler->getImageHistogram();
+   }
+   histo_remapper->setHistogram(histogram);
 
    // Need to select a band if multispectral:
    unsigned int numBands = handler->getNumberOfOutputBands();
@@ -174,8 +178,9 @@ AtpGeneratorBase::constructChain(shared_ptr<Image> image,
       unsigned int band = image->getActiveBand();
       if ((band > numBands) || (band <= 0))
       {
-         clog<<MODULE<<"Specified band ("<<band<<") is outside allowed range (1 to "<<numBands
-               <<"). Using default band 1 which may not be ideal."<<endl;
+         clog << MODULE << "Specified band (" << band << ") is outside allowed range (1 to "
+              << numBands
+              << "). Using default band 1 which may not be ideal." << endl;
          band = 1;
       }
       band--; // shift to zero-based
@@ -218,7 +223,7 @@ AtpGeneratorBase::constructChain(shared_ptr<Image> image,
       }
       ossimGpt proj_origin;
       image_geom->getTiePoint(proj_origin, false);
-      ossimUtmProjection* proj = new ossimUtmProjection();
+      ossimUtmProjection *proj = new ossimUtmProjection();
       proj->setOrigin(proj_origin);
       proj->setMetersPerPixel(gsd);
       proj->setUlTiePoints(proj_origin);
@@ -228,12 +233,12 @@ AtpGeneratorBase::constructChain(shared_ptr<Image> image,
    {
       // View geometry was already set up by first image of the pair (REF). Only need to check the
       // GSD of the CMP image and adjust the view GSD to match if larger:
-      ossimDpt cmpGsd (image_geom->getMetersPerPixel());
+      ossimDpt cmpGsd(image_geom->getMetersPerPixel());
       if (cmpGsd.x > cmpGsd.y)
          cmpGsd.y = cmpGsd.x;
       else
          cmpGsd.x = cmpGsd.y;
-      ossimDpt refGsd (m_viewGeom->getMetersPerPixel());
+      ossimDpt refGsd(m_viewGeom->getMetersPerPixel());
       if (cmpGsd.x > refGsd.x)
       {
          refGsd.x = cmpGsd.x;
@@ -242,39 +247,52 @@ AtpGeneratorBase::constructChain(shared_ptr<Image> image,
       }
    }
 
+   ivt = new ossimImageViewProjectionTransform(image_geom.get(), m_viewGeom.get());
+   return chain;
+}
+
+bool AtpGeneratorBase::getValidVertices(ossimRefPtr<ossimImageChain> chain,
+                                        ossimRefPtr<ossimImageViewProjectionTransform>& ivt,
+                                        std::vector<ossimDpt>& validVertices)
+{
    // Need to establish the valid image vertices for establishing overlap polygon. Compute in
    // image space then transform the vertices to view space:
+   if (!chain)
+      return false;
+   ossimImageHandler* handler = dynamic_cast<ossimImageHandler*>(chain->getLastSource());
+   if (!handler)
+      return false;
+
    if (handler->openValidVertices())
    {
       vector<ossimIpt> iverts;
       handler->getValidImageVertices(iverts);
-      for (int i=0; i<iverts.size(); ++i)
-         validVertices.push_back(iverts[i]);
+      for (const auto &vert : iverts)
+         validVertices.emplace_back(vert);
    }
    else
    {
       ossimFilename verticesFile (handler->createDefaultValidVerticesFilename());
-      ossimRefPtr<ossimVertexExtractor> ve = new ossimVertexExtractor(handler.get());
+      ossimRefPtr<ossimVertexExtractor> ve = new ossimVertexExtractor(handler);
       ve->setOutputName(verticesFile);
       ve->setAreaOfInterest(handler->getBoundingRect(0));
       ve->execute();
       const vector<ossimIpt>& iverts = ve->getVertices();
-      for (int i=0; i<iverts.size(); ++i)
-         validVertices.push_back(iverts[i]);
+      for (const auto &vert : iverts)
+         validVertices.emplace_back(vert);
    }
 
    // The image vertices are necessarily in image space coordinates. Need to transform to a common
    // "view" space before determining the overlap polygon:
-   ivt = new ossimImageViewProjectionTransform(image_geom.get(), m_viewGeom.get());
    ossimDpt ipt, vpt;
-   for (size_t i=0; i<validVertices.size(); ++i)
+   for (auto &vertex : validVertices)
    {
-      ipt = validVertices[i];
+      ipt = vertex;
       ivt->imageToView(ipt, vpt);
-      validVertices[i] = vpt;
+      vertex = vpt;
    }
 
-   return chain;
+   return true;
 }
 
 void AtpGeneratorBase::writeTiePointList(ostream& out, const AtpList& tpList)
@@ -285,9 +303,10 @@ void AtpGeneratorBase::writeTiePointList(ostream& out, const AtpList& tpList)
    }
    else
    {
+
       for (size_t i=0; i<tpList.size(); ++i)
       {
-         out<<"\ntiepoint["<<i<<"]: "<<*tpList[i]<<endl;
+         out<<"\ntiepoint["<<i<<"]: "<<tpList[i]<<endl;
       }
    }
 }
@@ -357,7 +376,7 @@ bool AtpGeneratorBase::generateTiePointList(TiePointList& atpList)
    if (config.diagnosticLevel(3))
    {
       m_annotatedRefImage->write();
-      if (config.diagnosticLevel(5))
+      if (config.diagnosticLevel(4))
          m_annotatedCmpImage->write();
    }
    return true;
@@ -514,7 +533,7 @@ void AtpGeneratorBase::filterBadMatches(AtpList& tpList)
       {
          // Remove this TP from our list as soon as it is discovered that there are no valid
          // peaks. All TPs in theTpList must have valid peaks:
-         if (config.diagnosticLevel(4))
+         if (config.diagnosticLevel(5))
             clog<<MODULE<<"Removing TP "<<(*iter)->getTiePointId()<<endl;
          iter = tpList.erase(iter);
          if (tpList.empty())

@@ -130,8 +130,8 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
    m_tile = ref_tile;
 
    // Convert both into OpenCV Mat objects using the Ipl image.
-   IplImage* refImage = convertToIpl32(ref_tile.get());
-   IplImage* cmpImage = convertToIpl32(cmp_tile.get());
+   IplImage* refImage = convertToIpl(ref_tile.get());
+   IplImage* cmpImage = convertToIpl(cmp_tile.get());
    cv::Mat queryImg = cv::cvarrToMat(refImage);
    cv::Mat trainImg = cv::cvarrToMat(cmpImage);
 
@@ -148,44 +148,15 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
    // Search for features and compute descriptors for all:
    cv::Ptr<cv::Feature2D> detector;
    if(descriptorType == "AKAZE")
-   {
       detector = cv::AKAZE::create();
-   }
    else if(descriptorType == "KAZE")
-   {
       detector = cv::KAZE::create();
-   }
    else if(descriptorType == "ORB")
-   {
-      // For some reason orb wants multiple channel mats so fake it.
-      //if (queryImg.channels() == 1)
-      //{
-      //   std::vector<cv::Mat> channels;
-      //   channels.push_back(queryImg);
-      //   channels.push_back(queryImg);
-      //   channels.push_back(queryImg);
-      //   cv::merge(channels, queryImg);
-      //}
-      //
-      //if (trainImg.channels() == 1)
-      //{
-      //   std::vector<cv::Mat> channels;
-      //   channels.push_back(trainImg);
-      //   channels.push_back(trainImg);
-      //   channels.push_back(trainImg);
-      //   cv::merge(channels, trainImg);
-      //}
-
       detector = cv::ORB::create();
-   }
    else if(descriptorType == "SURF")
-   {
       detector = cv::xfeatures2d::SURF::create();
-   }
    else if(descriptorType == "SIFT")
-   {
       detector = cv::xfeatures2d::SIFT::create();
-   }
    else
    {
       ossimNotify(ossimNotifyLevel_WARN) << MODULE << " WARNING: No such descriptor as " << descriptorType << "\n";
@@ -268,7 +239,7 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
 
 #endif
 
-   if (config.diagnosticLevel(4))
+   if (config.diagnosticLevel(5))
    {
       ossimNotify(ossimNotifyLevel_INFO) << "\nDETECT:\n  kpA.size = " << kpA.size() << endl;
       ossimNotify(ossimNotifyLevel_INFO) << "  kpb.size = " << kpA.size() << endl;

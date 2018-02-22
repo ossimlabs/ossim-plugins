@@ -184,7 +184,7 @@ bool AutoTiePoint::checkConsistency(const AtpList& ctpList)
    ossimDpt R1;
    unsigned int num_consistent_neighbors = 0;
 
-   if (config.diagnosticLevel(4))
+   if (config.diagnosticLevel(5))
    {
       clog<<"AutoTiePoint::checkConsistency() -- Processing TP "<<m_tiePointId
       <<" at REF image pt: ("<<m_imagePoints[0].x<<", "<<m_imagePoints[0].y<<")"<<endl;

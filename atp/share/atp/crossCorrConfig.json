@@ -3,9 +3,23 @@
       {
          "label": "Use Feature Mode",
          "name": "useFeatureMode",
-         "descr": "Directs the algorithm to search for features first then compute correlations around those features only.",
+         "descr": "DEPRECATED. Use \"useRasterMode\" instead (in opposite sense).",
          "type": "bool",
          "value": true
+      },
+      {
+         "label": "Use Raster Mode",
+         "name": "useRasterMode",
+         "descr": "Directs the algorithm to simply scan the correlation window in raster fashion instead of centering on features.",
+         "type": "bool",
+         "value": false
+      },
+      {
+         "label": "Raster Mode Correlation Window Step Interval",
+         "name": "corrStepSize",
+         "descr": "When useRasterMode=true, this parameter sets the distance in pixels between adjacent correlation window centers. If absent or zero, defaults to corrWindowSize.",
+         "type": "uint",
+         "value": 0
       },
       {
          "label": "Peak Threshold",
@@ -31,7 +45,7 @@
       {
          "label": "Correlation Method",
          "name": "correlationMethod",
-         "descr": "OpenCV correlation method to use for matching. ",
+         "descr": "OpenCV correlation method to use for template matching: 0=SQDIFF, 1=SQDIFF NORMED, 2=TM CCORR, 3=TM CCORR NORMED, 4=TM COEFF, 5=TM COEFF NORMED",
          "type": "uint",
          "value": 5
       },

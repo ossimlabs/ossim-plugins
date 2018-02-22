@@ -86,8 +86,13 @@ protected:
     */
    virtual ossimRefPtr<ossimImageChain>
    constructChain(std::shared_ptr<ossim::Image> image,
-                  ossimRefPtr<ossimImageViewProjectionTransform>& ivt,
-                  std::vector<ossimDpt>& validVertices);
+                  ossimRefPtr<ossimImageViewProjectionTransform>& ivt);
+
+   //! Establishes valid image vertices in view space for later computing overlap.
+   //  @return true if successful
+   bool getValidVertices(ossimRefPtr<ossimImageChain> chain,
+                         ossimRefPtr<ossimImageViewProjectionTransform>& ivt,
+                         std::vector<ossimDpt>& validVertices);
 
    //! Finds optimum layout of patches within the intersect area for feature search.
    void layoutSearchTileRects(ossimPolygon& overlapPoly);

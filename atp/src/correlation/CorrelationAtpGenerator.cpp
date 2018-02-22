@@ -47,12 +47,11 @@ CorrelationAtpGenerator::~CorrelationAtpGenerator()
 
 ossimRefPtr<ossimImageChain>
 CorrelationAtpGenerator::constructChain(shared_ptr<Image> image,
-                                        ossimRefPtr<ossimImageViewProjectionTransform>& ivt,
-                                        vector<ossimDpt>& validVertices)
+                                        ossimRefPtr<ossimImageViewProjectionTransform>& ivt)
 {
    static const char* MODULE="CorrelationAtpGenerator::constructChain()  ";
 
-   ossimRefPtr<ossimImageChain> chain = AtpGeneratorBase::constructChain(image, ivt, validVertices);
+   ossimRefPtr<ossimImageChain> chain = AtpGeneratorBase::constructChain(image, ivt);
    if (!chain)
       return NULL;
 
