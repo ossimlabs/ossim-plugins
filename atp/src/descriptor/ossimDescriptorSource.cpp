@@ -264,6 +264,9 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
             maxDistance = match.distance;
       }
    }
+
+   // Experimental: force min distance to be the perfect match case = 0:
+   minDistance = 0.0;
    float delta = maxDistance - minDistance;
 
    // Sort the matches in order of strength (i.e., confidence) using stl map:

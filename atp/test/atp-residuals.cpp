@@ -67,7 +67,7 @@ int main(int argc, char *argv[])
 
    if (tpList.empty())
    {
-      cout << "  " << root_name << " -- No tiepoints found." << endl;
+      cout << "\n  " << root_name << " -- No tiepoints found." << endl;
       return 0;
    }
 
@@ -122,7 +122,7 @@ int main(int argc, char *argv[])
       e += (distance-mean)*(distance-mean);
    double sigma = sqrt(e/distances.size());
 
-   cout<<"\n  "<<root_name<<"  mean residual: "<<mean<<" +- "<<sigma<<" m\n"<<endl;
+   cout<<"\n  "<<root_name<<"  mean residual: "<<mean<<" +- "<<sigma<<" m"<<endl;
    return 0;
 }
 

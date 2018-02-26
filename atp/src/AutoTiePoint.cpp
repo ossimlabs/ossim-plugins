@@ -124,6 +124,18 @@ void AutoTiePoint::saveJSON(Json::Value& json_node) const
    if (m_matchPoints.empty())
       return;
    json_node["confidence"] = m_matchPoints[0].getConfidenceMeasure();
+
+   auto geom = m_overlap->getRefIVT()->getViewGeometry();
+   if (geom)
+   {
+      ossimGpt refGpt, cmpGpt;
+      geom->localToWorld(m_refViewPt, refGpt);
+      geom->localToWorld(m_cmpViewPt, cmpGpt);
+      Json::Value residual;
+      residual["range"] = refGpt.distanceTo(cmpGpt);
+      residual["azimuth"] = refGpt.azimuthTo(cmpGpt);
+      json_node["residual"] = residual;
+   }
 }
 
 ostream& AutoTiePoint::print(std::ostream& out) const
