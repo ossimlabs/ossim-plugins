@@ -8,10 +8,7 @@
 #include "ossimCorrelationSource.h"
 #include "../AtpOpenCV.h"
 #include <ossim/imaging/ossimImageDataFactory.h>
-#include <atp/src/Config.h>
-
-#define INFO ossimNotify(ossimNotifyLevel_INFO)
-#define WARN ossimNotify(ossimNotifyLevel_WARN)
+#include "../../AtpCommon.h"
 
 namespace ATP
 {
@@ -82,7 +79,7 @@ ossimRefPtr<ossimImageData> ossimCorrelationSource::getTile(const ossimIrect& ti
    static const char* MODULE = "ossimCorrelationSource::getTile()  ";
    AtpConfig& config = AtpConfig::instance();
    if (config.diagnosticLevel(2))
-      clog<<"\n\nossimCorrelationSource::getTile() -- tileRect UL: "<<tileRect.ul()<<endl;
+      CINFO<<"\n\nossimCorrelationSource::getTile() -- tileRect UL: "<<tileRect.ul()<<endl;
    m_tiePoints.clear();
 
    if(getNumberOfInputs() < 2)
@@ -125,7 +122,7 @@ ossimRefPtr<ossimImageData> ossimCorrelationSource::getTile(const ossimIrect& ti
          }
       }
       if (config.diagnosticLevel(2))
-         clog<<MODULE<<"Before filtering: num matches in tile = "<<numMatches<<endl;
+         CINFO<<MODULE<<"Before filtering: num matches in tile = "<<numMatches<<endl;
    }
    else // raster mode
    {
@@ -170,7 +167,7 @@ void ossimCorrelationSource::findFeatures(const ossimImageData* imageChip,
    feature_points.clear();
    if (!imageChip || (imageChip->getDataObjectStatus() == OSSIM_EMPTY))
    {
-      clog<<MODULE<<"WARNING: NULL or empty image data passed in."<<endl;
+      CWARN<<MODULE<<"WARNING: NULL or empty image data passed in."<<endl;
       return;
    }
 
@@ -186,7 +183,7 @@ void ossimCorrelationSource::findFeatures(const ossimImageData* imageChip,
    IplImage *ipl_image = convertToIpl(imageChip);
    if(!ipl_image)
    {
-      clog<<MODULE << "ERROR: Got null IplImage pointer converting from ossimImageData*!";
+      CFATAL<<MODULE << "ERROR: Got null IplImage pointer converting from ossimImageData*!";
       return;
    }
 //   cvNamedWindow("ipl_image", 1); //###
@@ -244,7 +241,7 @@ void ossimCorrelationSource::findFeatures(const ossimImageData* imageChip,
       // TODO REMOVE
 //      ossimDpt imagePt;
 //      m_refIVT->viewToImage(viewPt, imagePt);
-//      clog<<"  Feature REF image point: "<<imagePt<<endl;
+//      CINFO<<"  Feature REF image point: "<<imagePt<<endl;
 
       // Good feature found, set the feature point's attributes and save to list:
       feature_points.push_back(viewPt);
@@ -254,9 +251,9 @@ void ossimCorrelationSource::findFeatures(const ossimImageData* imageChip,
    if (AtpConfig::instance().diagnosticLevel(2))
    {
       if (num_added)
-         clog<<MODULE<<"Number of features found in search patch: "<<num_added<<endl;
+         CINFO<<MODULE<<"Number of features found in search patch: "<<num_added<<endl;
       else
-         clog<<MODULE<<"No features found."<<endl;
+         CINFO<<MODULE<<"No features found."<<endl;
    }
 
    // Cleanup mem use:
@@ -287,7 +284,7 @@ bool ossimCorrelationSource::correlate(shared_ptr<AutoTiePoint> atp)
    ossimRefPtr<ossimImageData> refpatch (m_refChain->getTile(refPatchRect, 0));
    if (!refpatch.valid())
    {
-      WARN << MODULE << "Error getting ref patch image data." << endl;
+      CWARN << MODULE << "Error getting ref patch image data." << endl;
       return false;
    }
 
@@ -296,7 +293,7 @@ bool ossimCorrelationSource::correlate(shared_ptr<AutoTiePoint> atp)
       ossimDpt refImgPt, cmpImgPt;
       m_refIVT->viewToImage(refViewPt, refImgPt);
       m_cmpIVT->viewToImage(refViewPt, cmpImgPt);
-      INFO<<"\nFeature view pt: "<<refViewPt
+      CINFO<<"\nFeature view pt: "<<refViewPt
           <<"\n     REF img pt: "<<refImgPt
           <<"\n     CMP img pt: "<<cmpImgPt<<endl;
       refpatch->write("REF_PATCH.RAS");
@@ -304,20 +301,20 @@ bool ossimCorrelationSource::correlate(shared_ptr<AutoTiePoint> atp)
       vector<double> min, max;
       refpatch->computeMinMaxPix(min, max);
       if (min.size() && max.size())
-         INFO<<"   REF min, max: "<<(int)min[0]<<", "<<(int)max[0]<<endl;
+         CINFO<<"   REF min, max: "<<(int)min[0]<<", "<<(int)max[0]<<endl;
    }
 
    ossimDataObjectStatus stat = refpatch->getDataObjectStatus();
    if (stat != OSSIM_FULL)
    {
-      //INFO<<MODULE << "REF patch contained a null pixel. Skipping this point..."<<endl;
+      //CINFO<<MODULE << "REF patch contained a null pixel. Skipping this point..."<<endl;
       return false;
    }
 
    ossimRefPtr<ossimImageData> cmppatch (m_cmpChain->getTile(cmpPatchRect, 0));
    if (!cmppatch.valid())
    {
-      WARN << MODULE << "Error getting cmp patch image data." << endl;
+      CWARN << MODULE << "Error getting cmp patch image data." << endl;
       return false;
    }
 
@@ -327,7 +324,7 @@ bool ossimCorrelationSource::correlate(shared_ptr<AutoTiePoint> atp)
       vector<double> min, max;
       cmppatch->computeMinMaxPix(min, max);
       if (min.size() && max.size())
-         INFO << "   CMP min, max: " << (int) min[0] << ", " << (int) max[0]<< "\n" << endl;
+         CINFO << "   CMP min, max: " << (int) min[0] << ", " << (int) max[0]<< "\n" << endl;
    }
 
    // Invoke the proper correlation code to arive at the peak collection for this TP:
@@ -344,15 +341,15 @@ bool ossimCorrelationSource::correlate(shared_ptr<AutoTiePoint> atp)
          {
             double corr_value;
             atp->getConfidenceMeasure(corr_value);
-            INFO<<MODULE<<"Match found for TP "<<atp->getTiePointId()<<" = "<<corr_value<<endl;
+            CINFO<<MODULE<<"Match found for TP "<<atp->getTiePointId()<<" = "<<corr_value<<endl;
          }
         else
-            INFO<<MODULE<<"No match found for TP "<<atp->getTiePointId()<<endl;
+            CINFO<<MODULE<<"No match found for TP "<<atp->getTiePointId()<<endl;
       }
    }
    else // Correlation problem occurred
    {
-      WARN << MODULE << "Error encountered during correlation. Aborting correlation." << endl;
+      CWARN << MODULE << "Error encountered during correlation. Aborting correlation." << endl;
       return false;
    }
 
@@ -371,17 +368,17 @@ bool ossimCorrelationSource::correlate(shared_ptr<AutoTiePoint> atp)
          ossimDpt residual;
          atp->getConfidenceMeasure(val);
          atp->getVectorResidual(residual);
-         INFO<<"AutoTiePoint: ("<<atp->getTiePointId()<<") has "<<numMatches<<" matches,\n"
+         CINFO<<"AutoTiePoint: ("<<atp->getTiePointId()<<") has "<<numMatches<<" matches,\n"
                << "  best: (" << val << ") residual: " << residual <<"\n"
                << "  ref gpt:        "<<refGpt<<"\n"
                << "  cmpimg center:  "<<cmpimgpt<<"\n"
                << "  refimg center:  "<<refimgpt<<"\n"
                << "  cmpview center: "<<cmpviewpt<<"\n"
                << "  refview center: "<<refviewpt<<endl;
-         INFO<<endl;
+         CINFO<<endl;
       }
       else {
-         INFO<<"AutoTiePoint: (" << atp->getTiePointId() << ") has no peaks.\n"
+         CINFO<<"AutoTiePoint: (" << atp->getTiePointId() << ") has no peaks.\n"
                << "  ref gpt:        "<<refGpt<<"\n"
                << "  refimg center:  "<<refimgpt<<"\n"
                << "  refview center: "<<refviewpt<<endl;
@@ -410,7 +407,7 @@ bool ossimCorrelationSource::OpenCVCorrelation(std::shared_ptr<AutoTiePoint> atp
    refimage = convertToIpl32(refpatch);
    if (!cmpimage || !refimage)
    {
-      WARN << MODULE << "Error encountered creating IPL image tiles. Aborting..." << endl;
+      CWARN << MODULE << "Error encountered creating IPL image tiles. Aborting..." << endl;
       return false;
    }
 
@@ -424,7 +421,7 @@ bool ossimCorrelationSource::OpenCVCorrelation(std::shared_ptr<AutoTiePoint> atp
    result = cvCreateImage(resdim, IPL_DEPTH_32F, 1);
    if (!result)
    {
-      WARN << MODULE << "Error encountered creating IPL image tile (result). Aborting..." << endl;
+      CWARN << MODULE << "Error encountered creating IPL image tile (result). Aborting..." << endl;
       return false;
    }
 

@@ -7,6 +7,7 @@
 
 #include "ossimDescriptorSource.h"
 #include "../AtpOpenCV.h"
+#include "../../AtpCommon.h"
 #include <ossim/imaging/ossimImageDataFactory.h>
 
 #include <opencv2/xfeatures2d.hpp>
@@ -80,7 +81,7 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
    AtpConfig& config = AtpConfig::instance();
 
    if (config.diagnosticLevel(2))
-      ossimNotify(ossimNotifyLevel_INFO)<<"\n\n"<< MODULE << " -- tileRect: "<<tileRect<<endl;
+      CINFO<<"\n\n"<< MODULE << " -- tileRect: "<<tileRect<<endl;
    m_tiePoints.clear();
 
    if(!m_tile.get())
@@ -88,7 +89,7 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
       // try to initialize
       initialize();
       if(!m_tile.get()){
-         ossimNotify(ossimNotifyLevel_INFO) << MODULE << " ERROR: could not initialize tile\n";
+         CINFO << MODULE << " ERROR: could not initialize tile\n";
          return m_tile;
       }
    }
@@ -96,7 +97,7 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
    // Make sure there are at least two images as input.
    if(getNumberOfInputs() < 2)
    {
-      ossimNotify(ossimNotifyLevel_INFO) << MODULE << " ERROR: wrong number of inputs " << getNumberOfInputs() << " when expecting at least 2 \n";
+      CINFO << MODULE << " ERROR: wrong number of inputs " << getNumberOfInputs() << " when expecting at least 2 \n";
       return 0;
    }
 
@@ -111,7 +112,7 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
    ossimRefPtr<ossimImageData> ref_tile = m_refChain->getTile(refRect, resLevel);
    if (ref_tile->getDataObjectStatus() == OSSIM_EMPTY)
    {
-      ossimNotify(ossimNotifyLevel_WARN) << MODULE << " ERROR: could not get REF tile with rect " << refRect << "\n";
+      CWARN << MODULE << " ERROR: could not get REF tile with rect " << refRect << "\n";
       return m_tile;
    }
    if (config.diagnosticLevel(5))
@@ -121,7 +122,7 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
    ossimRefPtr<ossimImageData> cmp_tile = m_cmpChain->getTile(cmpRect, resLevel);
    if (cmp_tile->getDataObjectStatus() == OSSIM_EMPTY)
    {
-      ossimNotify(ossimNotifyLevel_WARN) << MODULE << " ERROR: could not get CMP tile with rect " << cmpRect << "\n";
+      CWARN << MODULE << " ERROR: could not get CMP tile with rect " << cmpRect << "\n";
       return m_tile;
    }
    if (config.diagnosticLevel(5))
@@ -144,7 +145,6 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
    ossimString descriptorType (config.getParameter("descriptor").asString());
    descriptorType.upcase();
 
-#if 1
    // Search for features and compute descriptors for all:
    cv::Ptr<cv::Feature2D> detector;
    if(descriptorType == "AKAZE")
@@ -159,64 +159,26 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
       detector = cv::xfeatures2d::SIFT::create();
    else
    {
-      ossimNotify(ossimNotifyLevel_WARN) << MODULE << " WARNING: No such descriptor as " << descriptorType << "\n";
+      CWARN << MODULE << " WARNING: No such descriptor as " << descriptorType << "\n";
       return m_tile;
    }
 
+#if 1
    detector->detectAndCompute(queryImg, cv::noArray(), kpA, desA);
    detector->detectAndCompute(trainImg, cv::noArray(), kpB, desB);
 
 #else
    // Separate detect and compute to limit the number of features for which descriptors are
-   // computed... Instantiate feature detector and descriptor algo:
-   cv::Ptr<cv::Feature2D> detector;
-   if(descriptorType == "AKAZE")
-      detector = cv::AKAZE::create();
-   else if(descriptorType == "KAZE")
-      detector = cv::KAZE::create();
-   else if(descriptorType == "ORB")
-   {
-      //// For some reason orb wants multiple channel mats so fake it.
-      //if (queryImg.channels() == 1)
-      //{
-      //   std::vector<cv::Mat> channels;
-      //   channels.push_back(queryImg);
-      //   channels.push_back(queryImg);
-      //   channels.push_back(queryImg);
-      //   cv::merge(channels, queryImg);
-      //}
-      //
-      //if (trainImg.channels() == 1)
-      //{
-      //   std::vector<cv::Mat> channels;
-      //   channels.push_back(trainImg);
-      //   channels.push_back(trainImg);
-      //   channels.push_back(trainImg);
-      //   cv::merge(channels, trainImg);
-      //}
-
-      detector = cv::ORB::create();
-   }
-   else if(descriptorType == "SURF")
-      detector = cv::xfeatures2d::SURF::create();
-   else if(descriptorType == "SIFT")
-      detector = cv::xfeatures2d::SIFT::create();
-   else
-   {
-      ossimNotify(ossimNotifyLevel_WARN) << MODULE << " WARNING: No such descriptor as " << descriptorType << "\n";
-      return m_tile;
-   }
-
-   // Perform detection:
+   // computed...  Perform detection:
    detector->detect(queryImg, kpA);
    detector->detect(trainImg, kpB);
 
-   cout << "\nDETECT:\n  kpA.size = "<<kpA.size() << endl;
-   cout << "  kpb.size = "<<kpA.size() << endl;
+   CINFO << "\nDETECT:\n  kpA.size = "<<kpA.size() << endl;
+   CINFO << "  kpb.size = "<<kpA.size() << endl;
 
    // Limit strongest detections to max number of features per tile on query image:
    unsigned int maxNumFeatures = config.getParameter("numFeaturesPerTile").asUint();
-   cout << "\n numFeatures= "<<maxNumFeatures << endl;
+   CINFO << "\n numFeatures= "<<maxNumFeatures << endl;
    if (kpA.size() > maxNumFeatures)
    {
       sort(kpA.begin(), kpA.end(), sortFunc);
@@ -228,23 +190,23 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
    //   sort(kpB.begin(), kpB.end(), sortFunc);
    //   kpB.resize(maxNumFeatures);
    //}
-   //cout << "\nTRIM:\n  kpA.size = "<<kpA.size() << endl;
-   //cout << "  kpb.size = "<<kpA.size() << endl;
+   //CINFO << "\nTRIM:\n  kpA.size = "<<kpA.size() << endl;
+   //CINFO << "  kpb.size = "<<kpA.size() << endl;
 
    // Now perform descriptor computations on remaining features:
    detector->compute(queryImg, kpA, desA);
    detector->compute(trainImg, kpB, desB);
-   cout << "\nCOMPUTE:\n  desA.size = "<<desA.size() << endl;
-   cout << "  desB.size = "<<desB.size() << endl;
+   CINFO << "\nCOMPUTE:\n  desA.size = "<<desA.size() << endl;
+   CINFO << "  desB.size = "<<desB.size() << endl;
 
 #endif
 
    if (config.diagnosticLevel(5))
    {
-      ossimNotify(ossimNotifyLevel_INFO) << "\nDETECT:\n  kpA.size = " << kpA.size() << endl;
-      ossimNotify(ossimNotifyLevel_INFO) << "  kpb.size = " << kpA.size() << endl;
-      ossimNotify(ossimNotifyLevel_INFO) << "\nCOMPUTE:\n  desA.size = " << desA.size() << endl;
-      ossimNotify(ossimNotifyLevel_INFO) << "  desB.size = " << desB.size() << endl;
+      CINFO << "\nDETECT:\n  kpA.size = " << kpA.size() << endl;
+      CINFO << "  kpb.size = " << kpA.size() << endl;
+      CINFO << "\nCOMPUTE:\n  desA.size = " << desA.size() << endl;
+      CINFO << "  desB.size = " << desB.size() << endl;
    }
 
    // Get the DPoints using the appropriate matcher.
@@ -259,51 +221,64 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
          k = kpA.size();
       transform(matcherType.begin(), matcherType.end(), matcherType.begin(),::toupper);
 
+      shared_ptr<cv::DescriptorMatcher> matcher;
       if(matcherType == "FLANN")
       {
          if(desA.type()!=CV_32F)
             desA.convertTo(desA, CV_32F);
          if(desB.type()!=CV_32F)
             desB.convertTo(desB, CV_32F);
-         cv::FlannBasedMatcher matcher;
-         matcher.knnMatch(desA, desB, matches, k);
+
+         matcher.reset(new cv::FlannBasedMatcher);
       }
       else if(matcherType == "BF")
       {
-         ossimNotify(ossimNotifyLevel_WARN) << MODULE << " BF NOT YET IMPLEMENTED\n";
-         return m_tile;
+         if(desA.type()!=CV_8U)
+            desA.convertTo(desA, CV_8U);
+         if(desB.type()!=CV_8U)
+            desB.convertTo(desB, CV_8U);
+
+         matcher.reset(new cv::BFMatcher(cv::NORM_HAMMING, true));
       }
       else
       {
-         ossimNotify(ossimNotifyLevel_WARN) << MODULE << " WARNING: No such matcher as " << matcherType << "\n";
+         CWARN << MODULE << " WARNING: No such matcher as " << matcherType << "\n";
          return m_tile;
       }
+
+      matcher->knnMatch(desA, desB, matches, k);
    }
 
-   int leastDistance = INT_MAX;
-   int maxDistance = 0;
+
+   float minDistance = INT_MAX;
+   float maxDistance = 0;
 
    // Find the highest distance to compute the relative confidence of each match
-   for (size_t i = 0; i < matches.size(); ++i)
+   for (auto &featureMatches : matches)
    {
-      for (size_t j = 0; j < matches[i].size(); ++j)
+      for (auto &match : featureMatches)
       {
-         if (leastDistance > matches[i][j].distance)
-            leastDistance = matches[i][j].distance;
-         if (maxDistance < matches[i][j].distance)
-            maxDistance = matches[i][j].distance;
+         if (minDistance >match.distance)
+            minDistance = match.distance;
+         if (maxDistance < match.distance)
+            maxDistance = match.distance;
       }
    }
+   float delta = maxDistance - minDistance;
 
    // Sort the matches in order of strength (i.e., confidence) using stl map:
    map<double, shared_ptr<AutoTiePoint> > tpMap;
 
    // Convert the openCV match points to something Atp could understand.
    string sid(""); // Leave blank to have it auto-assigned by CorrelationTiePoint constructor
-   for (size_t i = 0; i < matches.size(); ++i)
+
+   for (auto &featureMatches : matches)
    {
+      if (featureMatches.empty())
+         continue;
+
       shared_ptr<AutoTiePoint> atp (new AutoTiePoint(this, sid));
-      cv::KeyPoint cv_A = kpA[(matches[i][0]).queryIdx];
+      cv::KeyPoint cv_A = kpA[(featureMatches[0]).queryIdx];
       cv::KeyPoint cv_B;
 
       ossimDpt refImgPt (refRect.ul().x + cv_A.pt.x, refRect.ul().y + cv_A.pt.y);
@@ -311,11 +286,11 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
 
       // Create the match points
       double strength = 0;
-      for (size_t j = 0; j < matches[i].size(); ++j)
+      for (auto &match : featureMatches)
       {
-         cv_B = kpB[(matches[i][j]).trainIdx];
+         cv_B = kpB[(match).trainIdx];
          ossimDpt cmpImgPt (cmpRect.ul().x + cv_B.pt.x, cmpRect.ul().y + cv_B.pt.y);
-         double strength_j = 1.0 - (matches[i][j].distance-leastDistance)/maxDistance;
+         double strength_j = 1.0 - (match.distance-minDistance)/delta;
          if (strength_j > strength)
             strength = strength_j;
          atp->addImageMatch(cmpImgPt, strength_j);
@@ -323,17 +298,16 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
 
       // Insert into sorted map using one's complement as key since in ascending order:
       tpMap.insert(pair<double, shared_ptr<AutoTiePoint> >(1.0-strength, atp));
-
       sid.clear();
    }
 
    if (config.diagnosticLevel(2))
-      ossimNotify(ossimNotifyLevel_INFO)<<MODULE<<"Before filtering, num matches in tile = "<<matches.size()<<endl;
+      CINFO<<MODULE<<"Before filtering, num matches in tile = "<<matches.size()<<endl;
 
    // Now skim off the best matches and copy them to the list being returned:
    unsigned int N = config.getParameter("numFeaturesPerTile").asUint();
    unsigned int n = 0;
-   map<double, shared_ptr<AutoTiePoint> >::iterator tp_iter = tpMap.begin();
+   auto tp_iter = tpMap.begin();
    while ((tp_iter != tpMap.end()) && (n < N))
    {
       m_tiePoints.push_back(tp_iter->second);
@@ -342,7 +316,7 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
    }
 
    if (config.diagnosticLevel(2))
-      ossimNotify(ossimNotifyLevel_INFO)<<MODULE<<"After capping to max num features ("<<N<<"), num TPs in tile = "<<n<<endl;
+      CINFO<<MODULE<<"After capping to max num features ("<<N<<"), num TPs in tile = "<<n<<endl;
 
    return m_tile;
 }

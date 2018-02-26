@@ -128,6 +128,12 @@
          "value": 0
       },
       {
+         "name": "annotatedImageBaseName",
+         "descr": "For engineering use. Specifies the base filename of the annotated images being generated (if diagnostic level is appropriate).",
+         "type": "string",
+         "value": "annotated"
+      },
+      {
          "name": "residualMultiplier",
          "descr": "For engineering use. Factor used to exagerate the magnitude of the residual vectors in the annotated image.",
          "type": "float",

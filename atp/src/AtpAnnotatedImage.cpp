@@ -6,27 +6,19 @@
 //**************************************************************************************************
 #include "AtpAnnotatedImage.h"
 #include "AtpConfig.h"
-#include <ossim/base/ossimPolygon.h>
+#include "../AtpCommon.h"
 #include <ossim/imaging/ossimImageHandlerRegistry.h>
 #include <ossim/imaging/ossimImageDataFactory.h>
 #include <ossim/imaging/ossimBandSelector.h>
 #include <ossim/imaging/ossimImageRenderer.h>
-#include <ossim/imaging/ossimScalarRemapper.h>
 #include <ossim/imaging/ossimCacheTileSource.h>
 #include <ossim/imaging/ossimTiffWriter.h>
-#include <ossim/imaging/ossimMeanMedianFilter.h>
 #include <ossim/imaging/ossimIndexToRgbLutFilter.h>
 #include <ossim/imaging/ossimVertexExtractor.h>
-#include <ossim/projection/ossimUtmProjection.h>
 #include <ossim/elevation/ossimElevManager.h>
-#include <ossim/base/ossimDpt.h>
 #include <ossim/imaging/ossimLinearStretchRemapper.h>
-#include <ossim/imaging/ossimImageSourceSequencer.h>
 #include <ossim/imaging/ossimAnnotationLineObject.h>
 #include <ossim/imaging/ossimAnnotationFontObject.h>
-#include <ossim/imaging/ossimTwoColorView.h>
-#include <cmath>
-#include <map>
 
 using namespace std;
 
@@ -218,7 +210,7 @@ void AtpAnnotatedImage::annotateFeatureSearchTiles(std::vector<ossimIrect>& sear
 
    if (searchTileRects.empty())
    {
-      clog<<MODULE<<"No feature search tiles were established in the overlap."<<endl;
+      CINFO<<MODULE<<"No feature search tiles were established in the overlap."<<endl;
       return;
    }
 
@@ -270,7 +262,7 @@ bool AtpAnnotatedImage::write()
    writer->close();
 
    if (status)
-      clog<<"\nAtpAnnotatedImage::write() -- Wrote "<<m_annFilename<<endl;
+      CINFO<<"\nAtpAnnotatedImage::write() -- Wrote "<<m_annFilename<<endl;
 
    return status;
 }

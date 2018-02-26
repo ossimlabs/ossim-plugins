@@ -5,3 +5,6 @@
 //
 //**************************************************************************************************
 #define OSSIM_HAS_OPENCV_HIGHGUI @OPENCV_HIGHGUI_FOUND@
+#define CINFO  ossimNotify(ossimNotifyLevel_INFO)
+#define CWARN  ossimNotify(ossimNotifyLevel_WARN)
+#define CFATAL ossimNotify(ossimNotifyLevel_FATAL)

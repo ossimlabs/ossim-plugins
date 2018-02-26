@@ -5,10 +5,9 @@
 //
 //**************************************************************************************************
 #include "CorrelationAtpGenerator.h"
-#include "../AtpConfig.h"
+#include "../../AtpCommon.h"
 #include <ossim/imaging/ossimImageRenderer.h>
 #include <ossim/imaging/ossimCacheTileSource.h>
-#include <ossim/base/ossimConnectableObject.h>
 #include <ossim/base/ossimStringProperty.h>
 
 using namespace std;
@@ -77,7 +76,7 @@ CorrelationAtpGenerator::constructChain(shared_ptr<Image> image,
       ossimDpt viewPt, rtIpt;
       ivt->imageToView(imagePt, viewPt);
       ivt->viewToImage(viewPt, rtIpt);
-      clog<<MODULE<<"\n  imagePt: "<<imagePt<<
+      CINFO<<MODULE<<"\n  imagePt: "<<imagePt<<
             "\n  viewPt: "<<viewPt<<"\n  rtIpt: "<<rtIpt<<endl;
    }
    return chain;

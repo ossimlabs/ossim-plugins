@@ -31,7 +31,7 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test )
 FILE(GLOB ossim_atp_json ${${PROJECT_NAME}_SOURCE_DIR}/share/atp/*.json)
 INSTALL(FILES ${ossim_atp_json} DESTINATION share/ossim/atp COMPONENT ossim)
 
-CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/src/Config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/src/Config.h @ONLY)
+CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/AtpCommon.h.in ${CMAKE_CURRENT_SOURCE_DIR}/AtpCommon.h @ONLY)
 
 
 message("################## end of ossim-atp-plugin setup #########################")

@@ -6,6 +6,7 @@
 //**************************************************************************************************
 
 #include "ossimAtpTool.h"
+#include "../AtpCommon.h"
 #include <math.h>
 #include "correlation/CorrelationAtpGenerator.h"
 #include "descriptor/DescriptorAtpGenerator.h"
@@ -25,10 +26,6 @@
 
 using namespace std;
 using namespace ossim;
-
-#define CINFO  ossimNotify(ossimNotifyLevel_INFO)
-#define CWARN  ossimNotify(ossimNotifyLevel_WARN)
-#define CFATAL ossimNotify(ossimNotifyLevel_FATAL)
 
 namespace ATP
 {
@@ -112,7 +109,7 @@ bool ossimAtpTool::initialize(ossimArgumentParser& ap)
       }
       catch (exception& e)
       {
-         ossimNotify(ossimNotifyLevel_FATAL)<<__FILE__<<" Could not parse input JSON <"<<ts1<<">";
+         CFATAL<<__FILE__<<" Could not parse input JSON <"<<ts1<<">";
          return false;
       }
    }
@@ -189,7 +186,7 @@ void ossimAtpTool::loadJSON(const Json::Value& queryRoot)
       config.loadJSON(parameters);
 
    if (config.diagnosticLevel(2))
-      clog<<"\nATP configuration after loading:\n"<<config<<endl;
+      CINFO<<"\nATP configuration after loading:\n"<<config<<endl;
 
    if (m_method == GENERATE)
    {
@@ -346,7 +343,7 @@ void ossimAtpTool::doPairwiseMatching()
          m_photoBlock->addTiePoints(tpList);
 
          if (AtpConfig::instance().diagnosticLevel(2))
-            clog<<"Completed pairwise match for pair "<<i<<"-"<<j<<endl;
+            CINFO<<"Completed pairwise match for pair "<<i<<"-"<<j<<endl;
 
          // Now reverse CMP and REF to find possible additional features on B:
          bool doTwoWaySearch = AtpConfig::instance().getParameter("doTwoWaySearch").asBool();
@@ -359,7 +356,7 @@ void ossimAtpTool::doPairwiseMatching()
             m_photoBlock->addTiePoints(tpList);
 
             if (AtpConfig::instance().diagnosticLevel(2))
-               clog<<"Completed pairwise match for pair "<<j<<"-"<<i<<endl;
+               CINFO<<"Completed pairwise match for pair "<<j<<"-"<<i<<endl;
          }
       }
    }
@@ -370,7 +367,7 @@ void ossimAtpTool::doPairwiseMatching()
    m_responseJSON["photoblock"] = pbJson;
 
    if (AtpConfig::instance().diagnosticLevel(1))
-      clog<<"\n"<<MODULE<<"Total TPs found = "<<m_photoBlock->getTiePointList().size()<<endl;
+      CINFO<<"\n"<<MODULE<<"Total TPs found = "<<m_photoBlock->getTiePointList().size()<<endl;
 }
 
 

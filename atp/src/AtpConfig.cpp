@@ -7,11 +7,9 @@
 
 #include "AtpConfig.h"
 #include "AtpOpenCV.h"
-#include <ossim/base/ossimCommon.h>
 #include <ossim/base/ossimException.h>
 #include <ossim/base/ossimPreferences.h>
-#include <opencv2/features2d/features2d.hpp>
-#include <memory>
+#include "../AtpCommon.h"
 
 using namespace std;
 using namespace ossim;
@@ -88,7 +86,7 @@ bool AtpConfig::readConfig(const string& cn)
    }
    catch (ossimException& e)
    {
-      ossimNotify(ossimNotifyLevel_WARN)<<"AtpConfig::readConfig():  Could not open/parse "
+      CWARN<<"AtpConfig::readConfig():  Could not open/parse "
             "config file at <"<< configFilename << ">. Error: "<<e.what()<<endl;
       return false;
    }

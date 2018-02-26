@@ -7,6 +7,7 @@
 #include "AtpGeneratorBase.h"
 #include "AtpConfig.h"
 #include "AtpTileSource.h"
+#include "../AtpCommon.h"
 #include <ossim/imaging/ossimImageHandlerRegistry.h>
 #include <ossim/imaging/ossimImageDataFactory.h>
 #include <ossim/imaging/ossimBandSelector.h>
@@ -54,6 +55,7 @@ void AtpGeneratorBase::setCmpImage(shared_ptr<Image> cmp_image)
 void AtpGeneratorBase::initialize()
 {
    static const char* MODULE=" AtpGeneratorBase::initialize()  ";
+   AtpConfig &config = AtpConfig::instance();
 
    // Initialize the reference ATP containing the static data members used by all ATPs:
    s_referenceATP.reset(new AutoTiePoint());
@@ -65,14 +67,14 @@ void AtpGeneratorBase::initialize()
    m_cmpChain = constructChain(m_cmpImage, m_cmpIVT);
    if (!m_refChain || !m_cmpChain)
    {
-      ossimNotify(ossimNotifyLevel_FATAL)<<MODULE<<"Null input chain(s)."<<endl;
+      CFATAL<<MODULE<<"Null input chain(s)."<<endl;
       return;
    }
 
 
-   if (AtpConfig::instance().diagnosticLevel(1))
+   if (config.diagnosticLevel(1))
    {
-      clog<<"\n"<<MODULE<<"Initializing image pair with:"
+      CINFO<<"\n"<<MODULE<<"Initializing image pair with:"
             <<"\n  REF_ID: "<<m_refImage->getImageId()
             <<"\n  CMP_ID: "<<m_cmpImage->getImageId()<<endl;
    }
@@ -87,7 +89,7 @@ void AtpGeneratorBase::initialize()
    overlapPoly.getVisiblePolygons(intersectPolys);
    if (intersectPolys.empty())
    {
-      clog<<MODULE<<"No intersect polygon found."<<endl;
+      CINFO<<MODULE<<"No intersect polygon found."<<endl;
       return;
    }
    ossimPolygon intersectPoly (intersectPolys[0]);
@@ -97,12 +99,13 @@ void AtpGeneratorBase::initialize()
    m_aoiView = viewDrect;
    m_viewGeom->setImageSize(m_aoiView.size());
 
-   if (AtpConfig::instance().diagnosticLevel(3))
+   if (config.diagnosticLevel(3))
    {
+      ossimString basename (config.getParameter("annotatedImageBaseName").asString());
       m_annotatedRefImage = new AtpAnnotatedImage(m_refChain, m_refIVT, m_aoiView);
-      m_annotatedRefImage->setImageName("annotatedRef.tif");
+      m_annotatedRefImage->setImageName(basename+"Ref.tif");
       m_annotatedCmpImage = new AtpAnnotatedImage(m_cmpChain, m_cmpIVT, m_aoiView);
-      m_annotatedCmpImage->setImageName("annotatedCmp.tif");
+      m_annotatedCmpImage->setImageName(basename+"Cmp.tif");
    }
 
    // Establish the feature search tile locations:
@@ -112,7 +115,7 @@ void AtpGeneratorBase::initialize()
    ossimRefPtr<ossimImageGeometry> refGeom = m_refChain->getImageGeometry();
    if (!refGeom)
    {
-      ossimNotify(ossimNotifyLevel_FATAL)<<MODULE<<"Null ref image geometry."<<endl;
+      CFATAL<<MODULE<<"Null ref image geometry."<<endl;
       return;
    }
    ossimDpt viewCenter;
@@ -153,7 +156,7 @@ AtpGeneratorBase::constructChain(shared_ptr<Image> image,
    {
       ossimIrect vuRect;
       handler->getImageGeometry()->getBoundingRect(vuRect);
-      clog << MODULE << "m_aoiView: " << vuRect << endl;;
+      CINFO << MODULE << "m_aoiView: " << vuRect << endl;;
    }
 
    ossimRefPtr<ossimImageChain> chain = new ossimImageChain;
@@ -178,7 +181,7 @@ AtpGeneratorBase::constructChain(shared_ptr<Image> image,
       unsigned int band = image->getActiveBand();
       if ((band > numBands) || (band <= 0))
       {
-         clog << MODULE << "Specified band (" << band << ") is outside allowed range (1 to "
+         CINFO << MODULE << "Specified band (" << band << ") is outside allowed range (1 to "
               << numBands
               << "). Using default band 1 which may not be ideal." << endl;
          band = 1;
@@ -331,7 +334,7 @@ bool AtpGeneratorBase::generateTiePointList(TiePointList& atpList)
       if (ref_tile->getDataObjectStatus() == OSSIM_EMPTY)
       {
          if (config.diagnosticLevel(3))
-            clog<<MODULE<<"WARNING: Empty search tile returned from CorrelationSource."<<endl;
+            CWARN<<MODULE<<"WARNING: Empty search tile returned from CorrelationSource."<<endl;
          continue;
       }
 
@@ -355,7 +358,7 @@ bool AtpGeneratorBase::generateTiePointList(TiePointList& atpList)
       pruneList(tileATPs);
 
       if (config.diagnosticLevel(2))
-         clog<<MODULE<<"After filtering: num TPs in tile = "<<tileATPs.size()<<endl;
+         CINFO<<MODULE<<"After filtering: num TPs in tile = "<<tileATPs.size()<<endl;
 
       // Add remaining tile CTPs to master CTP list:
       if (tileATPs.size())
@@ -371,7 +374,7 @@ bool AtpGeneratorBase::generateTiePointList(TiePointList& atpList)
    }
 
    if (config.diagnosticLevel(1))
-      clog<<"\n"<<MODULE<<"Total number of TPs found in pair = "<<atpList.size()<<endl;
+      CINFO<<"\n"<<MODULE<<"Total number of TPs found in pair = "<<atpList.size()<<endl;
 
    if (config.diagnosticLevel(3))
    {
@@ -400,7 +403,7 @@ void AtpGeneratorBase::layoutSearchTileRects(ossimPolygon& intersectPoly)
    int lastVertex = intersectPoly.getNumberOfVertices() - 1;
    if (lastVertex < 2)
    {
-      clog<<MODULE<<"Intersect polygon num vertices is less than 3! This should never happen."<<endl;
+      CINFO<<MODULE<<"Intersect polygon num vertices is less than 3! This should never happen."<<endl;
       return;
    }
    if (intersectPoly[0] == intersectPoly[lastVertex])
@@ -408,7 +411,7 @@ void AtpGeneratorBase::layoutSearchTileRects(ossimPolygon& intersectPoly)
       intersectPoly.removeVertex(lastVertex);
       if (lastVertex < 3)
       {
-         clog<<MODULE<<"Intersect polygon num vertices is less than 3! This should never happen."<<endl;
+         CWARN<<MODULE<<"Intersect polygon num vertices is less than 3! This should never happen."<<endl;
          return;
       }
    }
@@ -416,7 +419,7 @@ void AtpGeneratorBase::layoutSearchTileRects(ossimPolygon& intersectPoly)
    double intersectArea = fabs(intersectPoly.area());
    if (intersectArea < min_area)
    {
-      clog<<MODULE<<"Intersect area too small"<<endl;
+      CINFO<<MODULE<<"Intersect area too small"<<endl;
       return;
    }
 
@@ -490,7 +493,7 @@ void AtpGeneratorBase::layoutSearchTileRects(ossimPolygon& intersectPoly)
    if (config.diagnosticLevel(2))
    {
       for (int tileIdx=0; tileIdx<m_searchTileRects.size(); ++tileIdx)
-         clog<<MODULE<<"m_searchTileRects["<<tileIdx<<"] = "<<m_searchTileRects[tileIdx]<<endl;
+         CINFO<<MODULE<<"m_searchTileRects["<<tileIdx<<"] = "<<m_searchTileRects[tileIdx]<<endl;
 
       if (config.diagnosticLevel(3) && m_annotatedRefImage)
          m_annotatedRefImage->annotateFeatureSearchTiles(m_searchTileRects);
@@ -520,7 +523,7 @@ void AtpGeneratorBase::filterBadMatches(AtpList& tpList)
    {
       if (!(*iter)) // Should never happen
       {
-         clog<<MODULE<<"WARNING: Null AutoTiePoint encountred in list. Skipping point."<<endl;
+         CWARN<<MODULE<<"WARNING: Null AutoTiePoint encountred in list. Skipping point."<<endl;
          ++iter;
          continue;
       }
@@ -534,7 +537,7 @@ void AtpGeneratorBase::filterBadMatches(AtpList& tpList)
          // Remove this TP from our list as soon as it is discovered that there are no valid
          // peaks. All TPs in theTpList must have valid peaks:
          if (config.diagnosticLevel(5))
-            clog<<MODULE<<"Removing TP "<<(*iter)->getTiePointId()<<endl;
+            CINFO<<MODULE<<"Removing TP "<<(*iter)->getTiePointId()<<endl;
          iter = tpList.erase(iter);
          if (tpList.empty())
             break;
@@ -556,7 +559,7 @@ void AtpGeneratorBase::pruneList(AtpList& tpList)
    {
       if (!(*iter)) // Should never happen
       {
-         clog<<MODULE<<"WARNING: Null AutoTiePoint encountred in list. Skipping point."<<endl;
+         CWARN<<MODULE<<"WARNING: Null AutoTiePoint encountred in list. Skipping point."<<endl;
          ++iter;
          continue;
       }

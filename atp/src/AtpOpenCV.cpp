@@ -6,6 +6,7 @@
 //**************************************************************************************************
 #include <ossim/imaging/ossimImageData.h>
 #include "AtpOpenCV.h"
+#include "../AtpCommon.h"
 
 using namespace cv;
 
@@ -33,7 +34,7 @@ IplImage *convertToIpl(const ossimImageData* data)
 
    if(data==NULL)
    {
-      clog<<"convertToIpl::Invalid data ptr."<<endl;;
+      CWARN<<"convertToIpl::Invalid data ptr."<<endl;;
       return ret;
    }
 
@@ -41,7 +42,7 @@ IplImage *convertToIpl(const ossimImageData* data)
    const PIXEL_TYPE *dataptr = (PIXEL_TYPE*) data->getBuf();
    if (!dataptr)
    {
-      clog<<"convertToIpl::ERROR getting the image data! bands/depth not supported"<<endl;
+      CFATAL<<"convertToIpl::ERROR getting the image data! bands/depth not supported"<<endl;
       return ret;
    }
 
@@ -57,7 +58,7 @@ IplImage *convertToIpl(const ossimImageData* data)
       // TODO COLOR IMAGES DON"T WORK RIGHT NOW
       numbytes=3;
       // Going to use the function (CvtPlaneToPix(IplImage*src0,src1,src2,src3,dst))
-      clog<<"convertToIpl -- ERROR: multiband feature detection not implemented yet!"<<endl;
+      CFATAL<<"convertToIpl -- ERROR: multiband feature detection not implemented yet!"<<endl;
       return ret;
    } 
 
@@ -73,7 +74,7 @@ IplImage *convertToIpl(const ossimImageData* data)
    } 
    else 
    {
-      clog<<"convertToIpl::ERROR creating IplImage."<<endl;
+      CFATAL<<"convertToIpl::ERROR creating IplImage."<<endl;
    }
    return ret;
 }

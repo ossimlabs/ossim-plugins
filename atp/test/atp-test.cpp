@@ -27,6 +27,7 @@
 #include <ossim/reg/PhotoBlock.h>
 #include <ossim/projection/ossimSensorModelTuple.h>
 #include <ossim/projection/ossimProjectionFactoryRegistry.h>
+#include "../AtpCommon.h"
 
 using namespace std;
 using namespace ossim;
@@ -103,13 +104,12 @@ int main(int argc, char *argv[])
    }
    catch(const ossimException& e)
    {
-      ossimNotify(ossimNotifyLevel_WARN) << e.what() << std::endl;
+      CWARN << e.what() << std::endl;
       returnCode = 1;
    }
    catch( ... )
    {
-      ossimNotify(ossimNotifyLevel_WARN)
-              << "ossim-foo caught unhandled exception!" << std::endl;
+      CWARN << "ossim-foo caught unhandled exception!" << std::endl;
       returnCode = 1;
    }
 

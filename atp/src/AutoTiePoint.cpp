@@ -7,11 +7,8 @@
 #include "AutoTiePoint.h"
 #include "AtpConfig.h"
 #include "AtpTileSource.h"
-#include <ossim/projection/ossimImageViewProjectionTransform.h>
-#include <ossim/projection/ossimSensorModel.h>
-#include <ossim/imaging/ossimImageChain.h>
+#include "../AtpCommon.h"
 #include <ossim/imaging/ossimImageRenderer.h>
-#include <ossim/base/ossimConstants.h>
 
 using namespace std;
 using namespace ossim;
@@ -54,7 +51,7 @@ AutoTiePoint::AutoTiePoint(AtpTileSource* overlap, const std::string& id)
    setTiePointId(id);
    if (!m_overlap)
    {
-      clog << "AutoTiePoint Constructor ERROR: Null overlap chain passed." << endl;
+      CFATAL << "AutoTiePoint Constructor ERROR: Null overlap chain passed." << endl;
       return;
    }
 
@@ -186,7 +183,7 @@ bool AutoTiePoint::checkConsistency(const AtpList& ctpList)
 
    if (config.diagnosticLevel(5))
    {
-      clog<<"AutoTiePoint::checkConsistency() -- Processing TP "<<m_tiePointId
+      CINFO<<"AutoTiePoint::checkConsistency() -- Processing TP "<<m_tiePointId
       <<" at REF image pt: ("<<m_imagePoints[0].x<<", "<<m_imagePoints[0].y<<")"<<endl;
    }
 
@@ -327,7 +324,7 @@ void AutoTiePoint::initializeStaticMembers()
    s_maxDiffRatio = config.getParameter("maxResMagDiffRatio").asFloat();
    if (ossim::isnan(s_maxDiffRatio) || (s_maxDiffRatio == 0))
    {
-      clog<<"AutoTiePoint::residualsAreConsistent() -- Bad parameters found in config: "
+      CWARN<<"AutoTiePoint::residualsAreConsistent() -- Bad parameters found in config: "
             "maxResMagDiffRatio = "<<s_maxDiffRatio<<". Defaulting to 0.1."<<endl;
       s_maxDiffRatio = 0.1;
    }
@@ -335,7 +332,7 @@ void AutoTiePoint::initializeStaticMembers()
    double theta = config.getParameter("maxResAngleDiff").asFloat();
    if (ossim::isnan(theta) || (theta <= 0))
    {
-      clog<<"AutoTiePoint::residualsAreConsistent() -- Bad parameters found in config: "
+      CWARN<<"AutoTiePoint::residualsAreConsistent() -- Bad parameters found in config: "
             "maxAngleDiff = "<<theta<<". Defaulting to 10 deg."<<endl;
       theta = 10.0;
    }
@@ -344,7 +341,7 @@ void AutoTiePoint::initializeStaticMembers()
    s_minVectorResDiff = config.getParameter("minVectorResDiff").asFloat();
    if (ossim::isnan(s_minVectorResDiff) || (s_minVectorResDiff < 1.0))
    {
-      clog<<"AutoTiePoint::residualsAreConsistent() -- Bad parameters found in config: "
+      CWARN<<"AutoTiePoint::residualsAreConsistent() -- Bad parameters found in config: "
             "minVectorResDiff = "<<s_minVectorResDiff<<". Defaulting to 1.0."<<endl;
       s_minVectorResDiff = 1.0;
    }

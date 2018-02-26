@@ -6,12 +6,7 @@
 //**************************************************************************************************
 #include "../src/AtpConfig.h"
 #include "../src/correlation/CorrelationAtpGenerator.h"
-#include <iostream>
 #include <ossim/init/ossimInit.h>
-#include <ossim/base/ossimKeywordlist.h>
-#include <ossim/reg/TiePoint.h>
-#include <ossim/reg/Image.h>
-#include <memory>
 
 using namespace std;
 using namespace ATP;
