@@ -238,7 +238,24 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
          if(desB.type()!=CV_8U)
             desB.convertTo(desB, CV_8U);
 
-         matcher.reset(new cv::BFMatcher(cv::NORM_HAMMING, true));
+         int normType;
+         std::string ErrorFunction = config.getParameter("normType").asString();
+         if(ErrorFunction == "NORM_L1"){
+            normType = cv::NORM_L1;
+         } else if(ErrorFunction == "NORM_L2") {
+            normType = cv::NORM_L2;
+         } else if(ErrorFunction == "NORM_HAMMING") {
+            normType = cv::NORM_HAMMING;
+         } else {
+            std::string descriptorUsed = config.getParameter("descriptor").asString();
+            if(descriptorUsed == "SURF" || descriptorUsed == "SIFT"){
+               normType = cv::NORM_L2;
+            } else {
+               normType = cv::NORM_HAMMING;
+            }
+         }
+
+         matcher.reset(new cv::BFMatcher(normType, true));
       }
       else
       {

@@ -39,10 +39,18 @@
       {
          "label": "OpenCV Keypoint Descriptor Matcher",
          "name": "matcher",
-         "descr": "Type of matcher being used. ",
+         "descr": "Type of matcher being used.",
          "type": "string",
          "value": "FLANN",
-         "allowedValues": ["FLANN"]
+         "allowedValues": ["FLANN", "BF"]
+      },
+      {
+         "label": "OpenCV Norm Type",
+         "name": "normType",
+         "descr": "Type of Norm being used by bruteforce matcher.",
+         "type": "string",
+         "value": "NORM_HAMMING",
+         "allowedValues": ["NORM_L1", "NORM_L2", "NORM_HAMMING"]
       },
       {
          "label": "K",
