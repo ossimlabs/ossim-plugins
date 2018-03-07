@@ -46,12 +46,12 @@ AtpAnnotatedImage::AtpAnnotatedImage(ossimRefPtr<ossimImageChain>& sourceChain,
    ossimImageRenderer* r = vref.getObjectAs<ossimImageRenderer>();
    if (!r)
    {
-      ossimImageRenderer* renderer = new ossimImageRenderer;
+      auto renderer = new ossimImageRenderer;
       add(renderer);
       renderer->setImageViewTransform(ivt.get());
 
       // Add cache after resampler:
-      ossimCacheTileSource* cache = new ossimCacheTileSource();
+      auto * cache = new ossimCacheTileSource();
       add(cache);
    }
 
@@ -94,7 +94,7 @@ AtpAnnotatedImage::~AtpAnnotatedImage()
 
 }
 
-void AtpAnnotatedImage::annotateResiduals(AtpList& atpList, int r, int g, int b)
+void AtpAnnotatedImage::annotateResiduals(AtpList& atps, int r, int g, int b)
 {
    if (!m_annSource)
       return;
@@ -107,9 +107,9 @@ void AtpAnnotatedImage::annotateResiduals(AtpList& atpList, int r, int g, int b)
    double residualMultiplier = config.getParameter("residualMultiplier").asFloat();
 
    ossimDpt refPt, cmpPt, residual;
-   for (size_t i=0; i<atpList.size(); ++i)
+   for (auto &atp : atps)
    {
-      atpList[i]->getRefViewPoint(refPt);
+      atp->getRefViewPoint(refPt);
       refPt *= m_annScaleInverse.x;
 
       // Draw box around feature:
@@ -121,25 +121,50 @@ void AtpAnnotatedImage::annotateResiduals(AtpList& atpList, int r, int g, int b)
       drawBox(box, r, g, 0);
 
       // Draw residual vector:
-      atpList[i]->getVectorResidual(residual);
+      atp->getVectorResidual(residual);
       cmpPt.x = refPt.x + residualMultiplier*residual.x;
       cmpPt.y = refPt.y + residualMultiplier*residual.y;
       ossimRefPtr<ossimAnnotationLineObject> l = new ossimAnnotationLineObject(refPt,cmpPt,r,g,b);
       m_annSource->addObject(l.get());
    }
 }
-void AtpAnnotatedImage::annotateTPIDs(AtpList& atpList, int r, int g, int b)
+void AtpAnnotatedImage::annotateTPIDs(AtpList& atps, int r, int g, int b)
 {
    if (!m_annSource)
       return;
 
    ossimDpt refPt, cmpPt, residual;
-   for (size_t i=0; i<atpList.size(); ++i)
+   for (auto &atp : atps)
    {
-      atpList[i]->getRefViewPoint(refPt);
+      atp->getRefViewPoint(refPt);
       ossimRefPtr<ossimAnnotationFontObject> f =
-            new ossimAnnotationFontObject(refPt, atpList[i]->getTiePointId());
+            new ossimAnnotationFontObject(refPt, atp->getTiePointId());
       m_annSource->addObject(f.get());
+   }
+}
+
+void AtpAnnotatedImage::annotateFeatures(vector<ossimDpt>& features, int r, int g, int b)
+{
+   if (!m_annSource)
+      return;
+
+   AtpConfig& config = AtpConfig::instance();
+   int d = 1 ;
+
+   for (auto &p : features)
+   {
+      // For each correlation, draw +, scaling to the size of the annotated image:
+      p *= m_annScaleInverse.x;
+      ossimDpt p1 (p.x, p.y-d);
+      ossimDpt p2 (p.x, p.y+d);
+      ossimDpt p3 (p.x-d, p.y);
+      ossimDpt p4 (p.x+1, p.y);
+
+      ossimAnnotationLineObject* line1 = new ossimAnnotationLineObject(p1, p2, r, g, b);
+      ossimAnnotationLineObject* line2 = new ossimAnnotationLineObject(p3, p4, r, g, b);
+
+      m_annSource->addObject(line1);
+      m_annSource->addObject(line2);
    }
 }
 
@@ -158,10 +183,10 @@ void AtpAnnotatedImage::annotateCorrelations(AtpList& atpList, int r, int g, int
       residualMultiplier = 1.0;
 
    ossimDpt refPt, cmpPt, residual;
-   for (size_t i=0; i<atpList.size(); ++i)
+   for (auto &atp : atpList)
    {
       // For each correlation, draw a box, scaling to the size of the annotated image:
-      atpList[i]->getCmpViewPoint(cmpPt);
+      atp->getCmpViewPoint(cmpPt);
       cmpPt *= m_annScaleInverse.x;
 
       ossimIrect box;
@@ -172,7 +197,7 @@ void AtpAnnotatedImage::annotateCorrelations(AtpList& atpList, int r, int g, int
       drawBox(box, r, g, b);
 
       // Draw residual vector:
-      atpList[i]->getVectorResidual(residual);
+      atp->getVectorResidual(residual);
       refPt.x = cmpPt.x - residualMultiplier*residual.x;
       refPt.y = cmpPt.y - residualMultiplier*residual.y;
       ossimRefPtr<ossimAnnotationLineObject> l = new ossimAnnotationLineObject(cmpPt,refPt,r,g,b);
@@ -216,25 +241,25 @@ void AtpAnnotatedImage::annotateFeatureSearchTiles(std::vector<ossimIrect>& sear
 
    ossimDpt pt;
 
-   for (size_t i=0; i<searchTileRects.size(); ++i)
+   for (auto &searchTileRect : searchTileRects)
    {
       ossimIrect box;
 
       // For each search rect, draw a box:
-      pt.x = searchTileRects[i].ul().x;
-      pt.y = searchTileRects[i].ul().y;
+      pt.x = searchTileRect.ul().x;
+      pt.y = searchTileRect.ul().y;
       box.set_ul(pt * m_annScaleInverse.x);
 
-      pt.x = searchTileRects[i].ur().x;
-      pt.y = searchTileRects[i].ur().y;
+      pt.x = searchTileRect.ur().x;
+      pt.y = searchTileRect.ur().y;
       box.set_ur(pt * m_annScaleInverse.x);
 
-      pt.x = searchTileRects[i].lr().x;
-      pt.y = searchTileRects[i].lr().y;
+      pt.x = searchTileRect.lr().x;
+      pt.y = searchTileRect.lr().y;
       box.set_lr(pt * m_annScaleInverse.x);
 
-      pt.x = searchTileRects[i].ll().x;
-      pt.y = searchTileRects[i].ll().y;
+      pt.x = searchTileRect.ll().x;
+      pt.y = searchTileRect.ll().y;
       box.set_ll(pt * m_annScaleInverse.x);
 
       drawBox(box, 200, 255, 100);

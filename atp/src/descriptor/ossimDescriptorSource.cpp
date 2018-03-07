@@ -173,12 +173,13 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
    detector->detect(queryImg, kpA);
    detector->detect(trainImg, kpB);
 
-   CINFO << "\nDETECT:\n  kpA.size = "<<kpA.size() << endl;
-   CINFO << "  kpb.size = "<<kpA.size() << endl;
+   //CINFO<<"\n -- Ref tileRect: "<<refRect<<endl;
+   //CINFO<<"\n -- Cmp tileRect: "<<cmpRect<<endl;
+   CINFO << "DETECTIONS: "<<kpA.size() << ",  "<<kpB.size() << endl;//TODO REMOVE
 
    // Limit strongest detections to max number of features per tile on query image:
    unsigned int maxNumFeatures = config.getParameter("numFeaturesPerTile").asUint();
-   CINFO << "\n numFeatures= "<<maxNumFeatures << endl;
+   //CINFO << "\n numFeatures= "<<maxNumFeatures << endl;
    if (kpA.size() > maxNumFeatures)
    {
       sort(kpA.begin(), kpA.end(), sortFunc);
@@ -196,8 +197,8 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
    // Now perform descriptor computations on remaining features:
    detector->compute(queryImg, kpA, desA);
    detector->compute(trainImg, kpB, desB);
-   CINFO << "\nCOMPUTE:\n  desA.size = "<<desA.size() << endl;
-   CINFO << "  desB.size = "<<desB.size() << endl;
+   //CINFO << "\nCOMPUTE:\n  desA.size = "<<desA.size() << endl;
+   //CINFO << "  desB.size = "<<desB.size() << endl;
 
 #endif
 
@@ -287,7 +288,7 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
    float delta = maxDistance - minDistance;
 
    // Sort the matches in order of strength (i.e., confidence) using stl map:
-   map<double, shared_ptr<AutoTiePoint> > tpMap;
+   multimap<double, shared_ptr<AutoTiePoint> > tpMap;
 
    // Convert the openCV match points to something Atp could understand.
    string sid(""); // Leave blank to have it auto-assigned by CorrelationTiePoint constructor
@@ -322,7 +323,11 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
    }
 
    if (config.diagnosticLevel(2))
-      CINFO<<MODULE<<"Before filtering, num matches in tile = "<<matches.size()<<endl;
+   {
+      CINFO<<"  Detections R,C: "<<kpA.size() << ",  "<<kpB.size() << endl;//TODO REMOVE
+      CINFO<<"  Matches (Before filtering): "<<matches.size()<<endl;
+
+   }
 
    // Now skim off the best matches and copy them to the list being returned:
    unsigned int N = config.getParameter("numFeaturesPerTile").asUint();
@@ -336,7 +341,7 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
    }
 
    if (config.diagnosticLevel(2))
-      CINFO<<MODULE<<"After capping to max num features ("<<N<<"), num TPs in tile = "<<n<<endl;
+      CINFO<<"  After capping to max num features ("<<N<<"), num TPs in tile = "<<n<<endl;
 
    return m_tile;
 }

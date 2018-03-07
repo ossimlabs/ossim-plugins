@@ -258,14 +258,17 @@ bool AtpGeneratorBase::getValidVertices(ossimRefPtr<ossimImageChain> chain,
                                         ossimRefPtr<ossimImageViewProjectionTransform>& ivt,
                                         std::vector<ossimDpt>& validVertices)
 {
+   validVertices.clear();
+
    // Need to establish the valid image vertices for establishing overlap polygon. Compute in
    // image space then transform the vertices to view space:
    if (!chain)
       return false;
-   ossimImageHandler* handler = dynamic_cast<ossimImageHandler*>(chain->getLastSource());
+   ossimImageHandler *handler = dynamic_cast<ossimImageHandler *>(chain->getLastSource());
    if (!handler)
       return false;
 
+   // Check if there is already a vertices file alongside the image:
    if (handler->openValidVertices())
    {
       vector<ossimIpt> iverts;
@@ -273,25 +276,43 @@ bool AtpGeneratorBase::getValidVertices(ossimRefPtr<ossimImageChain> chain,
       for (const auto &vert : iverts)
          validVertices.emplace_back(vert);
    }
-   else
+
+   if (validVertices.empty())
    {
-      ossimFilename verticesFile (handler->createDefaultValidVerticesFilename());
-      ossimRefPtr<ossimVertexExtractor> ve = new ossimVertexExtractor(handler);
-      ve->setOutputName(verticesFile);
-      ve->setAreaOfInterest(handler->getBoundingRect(0));
-      ve->execute();
-      const vector<ossimIpt>& iverts = ve->getVertices();
-      for (const auto &vert : iverts)
-         validVertices.emplace_back(vert);
+      // If the projection is a sensor model, then assume that the four image-space coordinates are
+      // valid image coordinates.
+      ossimRefPtr<ossimImageGeometry> geom = handler->getImageGeometry();
+      if (geom)
+      {
+         if (dynamic_cast<ossimSensorModel*>(geom->getProjection()))
+         {
+            ossimIrect rect (handler->getBoundingRect());
+            validVertices.emplace_back(rect.ul());
+            validVertices.emplace_back(rect.ur());
+            validVertices.emplace_back(rect.lr());
+            validVertices.emplace_back(rect.ll());
+         }
+      }
+
+      if (validVertices.empty())
+      {
+         ossimFilename verticesFile(handler->createDefaultValidVerticesFilename());
+         ossimRefPtr<ossimVertexExtractor> ve = new ossimVertexExtractor(handler);
+         ve->setOutputName(verticesFile);
+         ve->setAreaOfInterest(handler->getBoundingRect(0));
+         ve->execute();
+         const vector<ossimIpt> &iverts = ve->getVertices();
+         for (const auto &vert : iverts)
+            validVertices.emplace_back(vert);
+      }
    }
 
    // The image vertices are necessarily in image space coordinates. Need to transform to a common
    // "view" space before determining the overlap polygon:
-   ossimDpt ipt, vpt;
+   ossimDpt vpt;
    for (auto &vertex : validVertices)
    {
-      ipt = vertex;
-      ivt->imageToView(ipt, vpt);
+      ivt->imageToView(vertex, vpt);
       vertex = vpt;
    }
 
@@ -328,17 +349,22 @@ bool AtpGeneratorBase::generateTiePointList(TiePointList& atpList)
    // for correlating. The search tiles were previously established in the base class initialization
    ossimRefPtr<ossimImageData> ref_tile = 0;
    ossim_int64 tileId = 0;
-   for (int tileIdx=0; tileIdx<m_searchTileRects.size(); ++tileIdx)
+   for (auto &searchTileRect : m_searchTileRects)
    {
-      ref_tile = m_atpTileSource->getTile(m_searchTileRects[tileIdx]);
-      if (ref_tile->getDataObjectStatus() == OSSIM_EMPTY)
+      ref_tile = m_atpTileSource->getTile(searchTileRect);
+      //if (ref_tile->getDataObjectStatus() == OSSIM_EMPTY)
+      //{
+      //   if (config.diagnosticLevel(5))
+      //      CWARN<<MODULE<<"WARNING: Empty search tile returned from CorrelationSource."<<endl;
+      //   continue;
+      //}
+
+      AtpList &tileATPs = m_atpTileSource->getTiePoints();
+      if (tileATPs.empty() && config.diagnosticLevel(1))
       {
-         if (config.diagnosticLevel(3))
-            CWARN<<MODULE<<"WARNING: Empty search tile returned from CorrelationSource."<<endl;
+         CINFO << "\n" << MODULE << "No TPs found in tile." << endl;
          continue;
       }
-
-      AtpList& tileATPs = m_atpTileSource->getTiePoints();
 
       if (config.diagnosticLevel(3))
       {
@@ -347,21 +373,24 @@ bool AtpGeneratorBase::generateTiePointList(TiePointList& atpList)
          m_annotatedCmpImage->annotateCorrelations(tileATPs, 255, 0, 0);
       }
 
-      filterBadMatches(tileATPs);
-      if (config.diagnosticLevel(3))
+      if (!config.getParameter("useRasterMode").asBool())
       {
-         // Annotate yellow before pruning:
-         m_annotatedRefImage->annotateResiduals(tileATPs, 255, 255, 0);
-         m_annotatedCmpImage->annotateCorrelations(tileATPs, 255, 255, 0);
+         filterBadMatches(tileATPs);
+         if (config.diagnosticLevel(3))
+         {
+            // Annotate yellow before pruning:
+            m_annotatedRefImage->annotateResiduals(tileATPs, 255, 255, 0);
+            m_annotatedCmpImage->annotateCorrelations(tileATPs, 255, 255, 0);
+         }
+
+         pruneList(tileATPs);
+
+         if (config.diagnosticLevel(2))
+            CINFO << MODULE << "After filtering: num TPs in tile = " << tileATPs.size() << endl;
       }
 
-      pruneList(tileATPs);
-
-      if (config.diagnosticLevel(2))
-         CINFO<<MODULE<<"After filtering: num TPs in tile = "<<tileATPs.size()<<endl;
-
       // Add remaining tile CTPs to master CTP list:
-      if (tileATPs.size())
+      if (!tileATPs.empty())
          atpList.insert(atpList.end(), tileATPs.begin(), tileATPs.end());
 
       if (config.diagnosticLevel(3))
@@ -430,7 +459,6 @@ void AtpGeneratorBase::layoutSearchTileRects(ossimPolygon& intersectPoly)
    ossimIrect aoiRect;
    intersectPoly.getBoundingRect(aoiRect);
    int side_length = (int) config.getParameter("featureSearchTileSize").asUint();
-   int nx, ny; // Number of tiles in x and y directions
    int dx, dy; // tile width and height
    int aoiWidth = aoiRect.width();
    int aoiHeight = aoiRect.height();
@@ -547,39 +575,54 @@ void AtpGeneratorBase::filterBadMatches(AtpList& tpList)
    }
 }
 
-void AtpGeneratorBase::pruneList(AtpList& tpList)
+void AtpGeneratorBase::pruneList(AtpList& atps)
 {
    const char* MODULE = "AtpGeneratorBase::pruneList()  ";
-   multimap<double, shared_ptr<AutoTiePoint> > atpMap;
+
+   AtpConfig &config =  AtpConfig::instance();
+   if (config.getParameter("useRasterMode").asBool())
+   {
+      // For raster mode, simply remove entries with no match:
+      auto atp = atps.begin();
+      while (atp != atps.end())
+      {
+         if (*atp && (*atp)->hasValidMatch())
+            ++atp;
+         else
+            atp = atps.erase(atp);
+      }
+      return;
+   }
 
    // Use a map to sort by confidence measure:
-   AtpList::iterator iter = tpList.begin();
+   multimap<double, shared_ptr<AutoTiePoint> > atpMap;
+   auto atp = atps.begin();
    double confidence;
-   while (iter != tpList.end())
+   while (atp != atps.end())
    {
-      if (!(*iter)) // Should never happen
+      if (!(*atp)) // Should never happen
       {
          CWARN<<MODULE<<"WARNING: Null AutoTiePoint encountred in list. Skipping point."<<endl;
-         ++iter;
+         ++atp;
          continue;
       }
 
       // The "tiepoint" may not have any matches -- it may be just a feature:
-      bool hasValidMatch = (*iter)->getConfidenceMeasure(confidence);
+      bool hasValidMatch = (*atp)->getConfidenceMeasure(confidence);
       if (hasValidMatch)
-         atpMap.emplace(1.0/confidence, *iter);
+         atpMap.emplace(1.0/confidence, *atp);
 
-      iter++;
+      atp++;
    }
 
    // Skim off the top best:
-   unsigned int N =  AtpConfig::instance().getParameter("numTiePointsPerTile").asUint();
-   tpList.clear();
+   unsigned int N = config.getParameter("numTiePointsPerTile").asUint();
+   atps.clear();
    multimap<double, shared_ptr<AutoTiePoint> >::iterator tp = atpMap.begin();
    while (tp != atpMap.end())
    {
-      tpList.push_back(tp->second);
-      if (tpList.size() == N)
+      atps.push_back(tp->second);
+      if (atps.size() == N)
          break;
       tp++;
    }

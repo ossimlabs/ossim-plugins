@@ -54,8 +54,8 @@
          "name": "resamplingMethod",
          "descr": "Selects the type of resampler to use for reprojection. Can be ",
          "type": "string",
-         "value": "cubic",
-         "allowedValues": ["cubic", "bilinear", "nearest_neighbor", "box", "gaussian"]
+         "value": "bilinear",
+         "allowedValues": ["bilinear", "cubic", "nearest_neighbor", "box", "gaussian"]
       },
       {
          "label": "Use Harris Corner Detector",

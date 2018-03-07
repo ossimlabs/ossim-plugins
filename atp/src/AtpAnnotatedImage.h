@@ -36,6 +36,7 @@ public:
    void setImageName(const std::string& name) { m_annFilename = name; }
 
    void annotateFeatureSearchTiles(std::vector<ossimIrect>& tileRects);
+   void annotateFeatures(std::vector<ossimDpt>& atpList, int r, int g, int b);
    void annotateCorrelations(AtpList& atpList, int r, int g, int b);
    void annotateCorrelationSearchTile(const ossimIrect& tileRect);
    void annotateOverlap(ossimPolygon& poly);

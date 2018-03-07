@@ -101,7 +101,7 @@ protected:
    void filterBadMatches(AtpList& tpList);
 
    //! Caps the max number of TPs given the list, which is the list of filtered TPs for the tile.
-   void pruneList(AtpList& tpList);
+   void pruneList(AtpList& atps);
 
 
    std::shared_ptr<ossim::Image> m_refImage;

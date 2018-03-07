@@ -316,7 +316,6 @@ void ossimAtpTool::doPairwiseMatching()
    // First obtain list of images from photoblock:
    std::vector<shared_ptr<Image> >& imageList = m_photoBlock->getImageList();
    int numImages = (int) imageList.size();
-   int numPairs = (numImages * (numImages-1))/2; // triangular number assumes all overlap
    for (int i=0; i<(numImages-1); i++)
    {
       shared_ptr<Image> imageA = imageList[i];

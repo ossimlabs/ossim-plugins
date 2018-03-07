@@ -161,6 +161,12 @@ void ossimDemTool::loadJSON(const Json::Value& queryRoot)
       m_method = GET_PARAMS;
 
    m_outputDemFile = queryRoot["filename"].asString();
+   if (m_outputDemFile.empty())
+   {
+      m_outputDemFile = "dem-result";
+      m_outputDemFile.appendTimestamp();
+      m_outputDemFile.setExtension("tif");
+   }
 
    // Fetch the desired algorithm or configuration:
    JsonConfig& config = ossimDemToolConfig::instance();
@@ -334,13 +340,6 @@ void ossimDemTool::doASP()
    for (const auto &rpcFilename : rpcFilenameList)
       cmd << " " <<rpcFilename;
 
-   // Establish output DEM directory name:
-   if (m_outputDemFile.empty())
-   {
-      m_outputDemFile = "asp-result";
-      m_outputDemFile.appendTimestamp();
-   }
-
    cmd<<" "<<m_outputDemFile<<ends;
    cout << "\nSpawning command: "<<cmd.str()<<endl;
    if (system(cmd.str().c_str()))
@@ -376,6 +375,7 @@ void ossimDemTool::doOMG()
    atpJson["method"] = "generate";
    m_photoBlock->saveJSON(atpJson["photoblock"]);
    atpJson["parameters"] = m_atpParameters;
+   CINFO<<atpJson<<endl; //TODO REMOVE
    atpTool->loadJSON(atpJson);
 
    // Generate dense tiepoint field:
@@ -442,6 +442,7 @@ void ossimDemTool::doOMG()
    }
 
    // Need to populate response JSON with product filepath and statistics
+   m_responseJSON["file"] = m_outputDemFile.string();
 }
 
 

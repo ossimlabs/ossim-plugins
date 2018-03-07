@@ -44,7 +44,7 @@ void ossimCorrelationSource::initialize()
 
    unsigned int refPatchSize = AtpConfig::instance().getParameter("corrWindowSize").asUint(); // min distance between points
    m_nominalCmpPatchSize = DEFAULT_CMP_PATCH_SIZING_FACTOR*refPatchSize;
-
+   double total_error = 0;
    if (m_refIVT && m_cmpIVT)
    {
       ossimDpt gsd = m_refIVT->getOutputMetersPerPixel();
@@ -59,13 +59,11 @@ void ossimCorrelationSource::initialize()
       {
          double ref_ce = ref_sm->getNominalPosError();
          double cmp_ce = cmp_sm->getNominalPosError();
-         double total_error = ref_ce + cmp_ce; // meters -- being conservative here and not doing rss
-         ossimDpt gsd = m_refIVT->getOutputMetersPerPixel();
-         double nominalGsd = (gsd.x + gsd.y)/2.0;
-         double searchSizePixels = 2.0*total_error/nominalGsd;
+         total_error = ref_ce + cmp_ce; // meters -- being conservative here and not doing rss
+         double searchSizePixels = 2.0 * total_error / nominalGsd;
          m_nominalCmpPatchSize = refPatchSize + searchSizePixels;
       }
-      else
+      if (total_error == 0)
       {
          double searchSizePixels = 2.0*DEFAULT_NOMINAL_POSITION_ERROR/nominalGsd;
          m_nominalCmpPatchSize = refPatchSize + searchSizePixels;
@@ -88,11 +86,12 @@ ossimRefPtr<ossimImageData> ossimCorrelationSource::getTile(const ossimIrect& ti
    string sid(""); // Leave blank to have it auto-assigned by AutoTiePoint constructor
    if (!config.getParameter("useRasterMode").asBool())
    {
-      // Need to search for features in the REF tile first, then consider only those locations
-      // for correlating:
       m_tile = m_refChain->getTile(tileRect, resLevel);
       if (m_tile->getDataObjectStatus() == OSSIM_EMPTY)
          return m_tile;
+
+      // Need to search for features in the REF tile first, then consider only those locations
+      // for correlating:
       vector<ossimIpt> featurePoints;
       ossimRefPtr<ossimImageData> tileptr (m_tile);
 
@@ -101,7 +100,6 @@ ossimRefPtr<ossimImageData> ossimCorrelationSource::getTile(const ossimIrect& ti
          return m_tile;
 
       // Loop over features to perform correlations:
-      int numMatches = 0;
       for (size_t i=0; i<featurePoints.size(); ++i)
       {
          shared_ptr<ATP::AutoTiePoint> atp (new ATP::AutoTiePoint(this, sid));
@@ -118,26 +116,15 @@ ossimRefPtr<ossimImageData> ossimCorrelationSource::getTile(const ossimIrect& ti
          {
             m_tiePoints.push_back(atp);
             sid.clear();
-            numMatches++;
          }
       }
       if (config.diagnosticLevel(2))
-         CINFO<<MODULE<<"Before filtering: num matches in tile = "<<numMatches<<endl;
+         CINFO<<MODULE<<"Before filtering: num matches in tile = "<<m_tiePoints.size()<<endl;
    }
    else // raster mode
    {
-      if(!m_tile.get())
-      {
-         // try to initialize
-         initialize();
-         if(!m_tile.get())
-            return m_tile; // NULL
-      }
-
-      m_tile->setImageRectangle(tileRect);
-      m_tile->makeBlank();
-
      // Scan raster-fashion along REF tile and correlate at intervals:
+      unsigned int num_attempts = 0;
       int corrStepSize = 1;
       if (config.paramExists("corrStepSize"))
          corrStepSize = (int) config.getParameter("corrStepSize").asUint();
@@ -145,16 +132,23 @@ ossimRefPtr<ossimImageData> ossimCorrelationSource::getTile(const ossimIrect& ti
       {
          for (int x = tileRect.ul().x; x < tileRect.lr().x; x += corrStepSize)
          {
-            ossimDpt viewPt(x, y);
+            ++num_attempts;
             shared_ptr<AutoTiePoint> atp (new AutoTiePoint(this, sid));
+            atp->setRefViewPt(ossimDpt(x,y));
 
              // Trick here to keep using the same ID until a good correlation is found:
             if (!correlate(atp))
                sid = atp->getTiePointId();
             else
+            {
+               m_tiePoints.push_back(atp);
                sid.clear();
+            }
          }
       }
+      if (config.diagnosticLevel(2))
+         CINFO<<MODULE<<"Tile match ratio: "<<m_tiePoints.size()<<" / "<<num_attempts<<endl;
+
    }
    return m_tile;
 }
@@ -307,7 +301,8 @@ bool ossimCorrelationSource::correlate(shared_ptr<AutoTiePoint> atp)
    ossimDataObjectStatus stat = refpatch->getDataObjectStatus();
    if (stat != OSSIM_FULL)
    {
-      //CINFO<<MODULE << "REF patch contained a null pixel. Skipping this point..."<<endl;
+      if (config.diagnosticLevel(5))
+         CINFO<<MODULE << "REF patch contained a null pixel. Skipping this point..."<<endl;
       return false;
    }
 
@@ -315,6 +310,12 @@ bool ossimCorrelationSource::correlate(shared_ptr<AutoTiePoint> atp)
    if (!cmppatch.valid())
    {
       CWARN << MODULE << "Error getting cmp patch image data." << endl;
+      return false;
+   }
+   if (cmppatch->getDataObjectStatus() != OSSIM_FULL)
+   {
+      if (config.diagnosticLevel(5))
+         CINFO<<MODULE << "CMP patch contained a null pixel. Skipping this point..."<<endl;
       return false;
    }
 
@@ -335,7 +336,7 @@ bool ossimCorrelationSource::correlate(shared_ptr<AutoTiePoint> atp)
    // The peaks for the given patch pair have been established and stored in the TPs.
    if (corr_ok)
    {
-      if (config.diagnosticLevel(5))
+      if (config.diagnosticLevel(4))
       {
          if (numMatches)
          {
@@ -429,16 +430,16 @@ bool ossimCorrelationSource::OpenCVCorrelation(std::shared_ptr<AutoTiePoint> atp
    unsigned int corrMethod = config.getParameter("correlationMethod").asUint();
    cvMatchTemplate(cmpimage, refimage, result, (int) corrMethod);
 
-   //if (config.diagnosticLevel(5) )
-   //{
-   //   refpatch->write("ref.ras");
-   //   cmppatch->write("cmp.ras");
-   //   ossimRefPtr<ossimImageData> resultPatch =
-   //           ossimImageDataFactory::instance()->create(this, OSSIM_UINT8, 1, resdim.width, resdim.height);
-   //   resultPatch->initialize();
-   //   copyIpl32ToOid(result, resultPatch.get());
-   //   resultPatch->write("result.ras");
-   //}
+   if (config.diagnosticLevel(5) )
+   {
+      //refpatch->write("ref.ras");
+      //cmppatch->write("cmp.ras");
+      ossimRefPtr<ossimImageData> resultPatch =
+              ossimImageDataFactory::instance()->create(this, OSSIM_UINT8, 1, resdim.width, resdim.height);
+      resultPatch->initialize();
+      copyIpl32ToOid(result, resultPatch.get());
+      resultPatch->write("CORR.RAS");
+   }
    ossimIpt cmpPeakLocV;
    float corrCoef;
 
