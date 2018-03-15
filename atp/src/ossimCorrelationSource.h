@@ -15,14 +15,9 @@
 #include <memory>
 namespace ATP
 {
-//*************************************************************************************************
-//  CLASS DESCRIPTION:
-//! A tile source that manages the feature correlation between two images (hence a combiner).
-//! This class establishes correlations and corresponding residuals for the requested tile rect.
-//! NOTE: All references to pixel coordinates in this class are assumed to be in
-//! output projection (view) space. The primary product of this class is a list of
-//! CorrelationTiePoint objects, each representing a set of correlation peaks for each feature.
-//*************************************************************************************************
+/**
+ * Finds auto-tie-points using the corss-correlation-based matching algorithm
+ */
 class OSSIMDLLEXPORT ossimCorrelationSource : public AtpTileSource
 {
 public:
@@ -45,9 +40,6 @@ protected:
 
    bool correlate(std::shared_ptr<AutoTiePoint> atp);
 
-   //! Called by correlate(), correlates two image patches using OpenCV imaging functions.
-   //! Returns true if correlation was successful (this doesn't mean there were peaks, just that it
-   //! worked). Returns false on failure.
    bool OpenCVCorrelation(std::shared_ptr<AutoTiePoint> atp,
                           const ossimImageData*  refpatch,
                           const ossimImageData*  cmppatch);

@@ -20,15 +20,11 @@
 namespace ATP
 {
 
-//*************************************************************************************************
-//  CLASS DESCRIPTION:
-//! A tile source that manages the feature correlation between two images (hence a combiner).
-//! This class establishes correlations and corresponding residuals for the requested tile rect.
-//! NOTE: All references to pixel coordinates in this class are assumed to be in
-//! output projection (view) space. The primary product of this class is a list of
-//! CorrelationTiePoint objects, each representing a set of correlation peaks for each feature.
-//*************************************************************************************************
-class OSSIMDLLEXPORT AtpTileSource : public ossimImageCombiner
+/**
+ * Base class for tile sources performing auto tie point extraction. Implemented as a combiner that
+ * establishes the overlap between input sources, and computes tie-points in the getTile() call.
+ */
+ class OSSIMDLLEXPORT AtpTileSource : public ossimImageCombiner
 {
 public:
    AtpTileSource();
@@ -39,10 +35,12 @@ public:
 
    virtual void initialize();
 
-   /** Derived classes implement their particular tiepoint matching algorithms for the requested
+   /**
+    * Derived classes implement their particular tiepoint matching algorithms for the requested
     * tile. It is not clear what the output tile needs to be, since the product of this filter
     * is the list of tiepoints (available through the getTiePoints() method). Recommend simply
-    * passing through the corresponding REF image tile. */
+    * passing through the corresponding REF image tile.
+    */
    virtual ossimRefPtr<ossimImageData> getTile(const ossimIrect& origin, ossim_uint32 rLevel=0) = 0;
 
    /** This list resets with every getTile() call , so make sure tiepoints from previous getTile()

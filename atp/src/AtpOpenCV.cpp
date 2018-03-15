@@ -22,11 +22,6 @@ namespace ATP
    #define NUM_BYTES_PER_PIXEL 2
 #endif
 
-//*************************************************************************************************
-//! Converts an ossimImageData pointer to an IplImage for use in OpenCV.
-//! Warning: This function allocates memory, all non-null pointers should be
-//! free'd using cvReleaseImage.
-//*************************************************************************************************
 IplImage *convertToIpl(const ossimImageData* data)
 {
    IplImage *ret=NULL;
@@ -92,9 +87,6 @@ IplImage *convertToIpl32(const ossimImageData* data)
    return ret32bit;
 }
 
-//*************************************************************************************************
-//! Converts an IPL 32-bit image to an ossimImageData object:
-//*************************************************************************************************
 void copyIpl32ToOid(IplImage* ipl, ossimImageData* oid)
 {
    //IplImage *tmp8bit;
@@ -107,9 +99,6 @@ void copyIpl32ToOid(IplImage* ipl, ossimImageData* oid)
    copyIplToOid(indata, oid);
 }
 
-//*************************************************************************************************
-//! Converts an IPL X-bit image to an ossimImageData object:
-//*************************************************************************************************
 void copyIplToOid(IplImage* ipl, ossimImageData* oid)
 {
    const PIXEL_TYPE *iplptr = (const PIXEL_TYPE*) ipl->imageData;

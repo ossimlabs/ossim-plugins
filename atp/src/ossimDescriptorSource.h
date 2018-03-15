@@ -17,14 +17,9 @@
 
 namespace ATP
 {
-//*************************************************************************************************
-//  CLASS DESCRIPTION:
-//! A tile source that manages the feature correlation between two images (hence a combiner).
-//! This class establishes correlations and corresponding residuals for the requested tile rect.
-//! NOTE: All references to pixel coordinates in this class are assumed to be in
-//! output projection (view) space. The primary product of this class is a list of
-//! DescriptorTiePoint objects, each representing a set of correlation peaks for each feature.
-//*************************************************************************************************
+/**
+ * Finds auto-tie-points using the descriptor-based matching algorithm
+ */
 class OSSIMDLLEXPORT ossimDescriptorSource : public AtpTileSource
 {
 public:
