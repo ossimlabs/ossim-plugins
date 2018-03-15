@@ -53,9 +53,9 @@
          "allowedValues": ["NORM_L1", "NORM_L2", "NORM_HAMMING"]
       },
       {
-         "label": "K",
          "name": "k",
-         "descr": "DEPRECATED. Use \"maxNumMatchesPerFeature\" instead.",
+         "descr": "
+         CATED. Use \"maxNumMatchesPerFeature\" instead.",
          "type": "uint",
          "value": 1
       }
