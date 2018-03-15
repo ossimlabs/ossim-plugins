@@ -155,6 +155,7 @@ protected:
    static double      s_maxDiffRatio;
    static double      s_cosMaxAngleDiff;
    static double      s_minVectorResDiff;
+   static unsigned int s_minNumConsistent;
 };
 
 typedef std::vector< std::shared_ptr<AutoTiePoint> > AtpList;

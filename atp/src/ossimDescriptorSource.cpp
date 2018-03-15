@@ -6,8 +6,8 @@
 //**************************************************************************************************
 
 #include "ossimDescriptorSource.h"
-#include "../AtpOpenCV.h"
-#include "../../AtpCommon.h"
+#include "AtpOpenCV.h"
+#include "atp/AtpCommon.h"
 #include <ossim/imaging/ossimImageDataFactory.h>
 
 #include <opencv2/xfeatures2d.hpp>
@@ -27,7 +27,7 @@ ossimDescriptorSource::ossimDescriptorSource(ossimConnectableObject::Connectable
    initialize();
 }
 
-ossimDescriptorSource::ossimDescriptorSource(AtpGeneratorBase* generator)
+ossimDescriptorSource::ossimDescriptorSource(AtpGenerator* generator)
 : AtpTileSource(generator)
 {
 }

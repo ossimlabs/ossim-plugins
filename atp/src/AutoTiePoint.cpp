@@ -19,6 +19,7 @@ bool   AutoTiePoint::s_initialized = false;
 double AutoTiePoint::s_maxDiffRatio = 1.0;
 double AutoTiePoint::s_cosMaxAngleDiff = 0;
 double AutoTiePoint::s_minVectorResDiff = 0;
+unsigned int AutoTiePoint::s_minNumConsistent = 3;
 
 AutoTiePoint::AutoTiePoint()
 : m_relativeError(0),
@@ -215,14 +216,13 @@ bool AutoTiePoint::checkConsistency(const AtpList& ctpList)
    }
 
    // Decide if this peak was good or out there:
-   unsigned int n = config.getParameter("minNumConsistentNeighbors").asUint();
    unsigned int percentConsistentThreshold =
          config.getParameter("percentConsistentThreshold").asUint();
    unsigned int p = (unsigned int)
          ceil(percentConsistentThreshold*(ctpList.size()-1)/100);
    if (p == 0)
       p = 1;
-   unsigned int min_num_consistent_neighbors = (n > p ? n : p);
+   unsigned int min_num_consistent_neighbors = (s_minNumConsistent > p ? s_minNumConsistent : p);
    if (num_consistent_neighbors < min_num_consistent_neighbors)
       return false;
 
@@ -294,40 +294,25 @@ bool AutoTiePoint::hasValidMatch() const
 
 bool AutoTiePoint::residualsAreConsistent(const ossimDpt& R1)
 {
-   double cos_theta, mag_ratio;
+   // Check for simple minimum vector difference:
+   double diff = (m_residual-R1).length();
+   if (diff < s_minVectorResDiff)
+      return true;
+
+   double cos_theta=1.0, mag_ratio=0;
 
    // Compute angle and magnitude ratio between residuals. Note no check for valid peak:
    double r0 = m_residual.length();
    double r1 = R1.length();
-   double diff = (m_residual-R1).length();
-   if (r1 == 0.0)
-   {
-      cos_theta = 0;
-      if (r0 == 0.0)
-         mag_ratio = 1.0;
-      else
-         mag_ratio = OSSIM_DEFAULT_MAX_PIX_DOUBLE;
-   }
-   else if (r0 == 0.0)
-   {
-      cos_theta = 0;
-      if (r1 == 0.0)
-         mag_ratio = OSSIM_DEFAULT_MAX_PIX_DOUBLE;
-      else
-         mag_ratio = 1.0;
-   }
-   else
-   {
-      mag_ratio = 2.0*fabs(r1-r0)/(r0+r1);
+   mag_ratio = 2.0*fabs(r1-r0)/(r0+r1);
+   if ((r1 > 0.0) && (r0 > 0.0))
       cos_theta = (m_residual.x*R1.x + m_residual.y*R1.y)/(r0*r1);
-   }
 
    // Test for consistency with this neighbor's peak:
-   bool isConsistent = false;
-   if ((diff<s_minVectorResDiff)||((mag_ratio<s_maxDiffRatio)&&(cos_theta>s_cosMaxAngleDiff)))
-      isConsistent = true;
+   if ((mag_ratio < s_maxDiffRatio) && (cos_theta > s_cosMaxAngleDiff))
+      return true;
 
-   return isConsistent;
+   return false;
 }
 
 void AutoTiePoint::initializeStaticMembers()
@@ -336,7 +321,7 @@ void AutoTiePoint::initializeStaticMembers()
    s_maxDiffRatio = config.getParameter("maxResMagDiffRatio").asFloat();
    if (ossim::isnan(s_maxDiffRatio) || (s_maxDiffRatio == 0))
    {
-      CWARN<<"AutoTiePoint::residualsAreConsistent() -- Bad parameters found in config: "
+      CWARN<<"AutoTiePoint::residualsAreConsistent() -- Bad or missing parameter in config: "
             "maxResMagDiffRatio = "<<s_maxDiffRatio<<". Defaulting to 0.1."<<endl;
       s_maxDiffRatio = 0.1;
    }
@@ -344,7 +329,7 @@ void AutoTiePoint::initializeStaticMembers()
    double theta = config.getParameter("maxResAngleDiff").asFloat();
    if (ossim::isnan(theta) || (theta <= 0))
    {
-      CWARN<<"AutoTiePoint::residualsAreConsistent() -- Bad parameters found in config: "
+      CWARN<<"AutoTiePoint::residualsAreConsistent() -- Bad or missing parameter in config: "
             "maxAngleDiff = "<<theta<<". Defaulting to 10 deg."<<endl;
       theta = 10.0;
    }
@@ -353,10 +338,19 @@ void AutoTiePoint::initializeStaticMembers()
    s_minVectorResDiff = config.getParameter("minVectorResDiff").asFloat();
    if (ossim::isnan(s_minVectorResDiff) || (s_minVectorResDiff < 1.0))
    {
-      CWARN<<"AutoTiePoint::residualsAreConsistent() -- Bad parameters found in config: "
+      CWARN<<"AutoTiePoint::residualsAreConsistent() -- Bad or missing parameter in config: "
             "minVectorResDiff = "<<s_minVectorResDiff<<". Defaulting to 1.0."<<endl;
       s_minVectorResDiff = 1.0;
    }
+
+   s_minNumConsistent = config.getParameter("minNumConsistentNeighbors").asUint();
+   if (s_minNumConsistent == 0)
+   {
+      CWARN<<"AutoTiePoint::residualsAreConsistent() -- Bad or missing parameter in config: "
+              "minNumConsistentNeighbors = "<<s_minNumConsistent<<". Defaulting to 3.0."<<endl;
+      s_minNumConsistent = 3.0;
+   }
+
    s_initialized = true;
 }
 

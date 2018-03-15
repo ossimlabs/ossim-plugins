@@ -5,7 +5,6 @@
 //
 //**************************************************************************************************
 #include "../src/AtpConfig.h"
-#include "../src/correlation/CorrelationAtpGenerator.h"
 #include <ossim/init/ossimInit.h>
 
 using namespace std;

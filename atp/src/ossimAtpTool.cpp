@@ -7,22 +7,11 @@
 
 #include "ossimAtpTool.h"
 #include "../AtpCommon.h"
-#include <math.h>
-#include "correlation/CorrelationAtpGenerator.h"
-#include "descriptor/DescriptorAtpGenerator.h"
-#include <ossim/base/ossimException.h>
-#include <ossim/base/ossimGpt.h>
-#include <ossim/base/ossimEcefPoint.h>
-#include <ossim/base/ossimArgumentParser.h>
+#include "AtpGenerator.h"
+#include "AtpConfig.h"
+#include "ossimCorrelationSource.h"
+#include "ossimDescriptorSource.h"
 #include <ossim/base/ossimApplicationUsage.h>
-#include <ossim/base/ossimKeywordNames.h>
-#include <ossim/base/ossimException.h>
-#include <ossim/base/ossimNotify.h>
-#include <ossim/base/ossimException.h>
-#include <cstdlib>
-#include <iostream>
-#include <memory>
-#include <sstream>
 
 using namespace std;
 using namespace ossim;
@@ -37,7 +26,7 @@ ossimAtpTool::ossimAtpTool()
 : m_outputStream (0),
   m_verbose (false),
   m_featureBased (true),
-  m_algorithm (ALGO_UNASSIGNED),
+  m_algorithm (0),
   m_method (METHOD_UNASSIGNED)
 {
 }
@@ -172,13 +161,13 @@ void ossimAtpTool::loadJSON(const Json::Value& queryRoot)
 
    // Assign enum data member used throughout the service:
    if (algorithm == "crosscorr")
-      m_algorithm = CROSSCORR;
+      m_algorithm = (unsigned int) AtpGenerator::CROSSCORR;
    else if (algorithm == "descriptor")
-      m_algorithm = DESCRIPTOR;
+      m_algorithm = (unsigned int) AtpGenerator::DESCRIPTOR;
    else if (algorithm == "nasa")
-      m_algorithm = NASA;
+      m_algorithm = (unsigned int) AtpGenerator::NASA;
    else
-      m_algorithm = ALGO_UNASSIGNED;
+      m_algorithm = (unsigned int) AtpGenerator::ALGO_UNASSIGNED;
 
    // If parameters were provided in the JSON payload, have the config override the defaults:
    const Json::Value& parameters = queryRoot["parameters"];
@@ -284,15 +273,15 @@ void ossimAtpTool::generate()
 
    switch (m_algorithm)
    {
-   case CROSSCORR:
-   case DESCRIPTOR:
+   case (unsigned int) AtpGenerator::CROSSCORR:
+   case (unsigned int) AtpGenerator::DESCRIPTOR:
       doPairwiseMatching();
       break;
-   case NASA:
+   case (unsigned int) AtpGenerator::NASA:
       xmsg << "NASA Algorithm not yet implemented!";
       throw ossimException(xmsg.str());
       break;
-   case ALGO_UNASSIGNED:
+   case (unsigned int) AtpGenerator::ALGO_UNASSIGNED:
    default:
       xmsg << "Fatal: No algorithm selected prior to execute being called. I don't know what to do!";
       throw ossimException(xmsg.str());
@@ -311,7 +300,7 @@ void ossimAtpTool::doPairwiseMatching()
       throw ossimException(xmsg.str());
    }
 
-   shared_ptr<AtpGeneratorBase> generator;
+   shared_ptr<AtpGenerator> generator;
 
    // First obtain list of images from photoblock:
    std::vector<shared_ptr<Image> >& imageList = m_photoBlock->getImageList();
@@ -324,15 +313,7 @@ void ossimAtpTool::doPairwiseMatching()
          shared_ptr<Image> imageB = imageList[j];
 
          // Instantiate the ATP generator for this pair:
-         if (m_algorithm == CROSSCORR)
-            generator.reset(new CorrelationAtpGenerator());
-         else if (m_algorithm == DESCRIPTOR)
-            generator.reset(new DescriptorAtpGenerator());
-         else if (m_algorithm == NASA)
-         {
-            xmsg << "NASA algorithm not yet supported. Cannot perform ATP.";
-            throw ossimException(xmsg.str());
-         }
+         generator.reset(new AtpGenerator((AtpGenerator::Algorithm) m_algorithm));
 
          // Generate tie points using A for features:
          generator->setRefImage(imageA);

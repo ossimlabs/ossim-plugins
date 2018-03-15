@@ -4,10 +4,12 @@
 //     See top level LICENSE.txt file for license information
 //
 //**************************************************************************************************
-#include "AtpGeneratorBase.h"
+#include "AtpGenerator.h"
 #include "AtpConfig.h"
 #include "AtpTileSource.h"
 #include "../AtpCommon.h"
+#include "ossimCorrelationSource.h"
+#include "ossimDescriptorSource.h"
 #include <ossim/imaging/ossimImageHandlerRegistry.h>
 #include <ossim/imaging/ossimImageDataFactory.h>
 #include <ossim/imaging/ossimBandSelector.h>
@@ -22,6 +24,7 @@
 #include <ossim/imaging/ossimLinearStretchRemapper.h>
 #include <ossim/imaging/ossimAnnotationFontObject.h>
 #include <ossim/imaging/ossimHistogramRemapper.h>
+#include <ossim/base/ossimStringProperty.h>
 
 using namespace std;
 using namespace ossim;
@@ -30,31 +33,32 @@ using namespace ossim;
 
 namespace ATP
 {
-std::shared_ptr<AutoTiePoint> AtpGeneratorBase::s_referenceATP;
+std::shared_ptr<AutoTiePoint> AtpGenerator::s_referenceATP;
 
-AtpGeneratorBase::AtpGeneratorBase()
-:   m_refEllipHgt(0)
+AtpGenerator::AtpGenerator(Algorithm algo)
+:   m_algorithm (algo),
+    m_refEllipHgt(0)
 {
 }
 
-AtpGeneratorBase::~AtpGeneratorBase()
+AtpGenerator::~AtpGenerator()
 {
 
 }
 
-void AtpGeneratorBase::setRefImage(shared_ptr<Image> ref_image)
+void AtpGenerator::setRefImage(shared_ptr<Image> ref_image)
 {
    m_refImage = ref_image;
 }
 
-void AtpGeneratorBase::setCmpImage(shared_ptr<Image> cmp_image)
+void AtpGenerator::setCmpImage(shared_ptr<Image> cmp_image)
 {
    m_cmpImage = cmp_image;
 }
 
-void AtpGeneratorBase::initialize()
+void AtpGenerator::initialize()
 {
-   static const char* MODULE=" AtpGeneratorBase::initialize()  ";
+   static const char* MODULE=" AtpGenerator::initialize()  ";
    AtpConfig &config = AtpConfig::instance();
 
    // Initialize the reference ATP containing the static data members used by all ATPs:
@@ -70,7 +74,6 @@ void AtpGeneratorBase::initialize()
       CFATAL<<MODULE<<"Null input chain(s)."<<endl;
       return;
    }
-
 
    if (config.diagnosticLevel(1))
    {
@@ -126,13 +129,39 @@ void AtpGeneratorBase::initialize()
    geoCenter.height(m_refEllipHgt); // Sea level
    ossimElevManager::instance()->setDefaultHeightAboveEllipsoid(m_refEllipHgt);
    ossimElevManager::instance()->setUseGeoidIfNullFlag(true);
+
+   // Now need the algorithm-specific tile source that does the pixel pulling:
+   switch (m_algorithm)
+   {
+   case CROSSCORR:
+      m_atpTileSource = new ossimCorrelationSource(this);
+      break;
+   case DESCRIPTOR:
+      m_atpTileSource = new ossimDescriptorSource(this);
+      break;
+   case NASA:
+   case ALGO_UNASSIGNED:
+   default:
+      CFATAL<<MODULE<<"Unhandled algorithm type."<<endl;
+      return;
+   }
+
+   // Adjust AOI for half-width of correlation window -- this really should only apply to crosscorr,
+   // but descriptors also have a sampling window (just not readily known):
+   int patch_center = (config.getParameter("corrWindowSize").asUint() + 1) / 2;
+   ossimIpt first_pos(m_aoiView.ul().x + patch_center, m_aoiView.ul().y + patch_center);
+   ossimIpt last_pos(m_aoiView.lr().x - patch_center, m_aoiView.lr().y - patch_center);
+   m_aoiView.set_ul(first_pos);
+   m_aoiView.set_lr(last_pos);
+
+   m_atpTileSource->initialize();
 }
 
 ossimRefPtr<ossimImageChain>
-AtpGeneratorBase::constructChain(shared_ptr<Image> image,
+AtpGenerator::constructChain(shared_ptr<Image> image,
                                  ossimRefPtr<ossimImageViewProjectionTransform>& ivt)
 {
-   static const char *MODULE = "AtpGeneratorBase::constructChain()  ";
+   static const char *MODULE = "AtpGenerator::constructChain()  ";
    AtpConfig &config = AtpConfig::instance();
 
    ossimImageHandlerRegistry *factory = ossimImageHandlerRegistry::instance();
@@ -251,10 +280,40 @@ AtpGeneratorBase::constructChain(shared_ptr<Image> image,
    }
 
    ivt = new ossimImageViewProjectionTransform(image_geom.get(), m_viewGeom.get());
+
+   if (m_algorithm == CROSSCORR)
+   {
+      // Need to add a renderer since correlations are done in view-space:
+      ossimImageRenderer* renderer = new ossimImageRenderer;
+      chain->add(renderer);
+      renderer->setImageViewTransform(ivt.get());
+
+      // Set the appropriate resampling filter for ATP. TODO: Need experimentation.
+      ossimString filterType = AtpConfig::instance().getParameter("resamplingMethod").asString();
+      if (filterType.empty())
+         filterType = "bilinear";
+      ossimRefPtr<ossimProperty> p = new ossimStringProperty("filter_type", filterType);
+      renderer->setProperty(p);
+
+      // Add cache after resampler:
+      ossimRefPtr<ossimCacheTileSource> cache = new ossimCacheTileSource();
+      chain->add(cache.get());
+
+      if (AtpConfig::instance().diagnosticLevel(3))
+      {
+         ossimDpt imagePt(1,1);
+         ossimDpt viewPt, rtIpt;
+         ivt->imageToView(imagePt, viewPt);
+         ivt->viewToImage(viewPt, rtIpt);
+         CINFO<<MODULE<<"\n  imagePt: "<<imagePt<<
+              "\n  viewPt: "<<viewPt<<"\n  rtIpt: "<<rtIpt<<endl;
+      }
+
+   }
    return chain;
 }
 
-bool AtpGeneratorBase::getValidVertices(ossimRefPtr<ossimImageChain> chain,
+bool AtpGenerator::getValidVertices(ossimRefPtr<ossimImageChain> chain,
                                         ossimRefPtr<ossimImageViewProjectionTransform>& ivt,
                                         std::vector<ossimDpt>& validVertices)
 {
@@ -319,7 +378,7 @@ bool AtpGeneratorBase::getValidVertices(ossimRefPtr<ossimImageChain> chain,
    return true;
 }
 
-void AtpGeneratorBase::writeTiePointList(ostream& out, const AtpList& tpList)
+void AtpGenerator::writeTiePointList(ostream& out, const AtpList& tpList)
 {
    if (tpList.empty())
    {
@@ -335,9 +394,9 @@ void AtpGeneratorBase::writeTiePointList(ostream& out, const AtpList& tpList)
    }
 }
 
-bool AtpGeneratorBase::generateTiePointList(TiePointList& atpList)
+bool AtpGenerator::generateTiePointList(TiePointList& atpList)
 {
-   const char* MODULE = "AtpGeneratorBase::generateTiePointList()  ";
+   const char* MODULE = "AtpGenerator::generateTiePointList()  ";
    initialize();
 
    if (!m_refChain || !m_cmpChain || !m_atpTileSource)
@@ -414,9 +473,9 @@ bool AtpGeneratorBase::generateTiePointList(TiePointList& atpList)
    return true;
 }
 
-void AtpGeneratorBase::layoutSearchTileRects(ossimPolygon& intersectPoly)
+void AtpGenerator::layoutSearchTileRects(ossimPolygon& intersectPoly)
 {
-   const char* MODULE = "AtpGeneratorBase::layoutSearchTiles()  ";
+   const char* MODULE = "AtpGenerator::layoutSearchTiles()  ";
    AtpConfig& config = AtpConfig::instance();
 
    m_searchTileRects.clear();
@@ -528,9 +587,9 @@ void AtpGeneratorBase::layoutSearchTileRects(ossimPolygon& intersectPoly)
    }
 }
 
-void AtpGeneratorBase::filterBadMatches(AtpList& tpList)
+void AtpGenerator::filterBadMatches(AtpList& tpList)
 {
-   const char* MODULE = "AtpGeneratorBase::filterBadPeaks()  ";
+   const char* MODULE = "AtpGenerator::filterBadPeaks()  ";
 
    // Check for consistency check override:
    AtpConfig& config = AtpConfig::instance();
@@ -575,9 +634,9 @@ void AtpGeneratorBase::filterBadMatches(AtpList& tpList)
    }
 }
 
-void AtpGeneratorBase::pruneList(AtpList& atps)
+void AtpGenerator::pruneList(AtpList& atps)
 {
-   const char* MODULE = "AtpGeneratorBase::pruneList()  ";
+   const char* MODULE = "AtpGenerator::pruneList()  ";
 
    AtpConfig &config =  AtpConfig::instance();
    if (config.getParameter("useRasterMode").asBool())

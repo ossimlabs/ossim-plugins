@@ -7,9 +7,9 @@
 #ifndef ossimDescriptorSource_HEADER
 #define ossimDescriptorSource_HEADER
 
-#include "../AutoTiePoint.h"
-#include "../AtpConfig.h"
-#include "../AtpTileSource.h"
+#include "AutoTiePoint.h"
+#include "AtpConfig.h"
+#include "AtpTileSource.h"
 #include <ossim/base/ossimIrect.h>
 #include <ossim/base/ossimRefPtr.h>
 #include <memory>
@@ -30,7 +30,7 @@ class OSSIMDLLEXPORT ossimDescriptorSource : public AtpTileSource
 public:
    ossimDescriptorSource();
    ossimDescriptorSource(ossimConnectableObject::ConnectableObjectList& inputSources);
-   ossimDescriptorSource(AtpGeneratorBase* generator);
+   ossimDescriptorSource(AtpGenerator* generator);
 
    virtual ~ossimDescriptorSource();
 

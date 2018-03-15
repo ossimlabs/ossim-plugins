@@ -29,7 +29,7 @@ AtpTileSource::AtpTileSource(ossimConnectableObject::ConnectableObjectList& inpu
 {
 }
 
-AtpTileSource::AtpTileSource(AtpGeneratorBase* generator)
+AtpTileSource::AtpTileSource(AtpGenerator* generator)
 :  m_generator(generator),
    m_maxResidualMagnitude(0)
 {

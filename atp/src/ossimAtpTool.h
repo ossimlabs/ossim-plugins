@@ -20,7 +20,6 @@ namespace ATP
 class OSSIM_DLL ossimAtpTool : public ossimTool
 {
 public:
-   enum Algorithm { ALGO_UNASSIGNED=0, CROSSCORR, DESCRIPTOR, NASA };
    enum Method { METHOD_UNASSIGNED=0, GET_ALGO_LIST, GET_PARAMS, GENERATE };
 
    static const char* DESCRIPTION;
@@ -56,7 +55,7 @@ private:
    std::ostream* m_outputStream;
    bool m_verbose;
    bool m_featureBased;
-   Algorithm m_algorithm;
+   unsigned int m_algorithm;
    Method m_method;
    std::string m_configuration;
    Json::Value m_responseJSON;

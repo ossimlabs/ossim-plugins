@@ -29,15 +29,16 @@ namespace ATP
  * support N-way matching with an arbitrary number of input images. The multiple image case is
  * presently handled by the AutoTiePointService.
  */
-class AtpGeneratorBase : public std::enable_shared_from_this<AtpGeneratorBase>
-
+class AtpGenerator : public std::enable_shared_from_this<AtpGenerator>
 {
    friend class AtpTileSource;
 
 public:
-   AtpGeneratorBase();
+   enum Algorithm { ALGO_UNASSIGNED=0, CROSSCORR, DESCRIPTOR, NASA };
 
-   virtual ~AtpGeneratorBase();
+   AtpGenerator(Algorithm algo);
+
+   virtual ~AtpGenerator();
 
    void setRefImage(std::shared_ptr<ossim::Image> ref_image);
    void setCmpImage(std::shared_ptr<ossim::Image> cmp_image);
@@ -73,6 +74,8 @@ public:
    static void writeTiePointList(ostream& out, const AtpList& tpList);
 
 protected:
+   AtpGenerator() : m_algorithm (ALGO_UNASSIGNED), m_refEllipHgt(0) {}
+
    /**
     * Initializes the specific generator. Should be overriden by derived class as needed, though it
     * still needs to be called from the derived initialize() as it initializes the overlap polygon
@@ -104,6 +107,7 @@ protected:
    void pruneList(AtpList& atps);
 
 
+   Algorithm m_algorithm;
    std::shared_ptr<ossim::Image> m_refImage;
    std::shared_ptr<ossim::Image> m_cmpImage;
    ossimRefPtr<AtpTileSource> m_atpTileSource;

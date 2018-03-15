@@ -7,9 +7,9 @@
 #ifndef ossimCorrelationSource_HEADER
 #define ossimCorrelationSource_HEADER
 
-#include "../AutoTiePoint.h"
-#include "../AtpConfig.h"
-#include "../AtpTileSource.h"
+#include "AutoTiePoint.h"
+#include "AtpConfig.h"
+#include "AtpTileSource.h"
 #include <ossim/base/ossimIrect.h>
 #include <ossim/base/ossimRefPtr.h>
 #include <memory>
@@ -28,7 +28,7 @@ class OSSIMDLLEXPORT ossimCorrelationSource : public AtpTileSource
 public:
    ossimCorrelationSource();
    ossimCorrelationSource(ossimConnectableObject::ConnectableObjectList& inputSources);
-   ossimCorrelationSource(AtpGeneratorBase* generator);
+   ossimCorrelationSource(AtpGenerator* generator);
 
    virtual ~ossimCorrelationSource();
 

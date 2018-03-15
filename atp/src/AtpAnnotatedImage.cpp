@@ -31,7 +31,7 @@ AtpAnnotatedImage::AtpAnnotatedImage(ossimRefPtr<ossimImageChain>& sourceChain,
                                      const ossimDrect& aoi)
 :   m_annFilename("annotated.tif")
 {
-   const char* MODULE = "AtpGeneratorBase::setupAnnotatedChain()  ";
+   const char* MODULE = "AtpGenerator::setupAnnotatedChain()  ";
 
    // Combine inputs into a two-color multiview
 //   ossimRefPtr<ossimTwoColorView> mosaic (new ossimTwoColorView);

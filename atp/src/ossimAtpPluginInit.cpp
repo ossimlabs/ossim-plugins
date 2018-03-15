@@ -7,8 +7,6 @@
 
 #include "ossimAtpToolFactory.h"
 #include <ossim/plugin/ossimSharedObjectBridge.h>
-#include <ossim/plugin/ossimPluginConstants.h>
-#include <ossim/base/ossimString.h>
 #include <ossim/util/ossimToolRegistry.h>
 
 extern "C"

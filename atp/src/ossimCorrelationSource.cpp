@@ -5,10 +5,10 @@
 //
 //**************************************************************************************************
 
-#include "ossimCorrelationSource.h"
-#include "../AtpOpenCV.h"
+#include "atp/src/ossimCorrelationSource.h"
+#include "AtpOpenCV.h"
 #include <ossim/imaging/ossimImageDataFactory.h>
-#include "../../AtpCommon.h"
+#include "atp/AtpCommon.h"
 
 namespace ATP
 {
@@ -27,7 +27,7 @@ ossimCorrelationSource::ossimCorrelationSource(ossimConnectableObject::Connectab
    initialize();
 }
 
-ossimCorrelationSource::ossimCorrelationSource(AtpGeneratorBase* generator)
+ossimCorrelationSource::ossimCorrelationSource(AtpGenerator* generator)
 : AtpTileSource(generator),
   m_nominalCmpPatchSize(0)
 {
