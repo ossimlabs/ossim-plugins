@@ -1,7 +1,6 @@
 {
    "parameters": [
       {
-         "label": "Use Feature Mode",
          "name": "useFeatureMode",
          "descr": "DEPRECATED. Use \"useRasterMode\" instead (in opposite sense).",
          "type": "bool",
@@ -36,7 +35,6 @@
          "value": 0.01
       },
       {
-         "label": "Max Number Correlation Peaks.",
          "name": "maxNumPeaksPerFeature",
          "descr": "DEPRECATED. Use \"maxNumMatchesPerFeature\" instead.",
          "type": "uint",
