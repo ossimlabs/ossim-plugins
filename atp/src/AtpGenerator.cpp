@@ -35,26 +35,30 @@ namespace ATP
 {
 std::shared_ptr<AutoTiePoint> AtpGenerator::s_referenceATP;
 
+
 AtpGenerator::AtpGenerator(Algorithm algo)
 :   m_algorithm (algo),
     m_refEllipHgt(0)
 {
 }
 
+
 AtpGenerator::~AtpGenerator()
 {
-
 }
+
 
 void AtpGenerator::setRefImage(shared_ptr<Image> ref_image)
 {
    m_refImage = ref_image;
 }
 
+
 void AtpGenerator::setCmpImage(shared_ptr<Image> cmp_image)
 {
    m_cmpImage = cmp_image;
 }
+
 
 void AtpGenerator::initialize()
 {
@@ -156,6 +160,7 @@ void AtpGenerator::initialize()
 
    m_atpTileSource->initialize();
 }
+
 
 ossimRefPtr<ossimImageChain>
 AtpGenerator::constructChain(shared_ptr<Image> image,
@@ -411,12 +416,6 @@ bool AtpGenerator::generateTiePointList(TiePointList& atpList)
    for (auto &searchTileRect : m_searchTileRects)
    {
       ref_tile = m_atpTileSource->getTile(searchTileRect);
-      //if (ref_tile->getDataObjectStatus() == OSSIM_EMPTY)
-      //{
-      //   if (config.diagnosticLevel(5))
-      //      CWARN<<MODULE<<"WARNING: Empty search tile returned from CorrelationSource."<<endl;
-      //   continue;
-      //}
 
       AtpList &tileATPs = m_atpTileSource->getTiePoints();
       if (tileATPs.empty() && config.diagnosticLevel(1))
@@ -425,40 +424,9 @@ bool AtpGenerator::generateTiePointList(TiePointList& atpList)
          continue;
       }
 
-      if (config.diagnosticLevel(3))
-      {
-         // Annotate red before filtering:
-         m_annotatedRefImage->annotateResiduals(tileATPs, 255, 0, 0);
-         m_annotatedCmpImage->annotateCorrelations(tileATPs, 255, 0, 0);
-      }
-
-      if (!config.getParameter("useRasterMode").asBool())
-      {
-         filterBadMatches(tileATPs);
-         if (config.diagnosticLevel(3))
-         {
-            // Annotate yellow before pruning:
-            m_annotatedRefImage->annotateResiduals(tileATPs, 255, 255, 0);
-            m_annotatedCmpImage->annotateCorrelations(tileATPs, 255, 255, 0);
-         }
-
-         pruneList(tileATPs);
-
-         if (config.diagnosticLevel(2))
-            CINFO << MODULE << "After filtering: num TPs in tile = " << tileATPs.size() << endl;
-      }
-
-      // Add remaining tile CTPs to master CTP list:
+      // Add remaining tile ATPs to master ATP list:
       if (!tileATPs.empty())
          atpList.insert(atpList.end(), tileATPs.begin(), tileATPs.end());
-
-      if (config.diagnosticLevel(3))
-      {
-         // Annotate Green after accepting TP:
-         m_annotatedRefImage->annotateResiduals(tileATPs, 0, 255, 0);
-         m_annotatedCmpImage->annotateCorrelations(tileATPs, 0, 255, 0);
-         //m_annotatedRefImage->annotateTPIDs(tileATPs, 180, 180, 0);
-      }
    }
 
    if (config.diagnosticLevel(1))
@@ -587,104 +555,5 @@ void AtpGenerator::layoutSearchTileRects(ossimPolygon& intersectPoly)
    }
 }
 
-void AtpGenerator::filterBadMatches(AtpList& tpList)
-{
-   const char* MODULE = "AtpGenerator::filterBadPeaks()  ";
-
-   // Check for consistency check override:
-   AtpConfig& config = AtpConfig::instance();
-   unsigned int minNumConsistent = config.getParameter("minNumConsistentNeighbors").asUint();
-   if (minNumConsistent == 0)
-      return;
-
-   // Can't filter without neighbors, so remove all just in case they are bad:
-   if (tpList.size() < minNumConsistent)
-   {
-      tpList.clear();
-      return;
-   }
-
-   // Loop to eliminate bad peaks and inconsistent CTPs in tile:
-   AtpList::iterator iter = tpList.begin();
-   while (iter != tpList.end())
-   {
-      if (!(*iter)) // Should never happen
-      {
-         CWARN<<MODULE<<"WARNING: Null AutoTiePoint encountred in list. Skipping point."<<endl;
-         ++iter;
-         continue;
-      }
-
-      // The "tiepoint" may not have any matches -- it may be just a feature:
-      if ((*iter)->hasValidMatch())
-         (*iter)->findBestConsistentMatch(tpList);
-
-      if (!(*iter)->hasValidMatch())
-      {
-         // Remove this TP from our list as soon as it is discovered that there are no valid
-         // peaks. All TPs in theTpList must have valid peaks:
-         if (config.diagnosticLevel(5))
-            CINFO<<MODULE<<"Removing TP "<<(*iter)->getTiePointId()<<endl;
-         iter = tpList.erase(iter);
-         if (tpList.empty())
-            break;
-      }
-      else
-         iter++;
-   }
-}
-
-void AtpGenerator::pruneList(AtpList& atps)
-{
-   const char* MODULE = "AtpGenerator::pruneList()  ";
-
-   AtpConfig &config =  AtpConfig::instance();
-   if (config.getParameter("useRasterMode").asBool())
-   {
-      // For raster mode, simply remove entries with no match:
-      auto atp = atps.begin();
-      while (atp != atps.end())
-      {
-         if (*atp && (*atp)->hasValidMatch())
-            ++atp;
-         else
-            atp = atps.erase(atp);
-      }
-      return;
-   }
-
-   // Use a map to sort by confidence measure:
-   multimap<double, shared_ptr<AutoTiePoint> > atpMap;
-   auto atp = atps.begin();
-   double confidence;
-   while (atp != atps.end())
-   {
-      if (!(*atp)) // Should never happen
-      {
-         CWARN<<MODULE<<"WARNING: Null AutoTiePoint encountred in list. Skipping point."<<endl;
-         ++atp;
-         continue;
-      }
-
-      // The "tiepoint" may not have any matches -- it may be just a feature:
-      bool hasValidMatch = (*atp)->getConfidenceMeasure(confidence);
-      if (hasValidMatch)
-         atpMap.emplace(1.0/confidence, *atp);
-
-      atp++;
-   }
-
-   // Skim off the top best:
-   unsigned int N = config.getParameter("numTiePointsPerTile").asUint();
-   atps.clear();
-   multimap<double, shared_ptr<AutoTiePoint> >::iterator tp = atpMap.begin();
-   while (tp != atpMap.end())
-   {
-      atps.push_back(tp->second);
-      if (atps.size() == N)
-         break;
-      tp++;
-   }
-}
 
 }

@@ -185,10 +185,10 @@ void AutoTiePoint::addImageMatch(const ossimDpt& cmpImagePt, double confidenceVa
    }
 
    // Instantiate a new peak. Insert this peak into the map, where it is ordered by peak value:
-   m_matchPoints.push_back(MatchPoint(cmpImagePt, confidenceValue, m_residual));
+   m_matchPoints.emplace_back(MatchPoint(cmpImagePt, confidenceValue, m_residual));
 }
 
-bool AutoTiePoint::checkConsistency(const AtpList& ctpList)
+bool AutoTiePoint::checkConsistency(const AtpList& atpList)
 {
    AtpConfig& config = AtpConfig::instance();
    ossimDpt R1;
@@ -201,9 +201,9 @@ bool AutoTiePoint::checkConsistency(const AtpList& ctpList)
    }
 
    // Loop over all of the TPs neighbors:
-   AtpList::const_iterator neighbor = ctpList.begin();
+   AtpList::const_iterator neighbor = atpList.begin();
    AutoTiePoint* atp = 0;
-   for(;neighbor!=ctpList.end();++neighbor)
+   for(;neighbor!=atpList.end();++neighbor)
    {
       atp = neighbor->get();
       if (!atp || (atp == this))
@@ -219,7 +219,7 @@ bool AutoTiePoint::checkConsistency(const AtpList& ctpList)
    unsigned int percentConsistentThreshold =
          config.getParameter("percentConsistentThreshold").asUint();
    unsigned int p = (unsigned int)
-         ceil(percentConsistentThreshold*(ctpList.size()-1)/100);
+         ceil(percentConsistentThreshold*(atpList.size()-1)/100);
    if (p == 0)
       p = 1;
    unsigned int min_num_consistent_neighbors = (s_minNumConsistent > p ? s_minNumConsistent : p);

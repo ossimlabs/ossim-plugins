@@ -100,13 +100,6 @@ protected:
    //! Finds optimum layout of patches within the intersect area for feature search.
    void layoutSearchTileRects(ossimPolygon& overlapPoly);
 
-   //! Removes inconsistent residuals
-   void filterBadMatches(AtpList& tpList);
-
-   //! Caps the max number of TPs given the list, which is the list of filtered TPs for the tile.
-   void pruneList(AtpList& atps);
-
-
    Algorithm m_algorithm;
    std::shared_ptr<ossim::Image> m_refImage;
    std::shared_ptr<ossim::Image> m_cmpImage;

@@ -343,6 +343,7 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
    if (config.diagnosticLevel(2))
       CINFO<<"  After capping to max num features ("<<N<<"), num TPs in tile = "<<n<<endl;
 
+   filterPoints();
    return m_tile;
 }
 

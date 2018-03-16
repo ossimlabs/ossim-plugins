@@ -6,6 +6,7 @@
 //**************************************************************************************************
 
 #include "AtpTileSource.h"
+#include "../AtpCommon.h"
 #include <ossim/imaging/ossimImageData.h>
 #include <ossim/base/ossimKeywordlist.h>
 #include <ossim/base/ossimConstants.h>
@@ -151,6 +152,143 @@ ossimImageHandler* AtpTileSource::getImageHandler(ossimRefPtr<ossimImageSource>&
    return handler;
 }
 
+void AtpTileSource::filterPoints()
+{
+   const char* MODULE = "AtpTileSource::filterPoints() -- ";
+
+   AtpConfig& config = AtpConfig::instance();
+   if (config.diagnosticLevel(3))
+   {
+      // Annotate red before filtering:
+      m_generator->m_annotatedRefImage->annotateResiduals(m_tiePoints, 255, 0, 0);
+      m_generator->m_annotatedCmpImage->annotateCorrelations(m_tiePoints, 255, 0, 0);
+   }
+
+   if (!config.getParameter("useRasterMode").asBool())
+   {
+      removeBadMatches();
+      if (config.diagnosticLevel(3))
+      {
+         // Annotate yellow before pruning:
+         m_generator->m_annotatedRefImage->annotateResiduals(m_tiePoints, 255, 255, 0);
+         m_generator->m_annotatedCmpImage->annotateCorrelations(m_tiePoints, 255, 255, 0);
+      }
+
+      pruneList();
+
+      if (config.diagnosticLevel(2))
+         CINFO << MODULE << "After filtering: num TPs in tile = " << m_tiePoints.size() << endl;
+   }
+
+   if (config.diagnosticLevel(3))
+   {
+      // Annotate Green after accepting TP:
+      m_generator->m_annotatedRefImage->annotateResiduals(m_tiePoints, 0, 255, 0);
+      m_generator->m_annotatedCmpImage->annotateCorrelations(m_tiePoints, 0, 255, 0);
+      //m_annotatedRefImage->annotateTPIDs(m_tiePoints, 180, 180, 0);
+   }
+
+}
+
+void AtpTileSource::removeBadMatches()
+{
+   const char* MODULE = "AtpTileSource::removeBadMatches()  ";
+
+   // Check for consistency check override:
+   AtpConfig& config = AtpConfig::instance();
+   unsigned int minNumConsistent = config.getParameter("minNumConsistentNeighbors").asUint();
+   if (minNumConsistent == 0)
+      return;
+
+   // Can't filter without neighbors, so remove all just in case they are bad:
+   if (m_tiePoints.size() < minNumConsistent)
+   {
+      m_tiePoints.clear();
+      return;
+   }
+
+   // Loop to eliminate bad peaks and inconsistent ATPs in tile:
+   auto iter = m_tiePoints.begin();
+   while (iter != m_tiePoints.end())
+   {
+      if (!(*iter)) // Should never happen
+      {
+         CWARN<<MODULE<<"WARNING: Null AutoTiePoint encountred in list. Skipping point."<<endl;
+         ++iter;
+         continue;
+      }
+
+      // The "tiepoint" may not have any matches -- it may be just a feature:
+      if ((*iter)->hasValidMatch())
+         (*iter)->findBestConsistentMatch(m_tiePoints);
+
+      if (!(*iter)->hasValidMatch())
+      {
+         // Remove this TP from our list as soon as it is discovered that there are no valid
+         // peaks. All TPs in list must have valid peaks:
+         if (config.diagnosticLevel(5))
+            CINFO<<MODULE<<"Removing TP "<<(*iter)->getTiePointId()<<endl;
+         iter = m_tiePoints.erase(iter);
+         if (m_tiePoints.empty())
+            break;
+      }
+      else
+         iter++;
+   }
+}
+
+void AtpTileSource::pruneList()
+{
+   const char* MODULE = "AtpTileSource::pruneList()  ";
+
+   AtpConfig &config =  AtpConfig::instance();
+   if (config.getParameter("useRasterMode").asBool())
+   {
+      // For raster mode, simply remove entries with no match:
+      auto atp = m_tiePoints.begin();
+      while (atp != m_tiePoints.end())
+      {
+         if (*atp && (*atp)->hasValidMatch())
+            ++atp;
+         else
+            atp = m_tiePoints.erase(atp);
+      }
+      return;
+   }
+
+   // Use a map to sort by confidence measure:
+   multimap<double, shared_ptr<AutoTiePoint> > atpMap;
+   auto atp = m_tiePoints.begin();
+   double confidence;
+   while (atp != m_tiePoints.end())
+   {
+      if (!(*atp)) // Should never happen
+      {
+         CWARN<<MODULE<<"WARNING: Null AutoTiePoint encountred in list. Skipping point."<<endl;
+         ++atp;
+         continue;
+      }
+
+      // The "tiepoint" may not have any matches -- it may be just a feature:
+      bool hasValidMatch = (*atp)->getConfidenceMeasure(confidence);
+      if (hasValidMatch)
+         atpMap.emplace(1.0/confidence, *atp);
+
+      atp++;
+   }
+
+   // Skim off the top best:
+   unsigned int N = config.getParameter("numTiePointsPerTile").asUint();
+   m_tiePoints.clear();
+   multimap<double, shared_ptr<AutoTiePoint> >::iterator tp = atpMap.begin();
+   while (tp != atpMap.end())
+   {
+      m_tiePoints.push_back(tp->second);
+      if (m_tiePoints.size() == N)
+         break;
+      tp++;
+   }
+}
 
 }
 

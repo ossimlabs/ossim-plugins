@@ -24,7 +24,7 @@ namespace ATP
  * Base class for tile sources performing auto tie point extraction. Implemented as a combiner that
  * establishes the overlap between input sources, and computes tie-points in the getTile() call.
  */
- class OSSIMDLLEXPORT AtpTileSource : public ossimImageCombiner
+class OSSIMDLLEXPORT AtpTileSource : public ossimImageCombiner
 {
 public:
    AtpTileSource();
@@ -66,6 +66,13 @@ public:
 protected:
    virtual void allocate();
    ossimImageHandler* getImageHandler(ossimRefPtr<ossimImageSource>& chain);
+   void filterPoints();
+
+   //! Removes inconsistent residual peaks
+   void removeBadMatches();
+
+   //! Caps the max number of TPs given the list, which is the list of filtered TPs for the tile.
+   void pruneList();
 
    std::shared_ptr<AtpGenerator> m_generator;
    ossimRefPtr<ossimImageSource> m_refChain;

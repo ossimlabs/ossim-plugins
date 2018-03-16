@@ -150,6 +150,9 @@ ossimRefPtr<ossimImageData> ossimCorrelationSource::getTile(const ossimIrect& ti
          CINFO<<MODULE<<"Tile match ratio: "<<m_tiePoints.size()<<" / "<<num_attempts<<endl;
 
    }
+
+   filterPoints();
+
    return m_tile;
 }
 
