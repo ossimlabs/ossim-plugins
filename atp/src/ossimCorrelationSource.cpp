@@ -7,6 +7,7 @@
 
 #include "atp/src/ossimCorrelationSource.h"
 #include "AtpOpenCV.h"
+#include "AtpGenerator.h"
 #include <ossim/imaging/ossimImageDataFactory.h>
 #include "atp/AtpCommon.h"
 
@@ -18,6 +19,7 @@ static const double DEFAULT_NOMINAL_POSITION_ERROR = 50; // meters
 ossimCorrelationSource::ossimCorrelationSource()
 : m_nominalCmpPatchSize(0)
 {
+   // PRIVATE, SHOULD NEVER BE CALLED. WOULD NEED TO CALL INITIALIZE
 }
 
 ossimCorrelationSource::ossimCorrelationSource(ossimConnectableObject::ConnectableObjectList& inputSources)
@@ -31,6 +33,7 @@ ossimCorrelationSource::ossimCorrelationSource(AtpGenerator* generator)
 : AtpTileSource(generator),
   m_nominalCmpPatchSize(0)
 {
+   // PRIVATE, SHOULD NEVER BE CALLED. WOULD NEED TO CALL INITIALIZE
 }
 
 ossimCorrelationSource::~ossimCorrelationSource()
@@ -45,16 +48,18 @@ void ossimCorrelationSource::initialize()
    unsigned int refPatchSize = AtpConfig::instance().getParameter("corrWindowSize").asUint(); // min distance between points
    m_nominalCmpPatchSize = DEFAULT_CMP_PATCH_SIZING_FACTOR*refPatchSize;
    double total_error = 0;
-   if (m_refIVT && m_cmpIVT)
+   auto refIVT = m_generator->getRefIVT();
+   auto cmpIVT = m_generator->getCmpIVT();
+   if (refIVT.valid() && cmpIVT.valid())
    {
-      ossimDpt gsd = m_refIVT->getOutputMetersPerPixel();
+      ossimDpt gsd = refIVT->getOutputMetersPerPixel();
       double nominalGsd = (gsd.x + gsd.y)/2.0;
 
       // Fetch the CE90 of both images to determine cmp image search patch size:
       ossimSensorModel* ref_sm = dynamic_cast<ossimSensorModel*>(
-               m_refIVT->getImageGeometry()->getProjection());
+              refIVT->getImageGeometry()->getProjection());
       ossimSensorModel* cmp_sm = dynamic_cast<ossimSensorModel*>(
-               m_cmpIVT->getImageGeometry()->getProjection());
+              cmpIVT->getImageGeometry()->getProjection());
       if (ref_sm && cmp_sm)
       {
          double ref_ce = ref_sm->getNominalPosError();
@@ -83,10 +88,13 @@ ossimRefPtr<ossimImageData> ossimCorrelationSource::getTile(const ossimIrect& ti
    if(getNumberOfInputs() < 2)
       return 0;
 
+   // The tile rect (in view space) is referenced by the tiepoint filtering code:
+   m_tile->setImageRectangle(tileRect);
+
    string sid(""); // Leave blank to have it auto-assigned by AutoTiePoint constructor
    if (!config.getParameter("useRasterMode").asBool())
    {
-      m_tile = m_refChain->getTile(tileRect, resLevel);
+      m_tile = m_generator->getRefChain()->getTile(tileRect, resLevel);
       if (m_tile->getDataObjectStatus() == OSSIM_EMPTY)
          return m_tile;
 
@@ -102,15 +110,15 @@ ossimRefPtr<ossimImageData> ossimCorrelationSource::getTile(const ossimIrect& ti
       // Loop over features to perform correlations:
       for (size_t i=0; i<featurePoints.size(); ++i)
       {
-         shared_ptr<ATP::AutoTiePoint> atp (new ATP::AutoTiePoint(this, sid));
+         shared_ptr<ATP::AutoTiePoint> atp (new ATP::AutoTiePoint(m_generator.get(), sid));
          atp->setRefViewPt(featurePoints[i]);
 
          // Trick here to keep using the same ID until a good correlation is found:
          if (!correlate(atp))
          {
             sid = atp->getTiePointId();
-            atp->setTiePointId("NP");
-            m_tiePoints.push_back(atp);
+            //atp->setTiePointId("NP");
+            //m_tiePoints.push_back(atp);
          }
          else
          {
@@ -133,7 +141,7 @@ ossimRefPtr<ossimImageData> ossimCorrelationSource::getTile(const ossimIrect& ti
          for (int x = tileRect.ul().x; x < tileRect.lr().x; x += corrStepSize)
          {
             ++num_attempts;
-            shared_ptr<AutoTiePoint> atp (new AutoTiePoint(this, sid));
+            shared_ptr<AutoTiePoint> atp (new AutoTiePoint(m_generator.get(), sid));
             atp->setRefViewPt(ossimDpt(x,y));
 
              // Trick here to keep using the same ID until a good correlation is found:
@@ -237,7 +245,7 @@ void ossimCorrelationSource::findFeatures(const ossimImageData* imageChip,
 
       // TODO REMOVE
 //      ossimDpt imagePt;
-//      m_refIVT->viewToImage(viewPt, imagePt);
+//      m_generator->getRefIVT()->viewToImage(viewPt, imagePt);
 //      CINFO<<"  Feature REF image point: "<<imagePt<<endl;
 
       // Good feature found, set the feature point's attributes and save to list:
@@ -278,7 +286,7 @@ bool ossimCorrelationSource::correlate(shared_ptr<AutoTiePoint> atp)
    ossimIrect cmpPatchRect(refViewPt, m_nominalCmpPatchSize, m_nominalCmpPatchSize);
 
    // Grab the image patches from the cmp and ref images.
-   ossimRefPtr<ossimImageData> refpatch (m_refChain->getTile(refPatchRect, 0));
+   ossimRefPtr<ossimImageData> refpatch (m_generator->getRefChain()->getTile(refPatchRect, 0));
    if (!refpatch.valid())
    {
       CWARN << MODULE << "Error getting ref patch image data." << endl;
@@ -288,8 +296,8 @@ bool ossimCorrelationSource::correlate(shared_ptr<AutoTiePoint> atp)
    if (config.diagnosticLevel(5))
    {
       ossimDpt refImgPt, cmpImgPt;
-      m_refIVT->viewToImage(refViewPt, refImgPt);
-      m_cmpIVT->viewToImage(refViewPt, cmpImgPt);
+      m_generator->getRefIVT()->viewToImage(refViewPt, refImgPt);
+      m_generator->getCmpIVT()->viewToImage(refViewPt, cmpImgPt);
       CINFO<<"\nFeature view pt: "<<refViewPt
           <<"\n     REF img pt: "<<refImgPt
           <<"\n     CMP img pt: "<<cmpImgPt<<endl;
@@ -309,7 +317,7 @@ bool ossimCorrelationSource::correlate(shared_ptr<AutoTiePoint> atp)
       return false;
    }
 
-   ossimRefPtr<ossimImageData> cmppatch (m_cmpChain->getTile(cmpPatchRect, 0));
+   ossimRefPtr<ossimImageData> cmppatch (m_generator->getCmpChain()->getTile(cmpPatchRect, 0));
    if (!cmppatch.valid())
    {
       CWARN << MODULE << "Error getting cmp patch image data." << endl;

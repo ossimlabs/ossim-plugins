@@ -60,6 +60,51 @@ void AtpGenerator::setCmpImage(shared_ptr<Image> cmp_image)
 }
 
 
+string  AtpGenerator::getRefImageID()
+{
+   ossimImageHandler* handler = getImageHandler(m_refChain);
+   if (!handler)
+      return "";
+   return handler->getImageID().string();
+}
+
+string AtpGenerator::getCmpImageID()
+{
+   ossimImageHandler* handler = getImageHandler(m_cmpChain);
+   if (!handler)
+      return "";
+   return handler->getImageID().string();
+}
+
+string  AtpGenerator::getRefFilename()
+{
+   ossimImageHandler* handler = getImageHandler(m_refChain);
+   if (!handler)
+      return "";
+   return handler->getFilename().string();
+}
+
+string  AtpGenerator::getCmpFilename()
+{
+   ossimImageHandler* handler = getImageHandler(m_cmpChain);
+   if (!handler)
+      return "";
+   return handler->getFilename().string();
+}
+
+ossimImageHandler* AtpGenerator::getImageHandler(ossimRefPtr<ossimImageChain>& chain)
+{
+   if (!chain)
+      return 0;
+
+   ossimTypeNameVisitor visitor ("ossimImageHandler");
+   chain->accept(visitor);
+   ossimImageHandler* handler = (ossimImageHandler*) visitor.getObjectAs<ossimImageHandler>();
+
+   return handler;
+}
+
+
 void AtpGenerator::initialize()
 {
    static const char* MODULE=" AtpGenerator::initialize()  ";
@@ -532,7 +577,7 @@ void AtpGenerator::layoutSearchTileRects(ossimPolygon& intersectPoly)
    vector<ossimIrect>::iterator b = m_searchTileRects.begin();
    while (b != m_searchTileRects.end())
    {
-      if(!intersectPoly.rectIntersects(*b))
+      if(!intersectPoly.isRectWithin(*b))
          b = m_searchTileRects.erase(b);
       else
          b++;

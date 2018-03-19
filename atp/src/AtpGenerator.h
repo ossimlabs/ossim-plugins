@@ -15,6 +15,7 @@
 #include <ossim/imaging/ossimAnnotationSource.h>
 #include <ossim/projection/ossimImageViewProjectionTransform.h>
 #include <ossim/reg/Image.h>
+#include "AtpTileSource.h"
 #include "AutoTiePoint.h"
 #include "AtpAnnotatedImage.h"
 #include <vector>
@@ -73,6 +74,16 @@ public:
     */
    static void writeTiePointList(ostream& out, const AtpList& tpList);
 
+   ossimRefPtr<ossimImageViewProjectionTransform>& getRefIVT() { return m_refIVT; }
+   ossimRefPtr<ossimImageViewProjectionTransform>& getCmpIVT() { return m_cmpIVT; }
+   ossimRefPtr<ossimImageChain> getRefChain() { return m_refChain; }
+   ossimRefPtr<ossimImageChain> getCmpChain() { return m_cmpChain; }
+
+   std::string getRefImageID();
+   std::string getCmpImageID();
+   std::string getRefFilename();
+   std::string getCmpFilename();
+
 protected:
    AtpGenerator() : m_algorithm (ALGO_UNASSIGNED), m_refEllipHgt(0) {}
 
@@ -99,6 +110,8 @@ protected:
 
    //! Finds optimum layout of patches within the intersect area for feature search.
    void layoutSearchTileRects(ossimPolygon& overlapPoly);
+
+   ossimImageHandler* getImageHandler(ossimRefPtr<ossimImageChain>& chain);
 
    Algorithm m_algorithm;
    std::shared_ptr<ossim::Image> m_refImage;

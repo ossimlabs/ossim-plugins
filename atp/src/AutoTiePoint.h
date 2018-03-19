@@ -19,7 +19,7 @@
 
 namespace ATP
 {
-class AtpTileSource;
+class AtpGenerator;
 
 /**
  * Base class for all automatic tiepoints. These differ from tiepoint base class in that it is
@@ -40,7 +40,7 @@ public:
     * @param overlap The combiner source representing the overlap between REF and CMP images.
     * @id Tie point ID
     */
-   AutoTiePoint(AtpTileSource* overlap, const std::string& id);
+   AutoTiePoint(AtpGenerator* overlap, const std::string& id);
 
    /**
    * Creates new tiepoint from JSON object formatted as:
@@ -100,10 +100,6 @@ public:
    //! Returns the correlation value of current active peak via argument. Returns true if valid.
    bool getConfidenceMeasure(double &confidence) const;
 
-   //! The peaks are reviewed for inconsistencies. If the current peak is determined inconsistent,
-   //! the next best peak is enabled. Returns true if peak was changed.
-   bool findBestConsistentMatch(std::vector< std::shared_ptr<AutoTiePoint> >& neighborhoodAtpList);
-
    //! Returns the center location of the reference patch (the feature) in view-space. Returns
    //! false if point not yet defined. Note that there may not be any valid peak.
    bool getRefViewPoint (ossimDpt& view_pt)  const;
@@ -116,6 +112,9 @@ public:
    //! Returns false if no valid peak.
    bool getCmpViewPoint (ossimDpt& view_pt, unsigned int peak_idx=0)  const;
 
+   //! Removes the active match and sets the next peak as active. Returns TRUE unless there are no
+   //! more active matches.
+   bool bumpActiveMatch();
    /*
    * Refer to <a href="https://docs.google.com/document/d/1DXekmYm7wyo-uveM7mEu80Q7hQv40fYbtwZq-g0uKBs/edit?usp=sharing">3DISA API document</a>
    * for JSON format used.
@@ -123,39 +122,16 @@ public:
    virtual void saveJSON(Json::Value& json) const;
 
 protected:
-   //! Compares the residual against existing neighbors. Typically this will include all candidate
-   //! tiepoints in the same tile as this (and can include this). TODO: The consistency check should
-   //! consider distance to neighbor, and not just tile co-location. There may be TPs close by but
-   //! in a different tile. The difficulty is that for large overlaps, TP searches are done on a
-   //! tile basis, so TPs from other tiles are not known.
-   //! @param neighborList List of tiepoints considered neighbors. The list can contain THIS
-   //!   tiepoint -- it will be skipped.
-   //! @return TRUE if consistent.
-   bool checkConsistency(const std::vector< std::shared_ptr<AutoTiePoint> >& neighborList);
-
-   //! Compares this TP's residual against the given neighbor's residual and returns TRUE if
-   //! deemed consistent.
-   bool residualsAreConsistent(const ossimDpt& R1);
-
    //! Recomputes active peak's residual after a model adjustment or change in peak.
    //! Residuals are in view space for this type.
    virtual void recomputeResidual();
 
-   //! Costly processing for ATP common settings done only once for all TPs.
-   void initializeStaticMembers();
-
-   AtpTileSource*     m_overlap;
+   AtpGenerator*      m_generator;
    std::vector<MatchPoint> m_matchPoints;
    ossimDpt           m_refViewPt;
    ossimDpt           m_cmpViewPt;
    ossimDpt           m_residual;
    double             m_relativeError;    //!< Uncertainty in position of feature in CMP image.
-
-   static bool        s_initialized;
-   static double      s_maxDiffRatio;
-   static double      s_cosMaxAngleDiff;
-   static double      s_minVectorResDiff;
-   static unsigned int s_minNumConsistent;
 };
 
 typedef std::vector< std::shared_ptr<AutoTiePoint> > AtpList;

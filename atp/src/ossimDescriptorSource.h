@@ -23,8 +23,6 @@ namespace ATP
 class OSSIMDLLEXPORT ossimDescriptorSource : public AtpTileSource
 {
 public:
-   ossimDescriptorSource();
-   ossimDescriptorSource(ossimConnectableObject::ConnectableObjectList& inputSources);
    ossimDescriptorSource(AtpGenerator* generator);
 
    virtual ~ossimDescriptorSource();
@@ -40,7 +38,10 @@ private:
       { return (lhs.response > rhs.response); };
    } sortFunc;
 
-   unsigned int m_nominalCmpPatchSize;
+   ossimDescriptorSource();
+   ossimDescriptorSource(ossimConnectableObject::ConnectableObjectList& inputSources);
+
+   unsigned int m_cmpPatchInflation;
 };
 }
 #endif /* #ifndef ossimDescriptorSource_HEADER */
