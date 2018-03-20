@@ -40,7 +40,7 @@ public:
     * @param overlap The combiner source representing the overlap between REF and CMP images.
     * @id Tie point ID
     */
-   AutoTiePoint(AtpGenerator* overlap, const std::string& id);
+   AutoTiePoint(std::shared_ptr<AtpGenerator> generator, const std::string& id);
 
    /**
    * Creates new tiepoint from JSON object formatted as:
@@ -126,7 +126,7 @@ protected:
    //! Residuals are in view space for this type.
    virtual void recomputeResidual();
 
-   AtpGenerator*      m_generator;
+   std::shared_ptr<AtpGenerator> m_generator;
    std::vector<MatchPoint> m_matchPoints;
    ossimDpt           m_refViewPt;
    ossimDpt           m_cmpViewPt;

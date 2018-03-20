@@ -22,19 +22,19 @@ AutoTiePoint::AutoTiePoint()
 }
 
 AutoTiePoint::AutoTiePoint (const AutoTiePoint& copy)
-: TiePoint (copy),
-  m_generator(copy.m_generator),
-  m_refViewPt(copy.m_refViewPt),
-  m_cmpViewPt(copy.m_cmpViewPt),
-  m_residual(copy.m_residual),
-  m_relativeError(copy.m_relativeError)
+        : TiePoint (copy),
+          m_generator(copy.m_generator),
+          m_refViewPt(copy.m_refViewPt),
+          m_cmpViewPt(copy.m_cmpViewPt),
+          m_residual(copy.m_residual),
+          m_relativeError(copy.m_relativeError)
 {
    for (size_t i=0; i<copy.m_matchPoints.size(); ++i)
       m_matchPoints.push_back(copy.m_matchPoints[i]);
 }
 
-AutoTiePoint::AutoTiePoint(AtpGenerator* overlap, const std::string& id)
-:  m_generator(overlap),
+AutoTiePoint::AutoTiePoint(shared_ptr<AtpGenerator> generator, const std::string& id)
+:  m_generator(generator),
    m_relativeError(0)
 {
    m_type = TiePoint::AUTO;

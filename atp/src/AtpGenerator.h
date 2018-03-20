@@ -44,6 +44,9 @@ public:
    void setRefImage(std::shared_ptr<ossim::Image> ref_image);
    void setCmpImage(std::shared_ptr<ossim::Image> cmp_image);
 
+   /** Needs to be called after ref and cmp images are set */
+   virtual void initialize();
+
    /**
     * When the input images are multiband, the bands must be combined into a single-band image.
     * @param weights Vector of normalized weights (0-1) applied to the input bands for combining.
@@ -74,8 +77,8 @@ public:
     */
    static void writeTiePointList(ostream& out, const AtpList& tpList);
 
-   ossimRefPtr<ossimImageViewProjectionTransform>& getRefIVT() { return m_refIVT; }
-   ossimRefPtr<ossimImageViewProjectionTransform>& getCmpIVT() { return m_cmpIVT; }
+   ossimRefPtr<ossimImageViewProjectionTransform> getRefIVT() { return m_refIVT; }
+   ossimRefPtr<ossimImageViewProjectionTransform> getCmpIVT() { return m_cmpIVT; }
    ossimRefPtr<ossimImageChain> getRefChain() { return m_refChain; }
    ossimRefPtr<ossimImageChain> getCmpChain() { return m_cmpChain; }
 
@@ -84,15 +87,12 @@ public:
    std::string getRefFilename();
    std::string getCmpFilename();
 
+   ossimRefPtr<AtpTileSource> getAtpTileSource() { return m_atpTileSource; } // For engineering use
+   ossimRefPtr<AtpAnnotatedImage> m_annotatedRefImage; // For engineering use
+   ossimRefPtr<AtpAnnotatedImage> m_annotatedCmpImage; // For engineering use
+
 protected:
    AtpGenerator() : m_algorithm (ALGO_UNASSIGNED), m_refEllipHgt(0) {}
-
-   /**
-    * Initializes the specific generator. Should be overriden by derived class as needed, though it
-    * still needs to be called from the derived initialize() as it initializes the overlap polygon
-    * and other common quantities
-    * */
-   virtual void initialize();
 
    /**
     * Constructs the processing chain for the input image according to the needs of the generator.
@@ -128,8 +128,6 @@ protected:
    std::vector<ossimIrect> m_searchTileRects;
    static std::shared_ptr<AutoTiePoint> s_referenceATP;
 
-   ossimRefPtr<AtpAnnotatedImage> m_annotatedRefImage; // For engineering use
-   ossimRefPtr<AtpAnnotatedImage> m_annotatedCmpImage; // For engineering use
 };
 }
 #endif /* AtpGeneratorBase_H_ */

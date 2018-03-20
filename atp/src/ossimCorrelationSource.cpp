@@ -87,6 +87,8 @@ ossimRefPtr<ossimImageData> ossimCorrelationSource::getTile(const ossimIrect& ti
 
    if(getNumberOfInputs() < 2)
       return 0;
+   if (!m_tile)
+      allocate();
 
    // The tile rect (in view space) is referenced by the tiepoint filtering code:
    m_tile->setImageRectangle(tileRect);
@@ -110,7 +112,7 @@ ossimRefPtr<ossimImageData> ossimCorrelationSource::getTile(const ossimIrect& ti
       // Loop over features to perform correlations:
       for (size_t i=0; i<featurePoints.size(); ++i)
       {
-         shared_ptr<ATP::AutoTiePoint> atp (new ATP::AutoTiePoint(m_generator.get(), sid));
+         shared_ptr<ATP::AutoTiePoint> atp (new ATP::AutoTiePoint(m_generator, sid));
          atp->setRefViewPt(featurePoints[i]);
 
          // Trick here to keep using the same ID until a good correlation is found:
@@ -141,7 +143,7 @@ ossimRefPtr<ossimImageData> ossimCorrelationSource::getTile(const ossimIrect& ti
          for (int x = tileRect.ul().x; x < tileRect.lr().x; x += corrStepSize)
          {
             ++num_attempts;
-            shared_ptr<AutoTiePoint> atp (new AutoTiePoint(m_generator.get(), sid));
+            shared_ptr<AutoTiePoint> atp (new AutoTiePoint(m_generator, sid));
             atp->setRefViewPt(ossimDpt(x,y));
 
              // Trick here to keep using the same ID until a good correlation is found:

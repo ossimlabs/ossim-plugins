@@ -49,10 +49,14 @@ public:
 
    void filterPoints();
 
+   /** Used for testing */
+   void setTiePoints(ossim::TiePointList& atpList);
+
 protected:
    //! Convenience struct for use between filterWithParallax( and computeParallaxStatistics()
-   struct ParallaxStatistics
+   struct ParallaxInfo
    {
+      ParallaxInfo():dx_dH(0),dy_dH(0),parallaxSlope(0),parallaxOffset(0),denom(1),maxDistance(0) {}
       double dx_dH;
       double dy_dH;
       double parallaxSlope;
@@ -67,8 +71,9 @@ protected:
 
    virtual void allocate();
 
-   void filterWithParallax(ParallaxStatistics& paxstats);
-   void computeParallaxStatistics(ParallaxStatistics& paxstats);
+   void filterWithParallax();
+   void computeParallax();
+   void computeParallaxStatistics();
 
    void filterWithoutParallax();
 
@@ -80,6 +85,8 @@ protected:
    std::shared_ptr<AtpGenerator> m_generator;
    AtpList m_tiePoints;
    ossimRefPtr<ossimImageData> m_tile; // Used only for raster mode (rare)
+   ParallaxInfo m_paxInfo;
+   bool m_considerParallax;
 
    // Statics assigned once for speed
    static double s_minVectorResDiff;
@@ -90,7 +97,6 @@ protected:
    static unsigned int s_minNumConsistent;
    static unsigned int s_percentConsistent;
    static unsigned int s_numTpsPerTile;
-   static bool s_considerParallax;
    static bool s_useRasterMode;
    static bool s_initialized;
    static unsigned int s_numFilterIterations;

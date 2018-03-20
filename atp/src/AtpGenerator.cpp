@@ -436,7 +436,6 @@ void AtpGenerator::writeTiePointList(ostream& out, const AtpList& tpList)
    }
    else
    {
-
       for (size_t i=0; i<tpList.size(); ++i)
       {
          out<<"\ntiepoint["<<i<<"]: "<<tpList[i]<<endl;
@@ -457,7 +456,7 @@ bool AtpGenerator::generateTiePointList(TiePointList& atpList)
    // Need to search for features in the REF tile first, then consider only those locations
    // for correlating. The search tiles were previously established in the base class initialization
    ossimRefPtr<ossimImageData> ref_tile = 0;
-   ossim_int64 tileId = 0;
+   ossim_uint32 tileId = 0;
    for (auto &searchTileRect : m_searchTileRects)
    {
       ref_tile = m_atpTileSource->getTile(searchTileRect);
@@ -466,12 +465,15 @@ bool AtpGenerator::generateTiePointList(TiePointList& atpList)
       if (tileATPs.empty() && config.diagnosticLevel(1))
       {
          CINFO << "\n" << MODULE << "No TPs found in tile." << endl;
+         ++tileId;
          continue;
       }
 
       // Add remaining tile ATPs to master ATP list:
       if (!tileATPs.empty())
          atpList.insert(atpList.end(), tileATPs.begin(), tileATPs.end());
+
+      ++tileId;
    }
 
    if (config.diagnosticLevel(1))

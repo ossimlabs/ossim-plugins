@@ -75,6 +75,8 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
    if (config.diagnosticLevel(2))
       CINFO<<"\n\n"<< MODULE << " -- tileRect: "<<tileRect<<endl;
    m_tiePoints.clear();
+   if (!m_tile)
+      allocate();
 
    // The tile rect (in view space) is referenced by the tiepoint filtering code:
    m_tile->setImageRectangle(tileRect);
@@ -282,7 +284,7 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
       if (featureMatches.empty())
          continue;
 
-      shared_ptr<AutoTiePoint> atp (new AutoTiePoint(m_generator.get(), sid));
+      shared_ptr<AutoTiePoint> atp (new AutoTiePoint(m_generator, sid));
       cv::KeyPoint cv_A = kpA[(featureMatches[0]).queryIdx];
       cv::KeyPoint cv_B;
 
