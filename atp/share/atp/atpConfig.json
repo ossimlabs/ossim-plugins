@@ -156,7 +156,7 @@
          "name": "doHistogramStretch",
          "descr": "Experimental. Performs histogram stretch on input imagery before correlating.",
          "type": "bool",
-         "value": "true"
+         "value": true
       },
       {
          "name": "viewGSD",
