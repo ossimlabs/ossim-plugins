@@ -242,35 +242,39 @@ AtpGenerator::constructChain(shared_ptr<Image> image,
    chain->add(handler.get());
 
    // Add histogram (experimental)
-   ossimRefPtr<ossimHistogramRemapper> histo_remapper = new ossimHistogramRemapper();
-   chain->add(histo_remapper.get());
-   histo_remapper->setStretchMode(ossimHistogramRemapper::LINEAR_AUTO_MIN_MAX);
-   ossimRefPtr<ossimMultiResLevelHistogram> histogram = handler->getImageHistogram();
-   if (!histogram)
+   bool doHistogramStretch = config.getParameter("doHistogramStretch").asBool();
+   if (doHistogramStretch)
    {
-      handler->buildHistogram();
-      histogram = handler->getImageHistogram();
-   }
-   histo_remapper->setHistogram(histogram);
-
-   // Need to select a band if multispectral:
-   unsigned int numBands = handler->getNumberOfOutputBands();
-   if (numBands > 1)
-   {
-      unsigned int band = image->getActiveBand();
-      if ((band > numBands) || (band <= 0))
+      ossimRefPtr<ossimHistogramRemapper> histo_remapper = new ossimHistogramRemapper();
+      chain->add(histo_remapper.get());
+      histo_remapper->setStretchMode(ossimHistogramRemapper::LINEAR_AUTO_MIN_MAX);
+      ossimRefPtr<ossimMultiResLevelHistogram> histogram = handler->getImageHistogram();
+      if (!histogram)
       {
-         CINFO << MODULE << "Specified band (" << band << ") is outside allowed range (1 to "
-              << numBands
-              << "). Using default band 1 which may not be ideal." << endl;
-         band = 1;
+         handler->buildHistogram();
+         histogram = handler->getImageHistogram();
       }
-      band--; // shift to zero-based
-      ossimRefPtr<ossimBandSelector> band_selector = new ossimBandSelector();
-      chain->add(band_selector.get());
-      vector<ossim_uint32> bandList;
-      bandList.push_back(band);
-      band_selector->setOutputBandList(bandList);
+      histo_remapper->setHistogram(histogram);
+
+      // Need to select a band if multispectral:
+      unsigned int numBands = handler->getNumberOfOutputBands();
+      if (numBands > 1)
+      {
+         unsigned int band = image->getActiveBand();
+         if ((band > numBands) || (band <= 0))
+         {
+            CINFO << MODULE << "Specified band (" << band << ") is outside allowed range (1 to "
+                  << numBands
+                  << "). Using default band 1 which may not be ideal." << endl;
+            band = 1;
+         }
+         band--; // shift to zero-based
+         ossimRefPtr<ossimBandSelector> band_selector = new ossimBandSelector();
+         chain->add(band_selector.get());
+         vector<ossim_uint32> bandList;
+         bandList.push_back(band);
+         band_selector->setOutputBandList(bandList);
+      }
    }
 
    // Can only work in 8-bit radiometry:

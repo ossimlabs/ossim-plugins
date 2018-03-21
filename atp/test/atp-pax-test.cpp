@@ -60,6 +60,12 @@ int main(int argc, char *argv[])
       atpTileSource->setTiePoints(tpList);
       atpTileSource->filterPoints();
 
+      //ossimGrect grect (41.9339,12.4563,41.9316,12.4594);
+      //ossimDrect drect;
+      //generator->getRefIVT()->getViewGeometry()->worldToLocal(grect, drect);
+      //generator->m_annotatedRefImage->setAOI(drect);
+      //generator->m_annotatedCmpImage->setAOI(drect);
+
       generator->m_annotatedRefImage->write();
       generator->m_annotatedCmpImage->write();
 
