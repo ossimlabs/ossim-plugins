@@ -294,12 +294,19 @@ void AtpTileSource::computeParallax()
    // Compute parallax direction REF-->CMP
    m_paxInfo.dx_dH = dx_cmp - dx_ref;
    m_paxInfo.dy_dH = dy_cmp - dy_ref;
-   m_paxInfo.parallaxSlope = m_paxInfo.dy_dH / m_paxInfo.dx_dH;
-   m_paxInfo.denom = sqrt(m_paxInfo.parallaxSlope*m_paxInfo.parallaxSlope + 1.0);
-
-   CINFO << "### dx_dH: " << m_paxInfo.dx_dH << endl; // TODO REMOVE
-   CINFO << "### dy_dH: " << m_paxInfo.dy_dH << endl; // TODO REMOVE
-   CINFO << "### parallaxSlope: " << m_paxInfo.parallaxSlope << endl; // TODO REMOVE
+   if (m_paxInfo.dx_dH != 0)
+   {
+      m_paxInfo.parallaxSlope = m_paxInfo.dy_dH / m_paxInfo.dx_dH;
+      m_paxInfo.denom = sqrt(m_paxInfo.parallaxSlope * m_paxInfo.parallaxSlope + 1.0);
+   }
+   else
+   {
+      m_paxInfo.parallaxSlope == ossim::nan();
+      m_paxInfo.denom = ossim::nan();
+   }
+   //CINFO << "### dx_dH: " << m_paxInfo.dx_dH << endl; // TODO REMOVE
+   //CINFO << "### dy_dH: " << m_paxInfo.dy_dH << endl; // TODO REMOVE
+   //CINFO << "### parallaxSlope: " << m_paxInfo.parallaxSlope << endl; // TODO REMOVE
 }
 
 
@@ -338,7 +345,7 @@ void AtpTileSource::computeParallaxStatistics()
       }
       sumDistance2 += distance*distance;
       m_paxInfo.distanceMap.emplace(tiePoint->getTiePointId(), distance);
-      CINFO << "### TP: "<<tiePoint->getTiePointId()<<"  distance: " << distance << endl; // TODO REMOVE
+      //CINFO << "### TP: "<<tiePoint->getTiePointId()<<"  distance: " << distance << endl; // TODO REMOVE
 
    }
    double sigmaDistance = sqrt(sumDistance2/(m_tiePoints.size()-1));
@@ -346,8 +353,8 @@ void AtpTileSource::computeParallaxStatistics()
    if (m_paxInfo.maxDistance < s_maxPaxPix)
       m_paxInfo.maxDistance = s_maxPaxPix;
 
-   CINFO << "### sigmaDistance: " << sigmaDistance << endl; // TODO REMOVE
-   CINFO << "### maxDistance: " << m_paxInfo.maxDistance << endl; // TODO REMOVE
+   //CINFO << "### sigmaDistance: " << sigmaDistance << endl; // TODO REMOVE
+   //CINFO << "### maxDistance: " << m_paxInfo.maxDistance << endl; // TODO REMOVE
 }
 
 void AtpTileSource::filterWithoutParallax()
