@@ -18,7 +18,6 @@ public:
   /**
     * @brief Encode method.
     *
-    * Pure virtual method that encodes the passed in buffer to this codec.
     *
     * @param in Input data to encode.
     * 
