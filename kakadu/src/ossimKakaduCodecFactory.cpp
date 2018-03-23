@@ -17,7 +17,7 @@
 #include <ossim/base/ossimRefPtr.h>
 #include <ossim/base/ossimString.h>
 
-#include <ossim/imaging/ossimJpegCodec.h>
+#include "ossimKakaduJ2kCodec.h"
 
 #include <string>
 
@@ -42,7 +42,7 @@ ossimCodecBase* ossimKakaduCodecFactory::createCodec(const ossimString& type)con
 
    if((type.downcase() == "c8") )
    {
-      std::cout << "ossimKakaduCodecFactory::createCodec: WE DO NEED A ossimKakaduCodec allocation here!\n";
+      result = new ossimKakaduJ2kCodec();
    }
 
    return result.release();
