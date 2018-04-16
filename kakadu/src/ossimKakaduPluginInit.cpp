@@ -14,8 +14,10 @@
 #include "ossimKakaduOverviewBuilderFactory.h"
 #include "ossimKakaduReaderFactory.h"
 #include "ossimKakaduWriterFactory.h"
+#include "ossimKakaduCodecFactory.h"
 #include <ossim/plugin/ossimSharedObjectBridge.h>
 #include <ossim/imaging/ossimImageHandlerRegistry.h>
+#include <ossim/imaging/ossimCodecFactoryRegistry.h>
 #include <ossim/imaging/ossimImageWriterFactoryRegistry.h>
 #include <ossim/imaging/ossimOverviewBuilderFactoryRegistry.h>
 #include "ossimKakaduJpipHandlerFactory.h"
@@ -146,6 +148,8 @@ extern "C"
       {
          ossimImageGeometryRegistry::instance()->registerFactory(ossimKakaduJpipImageGeometryFactory::instance());
       }
+      ossimCodecFactoryRegistry::instance()->registerFactory(ossimKakaduCodecFactory::instance());
+
       setKakaduDescription(theKakaduDescription);
       ossimKakaduReaderFactory::instance()->getTypeNameList(theKakaduObjList);
       ossimKakaduJpipHandlerFactory::instance()->getTypeNameList(theKakaduObjList);
