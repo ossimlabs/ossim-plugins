@@ -43,7 +43,7 @@
          "name": "considerParallax",
          "descr": "If true, directs the consistency check to consider displacements due to parallax as acceptable.",
          "type": "bool",
-         "value": false
+         "value": true
       },
       {
          "label": "Parallax-adjusted Residual Deviation Threshold.",
