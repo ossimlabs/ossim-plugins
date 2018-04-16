@@ -39,6 +39,27 @@
          "value": 50
       },
       {
+         "label": "Consider Parallax",
+         "name": "considerParallax",
+         "descr": "If true, directs the consistency check to consider displacements due to parallax as acceptable.",
+         "type": "bool",
+         "value": true
+      },
+      {
+         "label": "Parallax-adjusted Residual Deviation Threshold.",
+         "name": "maxResParallaxDev",
+         "descr": "Used in match-point neighbor consistency check. Represents the maximum distance of the residual from the locus of neighbors along the parallax direction. Expressed as factor of standard deviation.",
+         "type": "float",
+         "value": 1.0
+      },
+      {
+         "label": "Parallax-adjusted Residual Pixel Threshold.",
+         "name": "maxResParallaxPix",
+         "descr": "Used in match-point neighbor consistency check. Represents the maximum distance (in view-space pixels) of the residual from the locus of neighbors along the parallax direction.",
+         "type": "uint",
+         "value": 2
+      },
+      {
          "label": "Min. Number of Consistent Neighbors",
          "name": "minNumConsistentNeighbors",
          "descr": "Used in match-point neighbor consistency check. Represents the minimum number of consistent neighbors needed to accept a match.",
@@ -60,13 +81,6 @@
          "value": 10
       },
       {
-         "label": "Consider Alternate Matches",
-         "name": "considerAltMatches",
-         "descr": "If true, directs the consistency check to also consider secondary matches in neighbors before rejecting a match.",
-         "type": "bool",
-         "value": true
-      },
-      {
          "label": "Do Two-way Feature Search",
          "name": "doTwoWaySearch",
          "descr": "If true, features are identified on both images of a pair. Otherwise, features are searched on the first image of the pair.",
@@ -86,13 +100,6 @@
          "descr": "Margin (in pixels) to add to the feature search tile specification to account for descriptor sampling size. Only meaningful when searchGridSize=0 (contiguous tiles).",
          "type": "uint",
          "value": 48
-      },
-      {
-         "label": "Use Tile Grid Layout",
-         "name": "useTileGridLayout",
-         "descr": "If true, directs the feature search patch layout to use grid layout scheme.",
-         "type": "bool",
-         "value": true
       },
       {
          "label": "Search Grid Size",
@@ -144,6 +151,12 @@
          "descr": "Experimental. Specifies the image processing chain to apply after the image handler.",
          "type": "string",
          "value": "None"
+      },
+      {
+         "name": "doHistogramStretch",
+         "descr": "Experimental. Performs histogram stretch on input imagery before correlating.",
+         "type": "bool",
+         "value": true
       },
       {
          "name": "viewGSD",

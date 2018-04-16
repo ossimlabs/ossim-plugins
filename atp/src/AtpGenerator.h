@@ -15,6 +15,7 @@
 #include <ossim/imaging/ossimAnnotationSource.h>
 #include <ossim/projection/ossimImageViewProjectionTransform.h>
 #include <ossim/reg/Image.h>
+#include "AtpTileSource.h"
 #include "AutoTiePoint.h"
 #include "AtpAnnotatedImage.h"
 #include <vector>
@@ -42,6 +43,9 @@ public:
 
    void setRefImage(std::shared_ptr<ossim::Image> ref_image);
    void setCmpImage(std::shared_ptr<ossim::Image> cmp_image);
+
+   /** Needs to be called after ref and cmp images are set */
+   virtual void initialize();
 
    /**
     * When the input images are multiband, the bands must be combined into a single-band image.
@@ -73,15 +77,22 @@ public:
     */
    static void writeTiePointList(ostream& out, const AtpList& tpList);
 
+   ossimRefPtr<ossimImageViewProjectionTransform> getRefIVT() { return m_refIVT; }
+   ossimRefPtr<ossimImageViewProjectionTransform> getCmpIVT() { return m_cmpIVT; }
+   ossimRefPtr<ossimImageChain> getRefChain() { return m_refChain; }
+   ossimRefPtr<ossimImageChain> getCmpChain() { return m_cmpChain; }
+
+   std::string getRefImageID();
+   std::string getCmpImageID();
+   std::string getRefFilename();
+   std::string getCmpFilename();
+
+   ossimRefPtr<AtpTileSource> getAtpTileSource() { return m_atpTileSource; } // For engineering use
+   ossimRefPtr<AtpAnnotatedImage> m_annotatedRefImage; // For engineering use
+   ossimRefPtr<AtpAnnotatedImage> m_annotatedCmpImage; // For engineering use
+
 protected:
    AtpGenerator() : m_algorithm (ALGO_UNASSIGNED), m_refEllipHgt(0) {}
-
-   /**
-    * Initializes the specific generator. Should be overriden by derived class as needed, though it
-    * still needs to be called from the derived initialize() as it initializes the overlap polygon
-    * and other common quantities
-    * */
-   virtual void initialize();
 
    /**
     * Constructs the processing chain for the input image according to the needs of the generator.
@@ -100,12 +111,7 @@ protected:
    //! Finds optimum layout of patches within the intersect area for feature search.
    void layoutSearchTileRects(ossimPolygon& overlapPoly);
 
-   //! Removes inconsistent residuals
-   void filterBadMatches(AtpList& tpList);
-
-   //! Caps the max number of TPs given the list, which is the list of filtered TPs for the tile.
-   void pruneList(AtpList& atps);
-
+   ossimImageHandler* getImageHandler(ossimRefPtr<ossimImageChain>& chain);
 
    Algorithm m_algorithm;
    std::shared_ptr<ossim::Image> m_refImage;
@@ -122,8 +128,6 @@ protected:
    std::vector<ossimIrect> m_searchTileRects;
    static std::shared_ptr<AutoTiePoint> s_referenceATP;
 
-   ossimRefPtr<AtpAnnotatedImage> m_annotatedRefImage; // For engineering use
-   ossimRefPtr<AtpAnnotatedImage> m_annotatedCmpImage; // For engineering use
 };
 }
 #endif /* AtpGeneratorBase_H_ */

@@ -85,13 +85,17 @@ AtpAnnotatedImage::AtpAnnotatedImage(ossimRefPtr<ossimImageChain>& sourceChain,
       m_annScale = ossimDpt(1.0, 1.0);
    m_annScaleInverse = ossimDpt(1.0/m_annScale.x, 1.0/m_annScale.y);
 
-   // Establish the AOI in scaled space:
-   m_annScaledAoi = aoi * m_annScaleInverse.x;
+   setAOI(aoi);
 }
 
 AtpAnnotatedImage::~AtpAnnotatedImage()
 {
+}
 
+void AtpAnnotatedImage::setAOI(const ossimDrect& aoi)
+{
+   // Establish the AOI in scaled space:
+   m_annScaledAoi = aoi * m_annScaleInverse.x;
 }
 
 void AtpAnnotatedImage::annotateResiduals(AtpList& atps, int r, int g, int b)
@@ -264,7 +268,6 @@ void AtpAnnotatedImage::annotateFeatureSearchTiles(std::vector<ossimIrect>& sear
 
       drawBox(box, 200, 255, 100);
    }
-
 }
 
 void AtpAnnotatedImage::annotateCorrelationSearchTile(const ossimIrect& tileRect)

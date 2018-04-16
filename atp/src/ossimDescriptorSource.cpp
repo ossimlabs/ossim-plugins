@@ -8,6 +8,7 @@
 #include "ossimDescriptorSource.h"
 #include "AtpOpenCV.h"
 #include "atp/AtpCommon.h"
+#include "AtpGenerator.h"
 #include <ossim/imaging/ossimImageDataFactory.h>
 
 #include <opencv2/xfeatures2d.hpp>
@@ -19,6 +20,7 @@ static const double DEFAULT_NOMINAL_POSITION_ERROR = 50; // meters
 
 ossimDescriptorSource::ossimDescriptorSource()
 {
+   // PRIVATE, SHOULD NEVER BE CALLED. WOULD NEED TO CALL INITIALIZE
 }
 
 ossimDescriptorSource::ossimDescriptorSource(ossimConnectableObject::ConnectableObjectList& inputSources)
@@ -30,6 +32,7 @@ ossimDescriptorSource::ossimDescriptorSource(ossimConnectableObject::Connectable
 ossimDescriptorSource::ossimDescriptorSource(AtpGenerator* generator)
 : AtpTileSource(generator)
 {
+   // PRIVATE, SHOULD NEVER BE CALLED. WOULD NEED TO CALL INITIALIZE
 }
 
 ossimDescriptorSource::~ossimDescriptorSource()
@@ -42,35 +45,24 @@ void ossimDescriptorSource::initialize()
    // to base class setViewGeom() will initialize the associated IVTs:
    AtpTileSource::initialize();
 
-   m_nominalCmpPatchSize = 0.0;
-   unsigned int refPatchSize = AtpConfig::instance().getParameter("corrWindowSize").asUint(); // min distance between points
-   m_nominalCmpPatchSize = DEFAULT_CMP_PATCH_SIZING_FACTOR*refPatchSize;
+   ossimDpt gsd =  m_generator->getRefIVT()->getOutputMetersPerPixel();
+   double nominalGsd = (gsd.x + gsd.y)/2.0;
 
-   if (m_refIVT && m_cmpIVT)
+   // Fetch the CE90 of both images to determine cmp image search patch size:
+   ossimSensorModel* ref_sm = dynamic_cast<ossimSensorModel*>(
+           m_generator->getRefIVT()->getImageGeometry()->getProjection());
+   ossimSensorModel* cmp_sm = dynamic_cast<ossimSensorModel*>(
+           m_generator->getCmpIVT()->getImageGeometry()->getProjection());
+   if (ref_sm && cmp_sm)
    {
-      ossimDpt gsd = m_refIVT->getOutputMetersPerPixel();
-      double nominalGsd = (gsd.x + gsd.y)/2.0;
-
-      // Fetch the CE90 of both images to determine cmp image search patch size:
-      ossimSensorModel* ref_sm = dynamic_cast<ossimSensorModel*>(
-              m_refIVT->getImageGeometry()->getProjection());
-      ossimSensorModel* cmp_sm = dynamic_cast<ossimSensorModel*>(
-              m_cmpIVT->getImageGeometry()->getProjection());
-      if (ref_sm && cmp_sm)
-      {
-         double ref_ce = ref_sm->getNominalPosError();
-         double cmp_ce = cmp_sm->getNominalPosError();
-         double total_error = ref_ce + cmp_ce; // meters -- being conservative here and not doing rss
-         ossimDpt gsd = m_refIVT->getOutputMetersPerPixel();
-         double nominalGsd = (gsd.x + gsd.y)/2.0;
-         double searchSizePixels = 2.0*total_error/nominalGsd;
-         m_nominalCmpPatchSize = refPatchSize + searchSizePixels;
-      }
-      else
-      {
-         double searchSizePixels = 2.0*DEFAULT_NOMINAL_POSITION_ERROR/nominalGsd;
-         m_nominalCmpPatchSize = refPatchSize + searchSizePixels;
-      }
+      double ref_ce = ref_sm->getNominalPosError();
+      double cmp_ce = cmp_sm->getNominalPosError();
+      double total_error = ref_ce + cmp_ce; // meters -- being conservative here and not doing rss
+      m_cmpPatchInflation = 2.0*total_error/nominalGsd;
+   }
+   else
+   {
+      m_cmpPatchInflation = 2.0*DEFAULT_NOMINAL_POSITION_ERROR/nominalGsd;
    }
 }
 
@@ -83,16 +75,11 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
    if (config.diagnosticLevel(2))
       CINFO<<"\n\n"<< MODULE << " -- tileRect: "<<tileRect<<endl;
    m_tiePoints.clear();
+   if (!m_tile)
+      allocate();
 
-   if(!m_tile.get())
-   {
-      // try to initialize
-      initialize();
-      if(!m_tile.get()){
-         CINFO << MODULE << " ERROR: could not initialize tile\n";
-         return m_tile;
-      }
-   }
+   // The tile rect (in view space) is referenced by the tiepoint filtering code:
+   m_tile->setImageRectangle(tileRect);
 
    // Make sure there are at least two images as input.
    if(getNumberOfInputs() < 2)
@@ -101,15 +88,15 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
       return 0;
    }
 
-
    // The tileRect passed in is in a common map-projected view space. Need to transform the rect
    // into image space for both ref and cmp images:
-   ossimIrect refRect (m_refIVT->getViewToImageBounds(tileRect));
-   ossimIrect cmpRect (m_cmpIVT->getViewToImageBounds(tileRect));
-   cmpRect.expand(ossimIpt(m_nominalCmpPatchSize, m_nominalCmpPatchSize));
+   ossimIrect cmpViewRect (tileRect);
+   cmpViewRect.expand(ossimIpt(m_cmpPatchInflation, m_cmpPatchInflation));
+   ossimIrect refRect (m_generator->getRefIVT()->getViewToImageBounds(tileRect));
+   ossimIrect cmpRect (m_generator->getCmpIVT()->getViewToImageBounds(cmpViewRect));
 
    // Retrieve both the ref and cmp image data
-   ossimRefPtr<ossimImageData> ref_tile = m_refChain->getTile(refRect, resLevel);
+   ossimRefPtr<ossimImageData> ref_tile = m_generator->getRefChain()->getTile(refRect, resLevel);
    if (ref_tile->getDataObjectStatus() == OSSIM_EMPTY)
    {
       CWARN << MODULE << " ERROR: could not get REF tile with rect " << refRect << "\n";
@@ -119,7 +106,7 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
       ref_tile->write("REF_TILE.RAS");
 
 
-   ossimRefPtr<ossimImageData> cmp_tile = m_cmpChain->getTile(cmpRect, resLevel);
+   ossimRefPtr<ossimImageData> cmp_tile = m_generator->getCmpChain()->getTile(cmpRect, resLevel);
    if (cmp_tile->getDataObjectStatus() == OSSIM_EMPTY)
    {
       CWARN << MODULE << " ERROR: could not get CMP tile with rect " << cmpRect << "\n";
@@ -128,7 +115,7 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
    if (config.diagnosticLevel(5))
       cmp_tile->write("CMP_TILE.RAS");
 
-   m_tile = ref_tile;
+   //m_tile = ref_tile;
 
    // Convert both into OpenCV Mat objects using the Ipl image.
    IplImage* refImage = convertToIpl(ref_tile.get());
@@ -267,7 +254,6 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
       matcher->knnMatch(desA, desB, matches, k);
    }
 
-
    float minDistance = INT_MAX;
    float maxDistance = 0;
 
@@ -298,7 +284,7 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
       if (featureMatches.empty())
          continue;
 
-      shared_ptr<AutoTiePoint> atp (new AutoTiePoint(this, sid));
+      shared_ptr<AutoTiePoint> atp (new AutoTiePoint(m_generator, sid));
       cv::KeyPoint cv_A = kpA[(featureMatches[0]).queryIdx];
       cv::KeyPoint cv_B;
 
@@ -343,6 +329,7 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
    if (config.diagnosticLevel(2))
       CINFO<<"  After capping to max num features ("<<N<<"), num TPs in tile = "<<n<<endl;
 
+   filterPoints();
    return m_tile;
 }
 

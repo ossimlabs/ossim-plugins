@@ -35,26 +35,75 @@ namespace ATP
 {
 std::shared_ptr<AutoTiePoint> AtpGenerator::s_referenceATP;
 
+
 AtpGenerator::AtpGenerator(Algorithm algo)
 :   m_algorithm (algo),
     m_refEllipHgt(0)
 {
 }
 
+
 AtpGenerator::~AtpGenerator()
 {
-
 }
+
 
 void AtpGenerator::setRefImage(shared_ptr<Image> ref_image)
 {
    m_refImage = ref_image;
 }
 
+
 void AtpGenerator::setCmpImage(shared_ptr<Image> cmp_image)
 {
    m_cmpImage = cmp_image;
 }
+
+
+string  AtpGenerator::getRefImageID()
+{
+   ossimImageHandler* handler = getImageHandler(m_refChain);
+   if (!handler)
+      return "";
+   return handler->getImageID().string();
+}
+
+string AtpGenerator::getCmpImageID()
+{
+   ossimImageHandler* handler = getImageHandler(m_cmpChain);
+   if (!handler)
+      return "";
+   return handler->getImageID().string();
+}
+
+string  AtpGenerator::getRefFilename()
+{
+   ossimImageHandler* handler = getImageHandler(m_refChain);
+   if (!handler)
+      return "";
+   return handler->getFilename().string();
+}
+
+string  AtpGenerator::getCmpFilename()
+{
+   ossimImageHandler* handler = getImageHandler(m_cmpChain);
+   if (!handler)
+      return "";
+   return handler->getFilename().string();
+}
+
+ossimImageHandler* AtpGenerator::getImageHandler(ossimRefPtr<ossimImageChain>& chain)
+{
+   if (!chain)
+      return 0;
+
+   ossimTypeNameVisitor visitor ("ossimImageHandler");
+   chain->accept(visitor);
+   ossimImageHandler* handler = (ossimImageHandler*) visitor.getObjectAs<ossimImageHandler>();
+
+   return handler;
+}
+
 
 void AtpGenerator::initialize()
 {
@@ -157,6 +206,7 @@ void AtpGenerator::initialize()
    m_atpTileSource->initialize();
 }
 
+
 ossimRefPtr<ossimImageChain>
 AtpGenerator::constructChain(shared_ptr<Image> image,
                                  ossimRefPtr<ossimImageViewProjectionTransform>& ivt)
@@ -192,35 +242,39 @@ AtpGenerator::constructChain(shared_ptr<Image> image,
    chain->add(handler.get());
 
    // Add histogram (experimental)
-   ossimRefPtr<ossimHistogramRemapper> histo_remapper = new ossimHistogramRemapper();
-   chain->add(histo_remapper.get());
-   histo_remapper->setStretchMode(ossimHistogramRemapper::LINEAR_AUTO_MIN_MAX);
-   ossimRefPtr<ossimMultiResLevelHistogram> histogram = handler->getImageHistogram();
-   if (!histogram)
+   bool doHistogramStretch = config.getParameter("doHistogramStretch").asBool();
+   if (doHistogramStretch)
    {
-      handler->buildHistogram();
-      histogram = handler->getImageHistogram();
-   }
-   histo_remapper->setHistogram(histogram);
-
-   // Need to select a band if multispectral:
-   unsigned int numBands = handler->getNumberOfOutputBands();
-   if (numBands > 1)
-   {
-      unsigned int band = image->getActiveBand();
-      if ((band > numBands) || (band <= 0))
+      ossimRefPtr<ossimHistogramRemapper> histo_remapper = new ossimHistogramRemapper();
+      chain->add(histo_remapper.get());
+      histo_remapper->setStretchMode(ossimHistogramRemapper::LINEAR_AUTO_MIN_MAX);
+      ossimRefPtr<ossimMultiResLevelHistogram> histogram = handler->getImageHistogram();
+      if (!histogram)
       {
-         CINFO << MODULE << "Specified band (" << band << ") is outside allowed range (1 to "
-              << numBands
-              << "). Using default band 1 which may not be ideal." << endl;
-         band = 1;
+         handler->buildHistogram();
+         histogram = handler->getImageHistogram();
       }
-      band--; // shift to zero-based
-      ossimRefPtr<ossimBandSelector> band_selector = new ossimBandSelector();
-      chain->add(band_selector.get());
-      vector<ossim_uint32> bandList;
-      bandList.push_back(band);
-      band_selector->setOutputBandList(bandList);
+      histo_remapper->setHistogram(histogram);
+
+      // Need to select a band if multispectral:
+      unsigned int numBands = handler->getNumberOfOutputBands();
+      if (numBands > 1)
+      {
+         unsigned int band = image->getActiveBand();
+         if ((band > numBands) || (band <= 0))
+         {
+            CINFO << MODULE << "Specified band (" << band << ") is outside allowed range (1 to "
+                  << numBands
+                  << "). Using default band 1 which may not be ideal." << endl;
+            band = 1;
+         }
+         band--; // shift to zero-based
+         ossimRefPtr<ossimBandSelector> band_selector = new ossimBandSelector();
+         chain->add(band_selector.get());
+         vector<ossim_uint32> bandList;
+         bandList.push_back(band);
+         band_selector->setOutputBandList(bandList);
+      }
    }
 
    // Can only work in 8-bit radiometry:
@@ -386,7 +440,6 @@ void AtpGenerator::writeTiePointList(ostream& out, const AtpList& tpList)
    }
    else
    {
-
       for (size_t i=0; i<tpList.size(); ++i)
       {
          out<<"\ntiepoint["<<i<<"]: "<<tpList[i]<<endl;
@@ -407,58 +460,24 @@ bool AtpGenerator::generateTiePointList(TiePointList& atpList)
    // Need to search for features in the REF tile first, then consider only those locations
    // for correlating. The search tiles were previously established in the base class initialization
    ossimRefPtr<ossimImageData> ref_tile = 0;
-   ossim_int64 tileId = 0;
+   ossim_uint32 tileId = 0;
    for (auto &searchTileRect : m_searchTileRects)
    {
       ref_tile = m_atpTileSource->getTile(searchTileRect);
-      //if (ref_tile->getDataObjectStatus() == OSSIM_EMPTY)
-      //{
-      //   if (config.diagnosticLevel(5))
-      //      CWARN<<MODULE<<"WARNING: Empty search tile returned from CorrelationSource."<<endl;
-      //   continue;
-      //}
 
       AtpList &tileATPs = m_atpTileSource->getTiePoints();
       if (tileATPs.empty() && config.diagnosticLevel(1))
       {
          CINFO << "\n" << MODULE << "No TPs found in tile." << endl;
+         ++tileId;
          continue;
       }
 
-      if (config.diagnosticLevel(3))
-      {
-         // Annotate red before filtering:
-         m_annotatedRefImage->annotateResiduals(tileATPs, 255, 0, 0);
-         m_annotatedCmpImage->annotateCorrelations(tileATPs, 255, 0, 0);
-      }
-
-      if (!config.getParameter("useRasterMode").asBool())
-      {
-         filterBadMatches(tileATPs);
-         if (config.diagnosticLevel(3))
-         {
-            // Annotate yellow before pruning:
-            m_annotatedRefImage->annotateResiduals(tileATPs, 255, 255, 0);
-            m_annotatedCmpImage->annotateCorrelations(tileATPs, 255, 255, 0);
-         }
-
-         pruneList(tileATPs);
-
-         if (config.diagnosticLevel(2))
-            CINFO << MODULE << "After filtering: num TPs in tile = " << tileATPs.size() << endl;
-      }
-
-      // Add remaining tile CTPs to master CTP list:
+      // Add remaining tile ATPs to master ATP list:
       if (!tileATPs.empty())
          atpList.insert(atpList.end(), tileATPs.begin(), tileATPs.end());
 
-      if (config.diagnosticLevel(3))
-      {
-         // Annotate Green after accepting TP:
-         m_annotatedRefImage->annotateResiduals(tileATPs, 0, 255, 0);
-         m_annotatedCmpImage->annotateCorrelations(tileATPs, 0, 255, 0);
-         //m_annotatedRefImage->annotateTPIDs(tileATPs, 180, 180, 0);
-      }
+      ++tileId;
    }
 
    if (config.diagnosticLevel(1))
@@ -564,7 +583,7 @@ void AtpGenerator::layoutSearchTileRects(ossimPolygon& intersectPoly)
    vector<ossimIrect>::iterator b = m_searchTileRects.begin();
    while (b != m_searchTileRects.end())
    {
-      if(!intersectPoly.rectIntersects(*b))
+      if(!intersectPoly.isRectWithin(*b))
          b = m_searchTileRects.erase(b);
       else
          b++;
@@ -587,104 +606,5 @@ void AtpGenerator::layoutSearchTileRects(ossimPolygon& intersectPoly)
    }
 }
 
-void AtpGenerator::filterBadMatches(AtpList& tpList)
-{
-   const char* MODULE = "AtpGenerator::filterBadPeaks()  ";
-
-   // Check for consistency check override:
-   AtpConfig& config = AtpConfig::instance();
-   unsigned int minNumConsistent = config.getParameter("minNumConsistentNeighbors").asUint();
-   if (minNumConsistent == 0)
-      return;
-
-   // Can't filter without neighbors, so remove all just in case they are bad:
-   if (tpList.size() < minNumConsistent)
-   {
-      tpList.clear();
-      return;
-   }
-
-   // Loop to eliminate bad peaks and inconsistent CTPs in tile:
-   AtpList::iterator iter = tpList.begin();
-   while (iter != tpList.end())
-   {
-      if (!(*iter)) // Should never happen
-      {
-         CWARN<<MODULE<<"WARNING: Null AutoTiePoint encountred in list. Skipping point."<<endl;
-         ++iter;
-         continue;
-      }
-
-      // The "tiepoint" may not have any matches -- it may be just a feature:
-      if ((*iter)->hasValidMatch())
-         (*iter)->findBestConsistentMatch(tpList);
-
-      if (!(*iter)->hasValidMatch())
-      {
-         // Remove this TP from our list as soon as it is discovered that there are no valid
-         // peaks. All TPs in theTpList must have valid peaks:
-         if (config.diagnosticLevel(5))
-            CINFO<<MODULE<<"Removing TP "<<(*iter)->getTiePointId()<<endl;
-         iter = tpList.erase(iter);
-         if (tpList.empty())
-            break;
-      }
-      else
-         iter++;
-   }
-}
-
-void AtpGenerator::pruneList(AtpList& atps)
-{
-   const char* MODULE = "AtpGenerator::pruneList()  ";
-
-   AtpConfig &config =  AtpConfig::instance();
-   if (config.getParameter("useRasterMode").asBool())
-   {
-      // For raster mode, simply remove entries with no match:
-      auto atp = atps.begin();
-      while (atp != atps.end())
-      {
-         if (*atp && (*atp)->hasValidMatch())
-            ++atp;
-         else
-            atp = atps.erase(atp);
-      }
-      return;
-   }
-
-   // Use a map to sort by confidence measure:
-   multimap<double, shared_ptr<AutoTiePoint> > atpMap;
-   auto atp = atps.begin();
-   double confidence;
-   while (atp != atps.end())
-   {
-      if (!(*atp)) // Should never happen
-      {
-         CWARN<<MODULE<<"WARNING: Null AutoTiePoint encountred in list. Skipping point."<<endl;
-         ++atp;
-         continue;
-      }
-
-      // The "tiepoint" may not have any matches -- it may be just a feature:
-      bool hasValidMatch = (*atp)->getConfidenceMeasure(confidence);
-      if (hasValidMatch)
-         atpMap.emplace(1.0/confidence, *atp);
-
-      atp++;
-   }
-
-   // Skim off the top best:
-   unsigned int N = config.getParameter("numTiePointsPerTile").asUint();
-   atps.clear();
-   multimap<double, shared_ptr<AutoTiePoint> >::iterator tp = atpMap.begin();
-   while (tp != atpMap.end())
-   {
-      atps.push_back(tp->second);
-      if (atps.size() == N)
-         break;
-      tp++;
-   }
-}
 
 }

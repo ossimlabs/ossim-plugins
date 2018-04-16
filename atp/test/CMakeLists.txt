@@ -23,3 +23,7 @@ add_executable(atp-residuals atp-residuals.cpp)
 set_target_properties(atp-residuals PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 target_link_libraries(atp-residuals ${requiredLibs} )
 
+add_executable(atp-pax-test atp-pax-test.cpp)
+set_target_properties(atp-pax-test PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+target_link_libraries(atp-pax-test ${requiredLibs} )
+

@@ -34,7 +34,7 @@ public:
    ~AtpAnnotatedImage();
 
    void setImageName(const std::string& name) { m_annFilename = name; }
-
+   void setAOI(const ossimDrect& aoi);
    void annotateFeatureSearchTiles(std::vector<ossimIrect>& tileRects);
    void annotateFeatures(std::vector<ossimDpt>& atpList, int r, int g, int b);
    void annotateCorrelations(AtpList& atpList, int r, int g, int b);
