@@ -10,7 +10,8 @@
 //  $Id: ossimGdalPluginInit.cpp 18971 2011-02-25 19:53:30Z gpotts $
 #include <gdal.h>
 #include <ossim/plugin/ossimSharedObjectBridge.h>
-#include <ossim/plugin/ossimPluginConstants.h>
+#include <ossim/base/ossimEnvironmentUtility.h>
+#include <ossim/base/ossimRegExp.h>
 #include <ossimGdalFactory.h>
 #include <ossimGdalObjectFactory.h>
 #include <ossimGdalImageWriterFactory.h>
@@ -41,7 +42,62 @@ static void setGdalDescription(ossimString& description)
       }
    }
 }
-
+static void setValidDrivers(const ossimKeywordlist& options){
+  int driverCount = GDALGetDriverCount();
+  int idx = 0;
+  ossimString driverRegExString = ossimEnvironmentUtility::instance()->getEnvironmentVariable("GDAL_ENABLE_DRIVERS");
+  ossimRegExp driverRegEx;
+  std::function<bool(GDALDriverH, ossimRegExp &)>
+    isDriverEnabled = [](GDALDriverH driver, ossimRegExp &regExpression) -> bool { return true; };
+  
+  // check env variables first
+  //
+  if (!driverRegExString.empty())
+  {
+    isDriverEnabled = [](GDALDriverH driver, ossimRegExp &regExpression) -> bool { return regExpression.find(GDALGetDriverShortName(driver)); };
+  }
+  else
+  {
+    driverRegExString = ossimEnvironmentUtility::instance()->getEnvironmentVariable("GDAL_DISABLE_DRIVERS");
+    if (!driverRegExString.empty())
+    {
+      isDriverEnabled = [](GDALDriverH driver, ossimRegExp &regExpression) -> bool { return !regExpression.find(GDALGetDriverShortName(driver)); };
+    }
+  }
+  // now check properties
+  if (driverRegExString.empty())
+  {
+    driverRegExString = options.find("enable_drivers");
+    if (!driverRegExString.empty())
+    {
+      isDriverEnabled = [](GDALDriverH driver, ossimRegExp &regExpression) -> bool { return regExpression.find(GDALGetDriverShortName(driver)); };
+    }
+    else
+    {
+      driverRegExString = options.find("disable_drivers");
+      if (!driverRegExString.empty())
+      {
+        isDriverEnabled = [](GDALDriverH driver, ossimRegExp &regExpression) -> bool { return !regExpression.find(GDALGetDriverShortName(driver)); };
+      }
+    }
+  }
+  if (!driverRegExString.empty())
+  {
+    driverRegEx.compile(driverRegExString.c_str());
+  }
+  for (idx = 0; idx < driverCount; ++idx)
+  {
+    GDALDriverH driver = GDALGetDriver(idx);
+    if (driver)
+    {
+      if (!isDriverEnabled(driver, driverRegEx))
+      {
+        GDALDeregisterDriver(driver);
+        GDALDestroyDriver(driver);
+      }
+    }
+  }
+}
 
 extern "C"
 {
@@ -69,38 +125,33 @@ extern "C"
    OSSIM_PLUGINS_DLL void ossimSharedLibraryInitialize(
                ossimSharedObjectInfo** info, 
                const char* options)
-   {    
-      gdalInfo.getDescription = getGdalDescription;
-      gdalInfo.getNumberOfClassNames = getGdalNumberOfClassNames;
-      gdalInfo.getClassName = getGdalClassName;
-      
-      *info = &gdalInfo;
-      ossimKeywordlist kwl;
-      kwl.parseString(ossimString(options));
+   {
+     gdalInfo.getDescription = getGdalDescription;
+     gdalInfo.getNumberOfClassNames = getGdalNumberOfClassNames;
+     gdalInfo.getClassName = getGdalClassName;
 
-      /* Register the readers... */
-     ossimImageHandlerRegistry::instance()->
-        registerFactory(ossimGdalFactory::instance(), ossimString(kwl.find("read_factory.location")).downcase() == "front" );
+     *info = &gdalInfo;
+     ossimKeywordlist kwl;
+     kwl.parseString(ossimString(options));
+     /* Register the readers... */
+     ossimImageHandlerRegistry::instance()
+         ->registerFactory(ossimGdalFactory::instance(), ossimString(kwl.find("read_factory.location")).downcase() == "front");
 
      /* Register the writers... */
-     ossimImageWriterFactoryRegistry::instance()->
-        registerFactory(ossimGdalImageWriterFactory::instance(), ossimString(kwl.find("writer_factory.location")).downcase() == "front" );
+     ossimImageWriterFactoryRegistry::instance()->registerFactory(ossimGdalImageWriterFactory::instance(), ossimString(kwl.find("writer_factory.location")).downcase() == "front");
 
      /* Register the overview builder factory. */
-     ossimOverviewBuilderFactoryRegistry::instance()->
-        registerFactory(ossimGdalOverviewBuilderFactory::instance());
+     ossimOverviewBuilderFactoryRegistry::instance()->registerFactory(ossimGdalOverviewBuilderFactory::instance());
 
-     ossimProjectionFactoryRegistry::instance()->
-        registerFactory(ossimGdalProjectionFactory::instance());
+     ossimProjectionFactoryRegistry::instance()->registerFactory(ossimGdalProjectionFactory::instance());
 
      /* Register generic objects... */
-     ossimObjectFactoryRegistry::instance()->
-        registerFactory(ossimGdalObjectFactory::instance());
+     ossimObjectFactoryRegistry::instance()->registerFactory(ossimGdalObjectFactory::instance());
 
      /* Register gdal info factoy... */
-     ossimInfoFactoryRegistry::instance()->
-       registerFactory(ossimGdalInfoFactory::instance());
+     ossimInfoFactoryRegistry::instance()->registerFactory(ossimGdalInfoFactory::instance());
 
+     setValidDrivers(kwl);
      setGdalDescription(gdalDescription);
      ossimGdalFactory::instance()->getTypeNameList(gdalObjList);
      ossimGdalImageWriterFactory::instance()->getTypeNameList(gdalObjList);
