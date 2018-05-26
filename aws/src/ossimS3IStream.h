@@ -1,6 +1,7 @@
 #ifndef ossimS3IStream_HEADER
 #define ossimS3IStream_HEADER 1
 #include <ossim/base/ossimIoStream.h>
+#include <ossim/base/ossimFileInfoInterface.h>
 #include "ossimS3StreamBuffer.h"
 
 namespace ossim{
@@ -32,9 +33,9 @@ namespace ossim{
          }
       }
       
-      ossim_uint64 getFileSize() const
+      virtual ossim_int64 getFileSize() const
       {
-         return m_s3membuf.getFileSize();
+         return (ossim_int64)m_s3membuf.getFileSize();
       }
       
       ossim_uint64 getBlockSize() const
