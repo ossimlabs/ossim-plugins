@@ -36,4 +36,6 @@ const std::string &ossimKakaduJ2kCodec::getExtension() const
 bool ossimKakaduJ2kCodec::loadState(const ossimKeywordlist &kwl, const char *prefix)
 {
    std::cout << "LOADING AND INITIALIZING THE DECOMPRESSOR AND COMPRESSORS\n";
+
+   return true;
 }
