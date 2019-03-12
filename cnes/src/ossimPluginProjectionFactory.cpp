@@ -20,6 +20,7 @@
 #include <ossim/base/ossimRefPtr.h>
 #include <ossim/projection/ossimProjection.h>
 #include "ossimRadarSatModel.h"
+#include "ossimRadarSat2RPCModel.h"
 #include "ossimEnvisatAsarModel.h"
 #include "ossimTerraSarModel.h"
 //#include <ossim/projection/ossimCosmoSkymedModel.h>
@@ -69,6 +70,15 @@ ossimProjection* ossimPluginProjectionFactory::createProjection(
 
    if ( !projection )
    {
+      ossimRefPtr<ossimRadarSat2RPCModel> model = new ossimRadarSat2RPCModel();
+      if ( model->open(filename) )
+         projection = model.get();
+      else
+         model = 0;
+   }
+
+   if ( !projection )
+   {
       ossimRefPtr<ossimRadarSat2Model> model = new ossimRadarSat2Model();
       if ( model->open(filename) )
       {
@@ -84,7 +94,7 @@ ossimProjection* ossimPluginProjectionFactory::createProjection(
          model = 0;
       }
    }
-   
+
    if(traceDebug())
    {
       ossimNotify(ossimNotifyLevel_DEBUG)

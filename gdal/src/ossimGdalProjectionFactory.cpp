@@ -414,7 +414,7 @@ ossimProjection* ossimGdalProjectionFactory::createProjection(const ossimFilenam
 
             kwl.add(ossimKeywordNames::IMAGE_MODEL_TRANSFORM_MATRIX_KW,
                     matrixString.str().c_str(), true);
-            kwl.add(ossimKeywordNames::IMAGE_MODEL_TRANSFORM_UNIT_KW,
+            kwl.add(ossimKeywordNames::ORIGINAL_MAP_UNITS_KW,
                     units.string().c_str(), true);
          }
 
@@ -492,7 +492,7 @@ ossimProjection* ossimGdalProjectionFactory::createProjection(const ossimKeyword
          tempKwl2.add(keywordList, prefix, true);
          tempKwl.add(prefix, tempKwl2,  true);
          tempKwl.add(prefix, ossimKeywordNames::TYPE_KW, proj->getClassName(), true);
-	 proj->loadState(tempKwl);
+	      proj->loadState(tempKwl);
          if(traceDebug())
          {
             tempKwl.clear();
