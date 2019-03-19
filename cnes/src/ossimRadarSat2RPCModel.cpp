@@ -108,220 +108,102 @@ bool ossimRadarSat2RPCModel::open(const ossimFilename& file)
    static const char MODULE[] = "ossimRadarSat2RPCModel::open";
 
    if (traceDebug())
-   {
       ossimNotify(ossimNotifyLevel_DEBUG)<< MODULE << " entered...\n";
-   }
-
-   bool result = false;
 
    // Get the xml file.
    ossimFilename xmlFile;
+   ossimXmlDocument* xdoc = new ossimXmlDocument();
+   ossimRadarSat2ProductDoc rsDoc;
 
    if (file.ext().downcase() == "xml")
-   {
       xmlFile = file;
-   }
    else if (file.isFile())
-   {
       xmlFile = file.expand().path().dirCat("product.xml");
+
+   if ( !xmlFile.exists() || !xdoc->openFile(xmlFile) || !rsDoc.isRadarSat2(xdoc))
+   {
+      setErrorStatus();
+      return false;
    }
+
+   theProductXmlFile = xmlFile;
+   if (traceDebug())
+   {
+      ossimNotify(ossimNotifyLevel_DEBUG)<< "isRadarSat2...\n";
+      ossimString s;
+      if ( rsDoc.getBeamModeMnemonic(xdoc, s) )
+         ossimNotify(ossimNotifyLevel_DEBUG) << "beam_mode_mnemonic: " << s << "\n";
+      if ( rsDoc.getAcquisitionType(xdoc, s) )
+         ossimNotify(ossimNotifyLevel_DEBUG)<< "acquisition_type: " << s << "\n";
+   }
+
+   // Set the sub image offset. tmp hard coded (drb).
+   theSubImageOffset.x = 0.0;
+   theSubImageOffset.y = 0.0;
+
+   // Set the base class number of lines and samples
+   if (rsDoc.initImageSize(xdoc, theImageSize))
+   {
+      // Set the base class clip rect.
+      theImageClipRect = ossimDrect( 0, 0, theImageSize.x-1, theImageSize.y-1);
+   }
+
+   rsDoc.getImageId(xdoc, theImageID);
+   rsDoc.getSatellite(xdoc, theSensorID);
+
+   // Set the base class gsd:
+   if (rsDoc.initGsd(xdoc, theGSD))
+      theMeanGSD = (theGSD.x + theGSD.y)/2.0;
+
+   thePolyType = B;
+   RPCModel model;
+   model = rsDoc.getRpcData(xdoc);
+
+   theBiasError  = model.biasError;
+   theRandError  = model.randomError;
+   theLineOffset = model.lineOffset;
+   theSampOffset = model.pixelOffset;
+   theLatOffset  = model.latitudeOffset;
+   theLonOffset  = model.longitudeOffset;
+   theHgtOffset  = model.heightOffset;
+   theLineScale  = model.lineScale;
+   theSampScale  = model.pixelScale;
+   theLatScale   = model.latitudeScale;
+   theLonScale   = model.longitudeScale;
+   theHgtScale   = model.heightScale;
 
    if (traceDebug())
    {
       ossimNotify(ossimNotifyLevel_DEBUG)
-         << "product xml file: " << xmlFile << "\n";
+         << "All parameters RPC : "
+         << theBiasError << ", "
+         << theRandError << ", "
+         << theLineOffset << ", "
+         << theSampOffset << ", "
+         << theLatOffset << ", "
+         << theLonOffset << ", "
+         << theHgtOffset << ", "
+         << theLineScale << ", "
+         << theSampScale << ", "
+         << theLatScale << ", "
+         << theLonScale << ", "
+         << theHgtScale << ", " << std::endl;
    }
 
-   if ( xmlFile.exists() )
+   // Parse coefficients:
+   ossim_uint32 i;
+
+   for (i=0; i<20; ++i)
    {
-      //---
-      // Instantiate the XML parser:
-      //---
-      ossimXmlDocument* xdoc = new ossimXmlDocument();
-      if ( xdoc->openFile(xmlFile) )
-      {
-         ossimRadarSat2ProductDoc rsDoc;
 
-         result = rsDoc.isRadarSat2(xdoc);
-
-         if (result)
-         {
-            if (traceDebug())
-            {
-               ossimNotify(ossimNotifyLevel_DEBUG)
-                  << "isRadarSat2...\n";
-               ossimString s;
-               if ( rsDoc.getBeamModeMnemonic(xdoc, s) )
-               {
-                  ossimNotify(ossimNotifyLevel_DEBUG)
-                     << "beam_mode_mnemonic: " << s << "\n";
-               }
-               if ( rsDoc.getAcquisitionType(xdoc, s) )
-               {
-                  ossimNotify(ossimNotifyLevel_DEBUG)
-                     << "acquisition_type: " << s << "\n";
-               }
-            }
-
-            // Set the base class number of lines and samples
-            result = rsDoc.initImageSize(xdoc, theImageSize);
-
-            // Assign the bounding image space rectangle:
-            if (result)
-            {
-               // Set the base class clip rect.
-               theImageClipRect = ossimDrect(
-                  0, 0,
-                  theImageSize.x-1, theImageSize.y-1);
-            }
-
-            // Set the sub image offset. tmp hard coded (drb).
-            theSubImageOffset.x = 0.0;
-            theSubImageOffset.y = 0.0;
-
-            // Set the image id.
-            if (result)
-            {
-               result = rsDoc.getImageId(xdoc, theImageID);
-            }
-
-            // Set the sensor ID.
-            if (result)
-            {
-               result = rsDoc.getSatellite(xdoc, theSensorID);
-            }
-
-            // Set the base class gsd:
-            result = rsDoc.initGsd(xdoc, theGSD);
-            if (result)
-            {
-               theMeanGSD = (theGSD.x + theGSD.y)/2.0;
-            }
-         }
-
-         thePolyType = B;
-
-         RPCModel model;
-         model = rsDoc.getRpcData(xdoc);
-
-
-         theBiasError  = model.biasError;
-         theRandError  = model.randomError;
-         theLineOffset = model.lineOffset;
-         theSampOffset = model.pixelOffset;
-         theLatOffset  = model.latitudeOffset;
-         theLonOffset  = model.longitudeOffset;
-         theHgtOffset  = model.heightOffset;
-         theLineScale  = model.lineScale;
-         theSampScale  = model.pixelScale;
-         theLatScale   = model.latitudeScale;
-         theLonScale   = model.longitudeScale;
-         theHgtScale   = model.heightScale;
-
-
-         if (traceDebug())
-         {
-            ossimNotify(ossimNotifyLevel_DEBUG)
-               << "All parameters RPC : "
-               << theBiasError << ", "
-               << theRandError << ", "
-               << theLineOffset << ", "
-               << theSampOffset << ", "
-               << theLatOffset << ", "
-               << theLonOffset << ", "
-               << theHgtOffset << ", "
-               << theLineScale << ", "
-               << theSampScale << ", "
-               << theLatScale << ", "
-               << theLonScale << ", "
-               << theHgtScale << ", " << std::endl;
-         }
-
-         // Parse coefficients:
-         ossim_uint32 i;
-
-         for (i=0; i<20; ++i)
-         {
-
-            theLineNumCoef[i] = model.lineNumeratorCoefficients[i];
-            theLineDenCoef[i] = model.lineDenominatorCoefficients[i];
-            theSampNumCoef[i] = model.pixelNumeratorCoefficients[i];
-            theSampDenCoef[i] = model.pixelDenominatorCoefficients[i];
-         }
-
-         // Assign other data members to default values:
-         theNominalPosError = sqrt(theBiasError*theBiasError +
-                                   theRandError*theRandError); // meters
-
-
-
-
-      } // matches: if ( xdoc->openFile(xmlFile) )
-
-      delete xdoc;
-      xdoc = 0;
-
-   } // matches: if ( xmlFile.exists() )
-
-   if (result)
-   {
-      theProductXmlFile = xmlFile;
-   }
-   else
-   {
-      theProductXmlFile = ossimFilename::NIL;
+      theLineNumCoef[i] = model.lineNumeratorCoefficients[i];
+      theLineDenCoef[i] = model.lineDenominatorCoefficients[i];
+      theSampNumCoef[i] = model.pixelNumeratorCoefficients[i];
+      theSampDenCoef[i] = model.pixelDenominatorCoefficients[i];
    }
 
-   if (result)
-   {
-      theProductXmlFile = xmlFile;
-   }
-   else
-   {
-      theProductXmlFile = ossimFilename::NIL;
-   }
-
-   if (result)
-   {
-      // Assign the ossimSensorModel::theBoundGndPolygon
-      ossimGpt ul;
-      ossimGpt ur;
-      ossimGpt lr;
-      ossimGpt ll;
-      lineSampleToWorld(theImageClipRect.ul(), ul);
-      lineSampleToWorld(theImageClipRect.ur(), ur);
-      lineSampleToWorld(theImageClipRect.lr(), lr);
-      lineSampleToWorld(theImageClipRect.ll(), ll);
-      setGroundRect(ul, ur, lr, ll);  // ossimSensorModel method.
-   }
-
-   if (traceDebug())
-   {
-      ossimNotify(ossimNotifyLevel_DEBUG)
-         << MODULE << " exit status = " << (result?"true":"false\n")
-         << std::endl;
-   }
-
-
-
-   //---
-   // Get the decimation if any from the header "IMAG" field.
-   //
-   // Look for string like:
-   // "/2" = 1/2
-   // "/4  = 1/4
-   // ...
-   // "/16 = 1/16
-   // If it is full resolution it should be "1.0"
-   //---
-
-   theDecimation = 1.0;
-
-
-
-   //***
-   // Assign other data members:
-   //***
+   // Assign other data members to default values:
+   theNominalPosError = sqrt(theBiasError*theBiasError + theRandError*theRandError); // meters
    thePolyType = B; 					// This may not be true for early RPC imagery
    theRefImgPt.line = theImageSize.line/2.0;
    theRefImgPt.samp = theImageSize.samp/2.0;
@@ -329,35 +211,33 @@ bool ossimRadarSat2RPCModel::open(const ossimFilename& file)
    theRefGndPt.lon  = theLonOffset;
    theRefGndPt.hgt  = theHgtOffset;
 
+   delete xdoc;
+   xdoc = 0;
 
-   //---
-   // Assign the bounding ground polygon:
-   //
-   // NOTE:  We will use the base ossimRpcModel for transformation since all
-   // of our calls are in full image space (not decimated).
-   //---
+   // Assign the ossimSensorModel::theBoundGndPolygon
+   ossimGpt ul;
+   ossimGpt ur;
+   ossimGpt lr;
+   ossimGpt ll;
+   lineSampleToWorld(theImageClipRect.ul(), ul);
+   lineSampleToWorld(theImageClipRect.ur(), ur);
+   lineSampleToWorld(theImageClipRect.lr(), lr);
+   lineSampleToWorld(theImageClipRect.ll(), ll);
+   setGroundRect(ul, ur, lr, ll);  // ossimSensorModel method.
+   if (theBoundGndPolygon.hasNans())
+   {
+      ossimNotify(ossimNotifyLevel_DEBUG)<<"ossimRadarSat2RPCModel: NaNs detected. Assuming bad model"<<endl;
+      setErrorStatus();
+      return false;
+   }
 
-   ossimGpt v0, v1, v2, v3;
-   ossimDpt ip0 (0.0, 0.0);
-   ossimRpcModel::lineSampleHeightToWorld(ip0, theHgtOffset, v0);
-   ossimDpt ip1 (theImageSize.samp-1.0, 0.0);
-   ossimRpcModel::lineSampleHeightToWorld(ip1, theHgtOffset, v1);
-   ossimDpt ip2 (theImageSize.samp-1.0, theImageSize.line-1.0);
-   ossimRpcModel::lineSampleHeightToWorld(ip2, theHgtOffset, v2);
-   ossimDpt ip3 (0.0, theImageSize.line-1.0);
-   ossimRpcModel::lineSampleHeightToWorld(ip3, theHgtOffset, v3);
-
-   theBoundGndPolygon
-      = ossimPolygon (ossimDpt(v0), ossimDpt(v1), ossimDpt(v2), ossimDpt(v3));
-
+   theDecimation = 1.0;
    updateModel();
 
    // Set the ground reference point.
-   ossimRpcModel::lineSampleHeightToWorld(theRefImgPt,
-                                          theHgtOffset,
-                                          theRefGndPt);
+   ossimRpcModel::lineSampleHeightToWorld(theRefImgPt, theHgtOffset, theRefGndPt);
 
-   if ( theRefGndPt.isLatNan() || theRefGndPt.isLonNan() )
+   if ( theRefGndPt.hasNans())
    {
       if (traceDebug())
       {
