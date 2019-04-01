@@ -220,6 +220,10 @@ ossimProjection* ossimPluginProjectionFactory::createProjection(
    //    {
    //      return new ossimCosmoSkymedModel;
    //   }
+   if (name == STATIC_TYPE_NAME(ossimRadarSat2RPCModel))
+   {
+      return new ossimRadarSat2RPCModel();
+   }
    if (name == STATIC_TYPE_NAME(ossimRadarSat2Model))
    {
       return new ossimRadarSat2Model();
@@ -285,6 +289,14 @@ ossimProjection* ossimPluginProjectionFactory::createProjection(
    {
       ossimString type = lookup;
 
+      if (type == "ossimRadarSat2RPCModel")
+      {
+         result = new ossimRadarSat2RPCModel();
+         if ( !result->loadState(kwl, prefix) )
+         {
+            result = 0;
+         }
+      }
       if (type == "ossimRadarSat2Model")
       {
          result = new ossimRadarSat2Model();
@@ -402,6 +414,7 @@ void ossimPluginProjectionFactory::getTypeNameList(std::vector<ossimString>& typ
 {
    typeList.push_back(STATIC_TYPE_NAME(ossimRadarSatModel));
    typeList.push_back(STATIC_TYPE_NAME(ossimRadarSat2Model));
+   typeList.push_back(STATIC_TYPE_NAME(ossimRadarSat2RPCModel));
    typeList.push_back(STATIC_TYPE_NAME(ossimTerraSarModel));
    //   result.push_back(STATIC_TYPE_NAME(ossimCosmoSkymedModel));
    typeList.push_back(STATIC_TYPE_NAME(ossimEnvisatAsarModel));
