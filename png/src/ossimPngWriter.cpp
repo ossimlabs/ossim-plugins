@@ -387,7 +387,8 @@ bool ossimPngWriter::writeStream()
             bipTile->setImageRectangle(buf_rect);
             void* bipBuf = bipTile->getBuf();
 
-            
+            theInputConnection->setAreaOfInterest(buf_rect);
+
             // Grab lines of data that span the entire width of the image.
             ossimRefPtr<ossimImageData> t = theInputConnection->getTile( buf_rect );
             if ( t.valid() )

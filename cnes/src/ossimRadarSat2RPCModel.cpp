@@ -115,12 +115,27 @@ bool ossimRadarSat2RPCModel::open(const ossimFilename& file)
    ossimXmlDocument* xdoc = new ossimXmlDocument();
    ossimRadarSat2ProductDoc rsDoc;
 
-   if (file.ext().downcase() == "xml")
-      xmlFile = file;
-   else if (file.isFile())
-      xmlFile = file.expand().path().dirCat("product.xml");
+   if (!file.exists())
+      return false;
 
-   if ( !xmlFile.exists() || !xdoc->openFile(xmlFile) || !rsDoc.isRadarSat2(xdoc))
+   while (1)
+   {
+      xmlFile = file;
+      if (xmlFile.ext().downcase() == "xml")
+         break;
+      xmlFile.setExtension("XML");
+      if (xmlFile.isReadable())
+         break;
+      xmlFile.setExtension("xml");
+      if (xmlFile.isReadable())
+         break;
+      xmlFile = file.expand().path().dirCat("product.xml");
+      if (xmlFile.isReadable())
+         break;
+      return false;
+   }
+
+   if (!xdoc->openFile(xmlFile) || !rsDoc.isRadarSat2(xdoc))
    {
       setErrorStatus();
       return false;
