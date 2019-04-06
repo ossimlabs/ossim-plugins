@@ -241,213 +241,238 @@ bool ossimPngCodec::encode(const ossimRefPtr<ossimImageData>& in,
    return true;
 }
 
+// #include <fstream>
+// static bool traced = false;
+
 bool ossimPngCodec::decode(const std::vector<ossim_uint8>& in,
                            ossimRefPtr<ossimImageData>& out ) const
 {
    bool result = true;
-   ossim_uint32 y = 0;
-   png_structp  pngPtr = 0;
-   png_infop    infoPtr = 0;
-   png_uint_32 pngWidth = 0;
-   png_uint_32 pngHeight = 0;
-   ossim_int32  pngBitDepth=0, pngByteDepth = 0, pngColorType=0, pngInterlaceType=0;
-
-   // png_bytep* row_pointers=0;
-
-   if (in.empty())
+   if ( in.size() )
    {
-      return false;
-   }
 
-   pngPtr = png_create_read_struct (PNG_LIBPNG_VER_STRING, 0, 0, 0);
-   //assert (png_ptr && "creating png_create_write_structpng_create_write_struct failed");
-
-   // Initialize info structure
-   infoPtr = png_create_info_struct (pngPtr);
-
-   // Setup Exception handling
-   setjmp (png_jmpbuf(pngPtr));
-
-   const ossim_uint8* inputPointer = &in.front();//&pngData_arg[0];
-   png_set_read_fn (pngPtr, reinterpret_cast<void*> (&inputPointer), user_read_data);
-
-   png_read_info (pngPtr, infoPtr);
-
-   png_get_IHDR (pngPtr, infoPtr, &pngWidth, &pngHeight, &pngBitDepth,
-                 &pngColorType, &pngInterlaceType, NULL, NULL);
-
-
-
-   // ensure a color bit depth of 8
-   //assert(png_bit_depth==sizeof(T)*8);
-
-   ossim_uint32 pngChannels = 0;
-   switch (pngColorType)
-   {
-      case PNG_COLOR_TYPE_GRAY:
+#if 0 /* Please leave for debug. drb */
+      if ( !traced )
       {
-         pngChannels = 1;
-         break;
-      }
-      case PNG_COLOR_TYPE_GRAY_ALPHA:
-      {
-         pngChannels = 2;
-         break;	  	
-      }
-      case PNG_COLOR_TYPE_RGB:
-      {
-         pngChannels = 3;
-         break;	  	
-      }
-      case PNG_COLOR_TYPE_RGB_ALPHA:
-      {
-         pngChannels = 4;
-         break;	  	
-      }
-      default:
-      {
-         pngChannels = 0;
-         break;	  	
-      }
-   }
-   pngByteDepth = pngBitDepth>>3;
-   //imageData_arg.clear ();
-   //imageData_arg.resize (png_height * png_width * png_channels);
-
-   ossim_uint32 bytes = pngHeight*pngWidth*pngChannels*pngByteDepth;
-   //row_pointers = reinterpret_cast<png_bytep*> (malloc (sizeof(png_bytep) * png_height));
-   std::vector<ossim_uint8> data(bytes);
-   std::vector<ossim_uint8*> rowPointers(pngHeight);
-   ossim_uint8* dataPtr = &data.front();
-   for (y = 0; y < pngHeight; y++)
-   {
-      rowPointers[y] = reinterpret_cast<ossim_uint8*> (dataPtr + ( y*(pngWidth*pngByteDepth*pngChannels)));
-   }
-
-   png_read_image (pngPtr, &rowPointers.front());
-
-   ossimScalarType scalarType = ((pngByteDepth==1)?OSSIM_UINT8:OSSIM_UINT16);
-   ossim_uint32 bands = pngChannels;
-
-   if((bands == 2) ||(bands==4))
-   {
-      bands = bands - 1;
-   }
-   // now allocate the ossimImageData object if not already allocated
-   if(!out.valid())
-   {
-      out = new ossimImageData(0, scalarType, bands, pngWidth, pngHeight);
-      out->initialize();
-   }
-   else
-   {
-      out->setNumberOfDataComponents(bands);
-      out->setImageRectangleAndBands(ossimIrect(0,0,pngWidth-1,pngHeight-1), bands);
-      out->initialize();
-   }
-
-   if(pngChannels == 1)
-   {
-      // ossim_uint32 idx = 0;
-      memcpy(out->getBuf(0), dataPtr, bytes);
-      out->validate();
-      // once we support alpha channel properly we will need to add alpha settings here
-
-   }
-   else if(pngChannels == 2)
-   {
-      //std::cout << "DECODING 2 channels\n";
-      ossim_uint32 size = pngWidth*pngHeight;
-      ossim_uint32 idx = 0;
-      if(scalarType == OSSIM_UINT16)
-      {
-         ossim_uint16* tempDataPtr = reinterpret_cast<ossim_uint16*> (dataPtr);
-         ossim_uint16* buf = static_cast<ossim_uint16*>(out->getBuf(0));
-
-         for(idx = 0; idx < size;++idx)
+         std::ofstream os;
+         os.open("debug.png", ios::out | ios::binary);
+         if (os.good())
          {
-            *buf = tempDataPtr[0];
-
-            tempDataPtr+=2;++buf;
+            os.write((const char*)(&in.front()), in.size());
+            cout << "wrote file: debug.png" << endl;
          }
-         out->validate();
+         traced = true;
       }
-      else if(scalarType == OSSIM_UINT8)
+#endif
+
+      png_structp  png_ptr = 0;
+      png_infop   info_ptr = 0;
+
+      png_ptr = png_create_read_struct (PNG_LIBPNG_VER_STRING, 0, 0, 0);
+
+      // Initialize info structure
+      info_ptr = png_create_info_struct (png_ptr);
+
+      // Setup Exception handling
+      setjmp (png_jmpbuf(png_ptr));
+      
+      const ossim_uint8* inputPointer = &in.front();//&pngData_arg[0];
+      png_set_read_fn (png_ptr, reinterpret_cast<void*> (&inputPointer), user_read_data);
+      
+      png_read_info (png_ptr, info_ptr);
+      
+      ossim_uint32 width           = png_get_image_width(png_ptr,info_ptr);
+      ossim_uint32 height          = png_get_image_height(png_ptr,info_ptr);
+      ossim_uint8  bit_depth       = png_get_bit_depth(png_ptr,info_ptr);
+      ossim_uint8  color_type      = png_get_color_type(png_ptr,info_ptr);
+      // ossim_uint8  channels         = png_get_channels(png_ptr, info_ptr);
+      ossim_uint32 bytes_per_pixel = (bit_depth <= 8) ? 1 : 2;
+      ossimScalarType scalar_type  = ((bytes_per_pixel==1)?OSSIM_UINT8:OSSIM_UINT16);
+
+      if( color_type == PNG_COLOR_TYPE_PALETTE)
       {
-         ossim_uint8* tempDataPtr = dataPtr;
-         ossim_uint8* buf = static_cast<ossim_uint8*>(out->getBuf(0));
+         png_set_palette_to_rgb(png_ptr);
+      }
+      
+      if(color_type == PNG_COLOR_TYPE_GRAY && bit_depth < 8)
+      {
+         png_set_expand_gray_1_2_4_to_8(png_ptr);
+      }
+      
+      if(png_get_valid(png_ptr, info_ptr,PNG_INFO_tRNS))
+      {
+         png_set_tRNS_to_alpha(png_ptr);
+      }
+      
+      if(bit_depth < 8)
+      {
+         png_set_packing(png_ptr);
+      }
 
-         for(idx = 0; idx < size;++idx)
-         {
-            *buf = *tempDataPtr;
+      // Update the info structures after the transformations are set.
+      png_read_update_info(png_ptr, info_ptr);
 
-            tempDataPtr+=2;++buf;
-         }
-         out->validate();
+      // Update the input/output bands after any tranformations...
+      ossim_uint32 input_bands = png_get_channels(png_ptr, info_ptr);
+      ossim_uint32 output_bands = input_bands;
+      if( (output_bands == 2) || (output_bands==4) )
+      {
+         output_bands = output_bands - 1;
+      }
+      
+      ossim_uint32 bytes = height*width*input_bands*bytes_per_pixel;
+      
+#if 0 /* Please leave for debug. drb */
+      ossim_uint8  filter_method    = png_get_filter_type(png_ptr,info_ptr);
+      ossim_uint8  compression_type = png_get_compression_type(png_ptr,info_ptr);
+      ossim_uint8  interlace_type   = png_get_interlace_type(png_ptr,info_ptr);
+      cout << "width:            " << width
+           << "\nheight:           " << height
+           << "\nbit_depth:        " << (int)bit_depth
+           << "\ncolor_type:       " << (int)color_type
+           << "\nfilter_method:    " << (int)filter_method
+           << "\ncompression_type: " << (int)compression_type
+           << "\ninterlace_type:   " << (int)interlace_type
+           << "\nchannels:         " << (int)channels
+           << "\ninput_bands:      " << input_bands
+           << "\noutput_bands:     " << output_bands
+           << "\nbytes_per_pixel:  " << bytes_per_pixel
+           << "\nbytes:            " << bytes
+           << "\n";
+#endif
+      std::vector<ossim_uint8> data(bytes);
+      std::vector<ossim_uint8*> rowPointers(height);
+      ossim_uint8* dataPtr = &data.front();
+      for (ossim_uint32 y = 0; y < height; ++y)
+      {
+         rowPointers[y] = reinterpret_cast<ossim_uint8*>
+            (dataPtr + ( y*(width*bytes_per_pixel*input_bands)));
+      }
+
+      png_read_image (png_ptr, &rowPointers.front());
+   
+      // now allocate the ossimImageData object if not already allocated
+      if(!out.valid())
+      {
+         out = new ossimImageData(0, scalar_type, output_bands, width, height);
+         out->initialize();
       }
       else
       {
-         result = false;
+         out->setNumberOfDataComponents(output_bands);
+         out->setImageRectangleAndBands(ossimIrect(0,0,width-1,height-1), output_bands);
+         out->initialize();
       }
-   }
-   else if(pngChannels == 4)
-   {
-      //std::cout << "DECODING 4 channels\n";
-      ossim_uint32 size = pngWidth*pngHeight;
-      ossim_uint32 idx = 0;
-      if(scalarType == OSSIM_UINT16)
+
+      if(input_bands == 1)
       {
-         ossim_uint16* tempDataPtr = reinterpret_cast<ossim_uint16*> (dataPtr);
-         ossim_uint16* buf1 = static_cast<ossim_uint16*>(out->getBuf(0));
-         ossim_uint16* buf2 = static_cast<ossim_uint16*>(out->getBuf(1));
-         ossim_uint16* buf3 = static_cast<ossim_uint16*>(out->getBuf(2));
-
-         for(idx = 0; idx < size;++idx)
-         {
-            *buf1 = tempDataPtr[0];
-            *buf2 = tempDataPtr[1];
-            *buf3 = tempDataPtr[2];
-
-            tempDataPtr+=4;++buf1;++buf2;++buf3;
-         }
+         // ossim_uint32 idx = 0;
+         memcpy(out->getBuf(0), dataPtr, bytes);
          out->validate();
+         // once we support alpha channel properly we will need to add alpha settings here
+
       }
-      else if(scalarType == OSSIM_UINT8)
+      else if(input_bands == 2)
       {
-         ossim_uint8* tempDataPtr = dataPtr;
-         ossim_uint8* buf1 = static_cast<ossim_uint8*>(out->getBuf(0));
-         ossim_uint8* buf2 = static_cast<ossim_uint8*>(out->getBuf(1));
-         ossim_uint8* buf3 = static_cast<ossim_uint8*>(out->getBuf(2));
-
-         for(idx = 0; idx < size;++idx)
+         //std::cout << "DECODING 2 channels\n";
+         ossim_uint32 size = width*height;
+         ossim_uint32 idx = 0;
+         if(scalar_type == OSSIM_UINT16)
          {
-            *buf1 = tempDataPtr[0];
-            *buf2 = tempDataPtr[1];
-            *buf3 = tempDataPtr[2];
+            ossim_uint16* tempDataPtr = reinterpret_cast<ossim_uint16*> (dataPtr);
+            ossim_uint16* buf = static_cast<ossim_uint16*>(out->getBuf(0));
 
-            tempDataPtr+=4;++buf1;++buf2;++buf3;
+            for(idx = 0; idx < size;++idx)
+            {
+               *buf = tempDataPtr[0];
+
+               tempDataPtr+=2;++buf;
+            }
+            out->validate();
          }
-         out->validate();
+         else if(scalar_type == OSSIM_UINT8)
+         {
+            ossim_uint8* tempDataPtr = dataPtr;
+            ossim_uint8* buf = static_cast<ossim_uint8*>(out->getBuf(0));
+
+            for(idx = 0; idx < size;++idx)
+            {
+               *buf = *tempDataPtr;
+
+               tempDataPtr+=2;++buf;
+            }
+            out->validate();
+         }
+         else
+         {
+            result = false;
+         }
+      }
+      else if(input_bands == 4)
+      {
+         // cout << "scalarType: " << scalarType << endl;
+      
+         //std::cout << "DECODING 4 channels\n";
+         ossim_uint32 size = width*height;
+         ossim_uint32 idx = 0;
+         if(scalar_type == OSSIM_UINT16)
+         {
+            ossim_uint16* tempDataPtr = reinterpret_cast<ossim_uint16*> (dataPtr);
+            ossim_uint16* buf1 = static_cast<ossim_uint16*>(out->getBuf(0));
+            ossim_uint16* buf2 = static_cast<ossim_uint16*>(out->getBuf(1));
+            ossim_uint16* buf3 = static_cast<ossim_uint16*>(out->getBuf(2));
+
+            for(idx = 0; idx < size;++idx)
+            {
+               *buf1 = tempDataPtr[0];
+               *buf2 = tempDataPtr[1];
+               *buf3 = tempDataPtr[2];
+
+               tempDataPtr+=4;++buf1;++buf2;++buf3;
+            }
+            out->validate();
+         }
+         else if(scalar_type == OSSIM_UINT8)
+         {
+            ossim_uint8* tempDataPtr = dataPtr;
+            ossim_uint8* buf1 = static_cast<ossim_uint8*>(out->getBuf(0));
+            ossim_uint8* buf2 = static_cast<ossim_uint8*>(out->getBuf(1));
+            ossim_uint8* buf3 = static_cast<ossim_uint8*>(out->getBuf(2));
+
+            for(idx = 0; idx < size;++idx)
+            {
+               *buf1 = tempDataPtr[0];
+               *buf2 = tempDataPtr[1];
+               *buf3 = tempDataPtr[2];
+
+               tempDataPtr+=4;++buf1;++buf2;++buf3;
+            }
+            out->validate();
+         }
+         else
+         {
+            result = false;
+         }
       }
       else
       {
-         result = false;
+         out->loadTile(dataPtr, out->getImageRectangle(), OSSIM_BIP);
+      }
+
+      if (info_ptr)
+      {
+         png_free_data (png_ptr, info_ptr, PNG_FREE_ALL, -1);
+      }
+      if (png_ptr)
+      {
+         png_destroy_read_struct (&png_ptr, 0, 0);
       }
    }
    else
    {
-      out->loadTile(dataPtr, out->getImageRectangle(), OSSIM_BIP);
+      result = false;
    }
-
-   if (infoPtr)
-   {
-      png_free_data (pngPtr, infoPtr, PNG_FREE_ALL, -1);
-   }
-   if (pngPtr)
-   {
-      png_destroy_read_struct (&pngPtr, 0, 0);
-   }
-
+   
    return result;
 }
 

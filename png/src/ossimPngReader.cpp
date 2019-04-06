@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// License:  LGPL
+// License: MIT
 // 
 // See LICENSE.txt file in the top level directory for more details.
 //
@@ -9,7 +9,7 @@
 // Description: OSSIM Portable Network Graphics (PNG) reader (tile source).
 //
 //----------------------------------------------------------------------------
-// $Id: ossimPngReader.cpp 23355 2015-06-01 23:55:15Z dburken $
+// $Id$
 
 
 #include "ossimPngReader.h"
@@ -55,7 +55,7 @@ ossimPngReader::ossimPngReader()
    m_imageRect(0, 0, 0, 0),
    m_numberOfInputBands(0),
    m_numberOfOutputBands(0),
-   m_bytePerPixelPerBand(1),
+   m_bytesPerPixelPerBand(1),
    m_cacheSize(0),
    m_cacheId(-1),
    m_pngReadPtr(0),
@@ -858,30 +858,83 @@ bool ossimPngReader::readPngInit()
 bool ossimPngReader::initReader()
 {
    bool result = true;
+
+   ossim_uint32 width        = png_get_image_width(m_pngReadPtr,m_pngReadInfoPtr);
+   ossim_uint32 height       = png_get_image_height(m_pngReadPtr,m_pngReadInfoPtr);
+   ossim_uint8  bit_depth    = png_get_bit_depth(m_pngReadPtr,m_pngReadInfoPtr);
+   ossim_uint8  color_type   = png_get_color_type(m_pngReadPtr,m_pngReadInfoPtr);
+   ossim_uint8  channels     = png_get_channels(m_pngReadPtr, m_pngReadInfoPtr);
+
+   if( color_type == PNG_COLOR_TYPE_PALETTE)
+   {
+      png_set_palette_to_rgb(m_pngReadPtr);
+   }
    
-   ossim_uint32 height    = png_get_image_height(m_pngReadPtr, m_pngReadInfoPtr);
-   ossim_uint32 width     = png_get_image_width(m_pngReadPtr, m_pngReadInfoPtr);
-   m_bitDepth            = png_get_bit_depth(m_pngReadPtr, m_pngReadInfoPtr);
-   m_pngColorType        = png_get_color_type(m_pngReadPtr, m_pngReadInfoPtr);
+   if(color_type == PNG_COLOR_TYPE_GRAY && bit_depth < 8)
+   {
+      png_set_expand_gray_1_2_4_to_8(m_pngReadPtr);
+   }
    
+   if(png_get_valid(m_pngReadPtr, m_pngReadInfoPtr,PNG_INFO_tRNS))
+   {
+      png_set_tRNS_to_alpha(m_pngReadPtr);
+   }
+   
+   if(bit_depth < 8)
+   {
+      png_set_packing(m_pngReadPtr);
+   }
+
+   //---
+   // Turn on interlace handling... libpng returns just 1 (ie single pass)
+   //  if the image is not interlaced
+   //---
+   m_interlacePasses = png_set_interlace_handling (m_pngReadPtr);
+
+   // Update the info structures after the transformations are set.
+   png_read_update_info(m_pngReadPtr, m_pngReadInfoPtr);
+
+   // Update the input/output bands after any tranformations...
+   ossim_uint32 input_bands = png_get_channels(m_pngReadPtr, m_pngReadInfoPtr);
+   ossim_uint32 output_bands = input_bands;
+   if( (output_bands == 2) || (output_bands==4) )
+   {
+      output_bands = output_bands - 1;
+   }
+
+   m_numberOfInputBands  = input_bands;
+   m_numberOfOutputBands = output_bands;
+   m_pngColorType = color_type;
+   m_bytesPerPixelPerBand  = (bit_depth <= 8) ? 1 : 2;
+   m_bitDepth = bit_depth;
+   m_outputScalarType = ((m_bytesPerPixelPerBand==1)?OSSIM_UINT8:OSSIM_UINT16);
+
+#if 0 /* Please leave for debug. drb */
+   ossim_uint8  filter_method    = png_get_filter_type(m_pngReadPtr,m_pngReadInfoPtr);
+   ossim_uint8  compression_type = png_get_compression_type(m_pngReadPtr,m_pngReadInfoPtr);
+   ossim_uint8  interlace_type   = png_get_interlace_type(m_pngReadPtr,m_pngReadInfoPtr);
+   ossim_uint32 bytes = height*width*input_bands*m_bytesPerPixelPerBand;
+   cout << "width:            " << width
+        << "\nheight:           " << height
+        << "\nbit_depth:        " << (int)bit_depth
+        << "\ncolor_type:       " << (int)color_type
+        << "\nfilter_method:    " << (int)filter_method
+        << "\ncompression_type: " << (int)compression_type
+        << "\ninterlace_type:   " << (int)interlace_type
+        << "\nchannels:         " << (int)channels
+        << "\ninput_bands:      " << input_bands
+        << "\noutput_bands:     " << output_bands
+        << "\nbytes_per_pixel:  " << m_bytesPerPixelPerBand
+        << "\nbytes:            " << bytes
+        << "\n";
+#endif
+
    m_imageRect = ossimIrect(0, 0, width  - 1, height - 1);
-   
-   if (m_bitDepth == 16)
-   {
-      // png_set_strip_16 (m_pngReadPtr);
-      m_bytePerPixelPerBand = 2;
-      m_outputScalarType = OSSIM_UINT16;
-   }
-   else
-   {
-      m_bytePerPixelPerBand = 1;
-   }
 
    // Set the read mode from scalar and color type.
    if (m_outputScalarType == OSSIM_UINT8)
    {
-      if ( (m_pngColorType == PNG_COLOR_TYPE_RGB_ALPHA) ||
-           (m_pngColorType == PNG_COLOR_TYPE_GRAY_ALPHA) )
+      if ( (input_bands == 2) || (input_bands == 4) )
       {
          m_readMode = ossimPngRead8a;
       }
@@ -892,8 +945,7 @@ bool ossimPngReader::initReader()
    }
    else
    {
-      if ( (m_pngColorType == PNG_COLOR_TYPE_RGB_ALPHA) ||
-           (m_pngColorType == PNG_COLOR_TYPE_GRAY_ALPHA) )
+      if ( (input_bands == 2) || (input_bands == 4) )
       {
          m_readMode = ossimPngRead16a;
       }
@@ -908,121 +960,6 @@ bool ossimPngReader::initReader()
          m_swapFlag = true;
       }
    }
-   
-   //---
-   // If png_set_expand used:
-   // Expand data to 24-bit RGB, or 8-bit grayscale,
-   // with alpha if available.
-   //---
-   bool expandFlag = false;
-
-   if ( m_pngColorType == PNG_COLOR_TYPE_PALETTE )
-   {
-      expandFlag = true;
-   }
-   if ( (m_pngColorType == PNG_COLOR_TYPE_GRAY) && (m_bitDepth < 8) )
-   {
-      expandFlag = true;
-   }
-   if ( png_get_valid(m_pngReadPtr, m_pngReadInfoPtr, PNG_INFO_tRNS) )
-   {
-      expandFlag = true;
-   }
-
-   //---
-   // If png_set_packing used:
-   // Use 1 byte per pixel in 1, 2, or 4-bit depth files. */
-   //---
-   bool packingFlag = false;
-
-   if ( (m_bitDepth < 8) && (m_pngColorType == PNG_COLOR_TYPE_GRAY) )
-   {
-      packingFlag = true;
-   }
-
-   if (expandFlag)
-   {
-       png_set_expand(m_pngReadPtr);
-   }
-   if (packingFlag)
-   {
-      png_set_packing(m_pngReadPtr);
-   }
-
-   // Gamma correction.
-   // ossim_float64 gamma;
-   // if (png_get_gAMA(m_pngReadPtr, m_pngReadInfoPtr, &gamma))
-   // {
-   //    png_set_gamma(png_ptr, display_exponent, gamma);
-   // }
-
-   //---
-   // Turn on interlace handling... libpng returns just 1 (ie single pass)
-   //  if the image is not interlaced
-   //---
-   m_interlacePasses = png_set_interlace_handling (m_pngReadPtr);
-
-   //---
-   // Update the info structures after the transformations take effect
-   //---
-   png_read_update_info (m_pngReadPtr, m_pngReadInfoPtr);
-
-   // TODO:
-   // Add check for image offsets.
-   // Add check for resolution.
-   // Add check for colormap.
-
-   switch (m_pngColorType)
-   {
-      case PNG_COLOR_TYPE_RGB:           /* RGB */
-      {
-         m_numberOfInputBands  = 3;
-         m_numberOfOutputBands = 3;
-         break;
-      }  
-      case PNG_COLOR_TYPE_RGB_ALPHA:     /* RGBA */
-      {
-         m_numberOfInputBands  = 4;
-         if (m_useAlphaChannelFlag)
-         {
-            m_numberOfOutputBands = 4;     
-         }
-         else
-         {
-            m_numberOfOutputBands = 3;    
-         }         
-         break;
-      }
-      case PNG_COLOR_TYPE_GRAY:          /* Grayscale */
-      {
-         m_numberOfInputBands = 1;
-         m_numberOfOutputBands = 1;
-         break;
-      }  
-      case PNG_COLOR_TYPE_GRAY_ALPHA:    /* Grayscale + alpha */
-      {
-         m_numberOfInputBands = 2;
-         if (m_useAlphaChannelFlag)
-         {
-            m_numberOfOutputBands = 2;     
-         }
-         else
-         {
-            m_numberOfOutputBands = 1;
-         }
-        break;
-      }
-     case PNG_COLOR_TYPE_PALETTE:       /* Indexed */
-     {
-        m_numberOfInputBands  = 3;
-        m_numberOfOutputBands = 3;
-        break;
-     }  
-     default:                   /* Unknown type */
-     {
-        result = false;
-     }
-   }
 
    if ( result )
    {
@@ -1032,9 +969,37 @@ bool ossimPngReader::initReader()
       setMaxPixelValue();
       
       // Set to OSSIM_USHORT11 for use of specialized tile.
-      if (m_maxPixelValue[0] == 2047.0)
+      if (m_maxPixelValue[0] == 511.0)
       {
-         m_outputScalarType = OSSIM_USHORT11;
+         m_outputScalarType = OSSIM_UINT9;
+      }
+      else if (m_maxPixelValue[0] == 1023.0)
+      {
+         m_outputScalarType = OSSIM_UINT10;
+      }
+      else if (m_maxPixelValue[0] == 2047.0)
+      {
+         m_outputScalarType = OSSIM_UINT11;
+      }
+      else if (m_maxPixelValue[0] == 4095.0)
+      {
+         m_outputScalarType = OSSIM_UINT12;
+      }
+      else if (m_maxPixelValue[0] == 8191.0)
+      {
+         m_outputScalarType = OSSIM_UINT13;
+      }
+      else if (m_maxPixelValue[0] == 16383.0)
+      {
+         m_outputScalarType = OSSIM_UINT14;
+      }
+      else if (m_maxPixelValue[0] == 32767.0)
+      {
+         m_outputScalarType = OSSIM_UINT15;
+      }
+      else if (m_maxPixelValue[0] == 65535.0)
+      {
+         m_outputScalarType = OSSIM_UINT16;
       }
 
       // We're on row 0 or first line.
@@ -1050,13 +1015,11 @@ bool ossimPngReader::initReader()
             <<  getPngColorTypeString().c_str()
             << "\nm_numberOfInputBands:            " << m_numberOfInputBands
             << "\nm_numberOfOutputBands:           " << m_numberOfOutputBands
-            << "\nm_bytePerPixelPerBand:           " << m_bytePerPixelPerBand
+            << "\nm_bytesPerPixelPerBand:          " << m_bytesPerPixelPerBand
             << "\nm_lineBufferSizeInBytes:         " << m_lineBufferSizeInBytes
             << "\nm_interlacePasses:               " << m_interlacePasses
+            << "\nchannels:                        " << channels
             << "\npalette expansion:                "
-            << (expandFlag?"on":"off")
-            << "\npacking (1,2,4 bit to one byte):  "
-            << (packingFlag?"on":"off")
             << "\nm_readMode:                      " << m_readMode
             << "\nm_swapFlag:                      " << m_swapFlag
             << std::endl;
