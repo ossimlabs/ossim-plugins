@@ -1,6 +1,6 @@
 //----------------------------------------------------------------------------
 //
-// License:  LGPL
+// License: MIT
 // 
 // See LICENSE.txt file in the top level directory for more details.
 //
@@ -9,7 +9,7 @@
 // Description: OSSIM Portable Network Graphics (PNG) reader (tile source).
 //
 //----------------------------------------------------------------------------
-// $Id: ossimPngReader.h 23355 2015-06-01 23:55:15Z dburken $
+// $Id$
 #ifndef ossimPngReader_HEADER
 #define ossimPngReader_HEADER 1
 
@@ -296,7 +296,7 @@ protected:
    ossimIrect    m_imageRect;
    ossim_uint32  m_numberOfInputBands;
    ossim_uint32  m_numberOfOutputBands;
-   ossim_uint32  m_bytePerPixelPerBand;
+   ossim_uint32  m_bytesPerPixelPerBand;
    ossimIpt      m_cacheSize;
 
 
