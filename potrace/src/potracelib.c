@@ -8,8 +8,8 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <libio.h>
-
+/*#include <libio.h>*/
+#include <stdio.h>
 #include "potracelib.h"
 #include "curve.h"
 #include "decompose.h"
