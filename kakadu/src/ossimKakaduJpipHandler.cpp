@@ -75,7 +75,7 @@ void ossimKakaduJpipHandler::close()
    }
    catch ( kdu_core::kdu_exception exc )
    {
-      ostringstream e;
+      std::ostringstream e;
       e << "ossimKakaduNitfReader::~ossimKakaduNitfReader\n"
         << "Caught exception from kdu_region_decompressor: " << exc << "\n";
       ossimNotify(ossimNotifyLevel_WARN) << e.str() << std::endl;
@@ -842,7 +842,7 @@ ossimRefPtr<ossimImageData> ossimKakaduJpipHandler::getTile(const  ossimIrect& r
    }
    catch ( kdu_exception exc )
    {
-      ostringstream e;
+      std::ostringstream e;
       e << "ossimKakaduNitfReader::~ossimKakaduNitfReader\n"
         << "Caught exception from kdu_region_decompressor: " << exc << "\n";
       ossimNotify(ossimNotifyLevel_WARN) << e.str() << std::endl;

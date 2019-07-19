@@ -32,6 +32,8 @@
 #include <cmath>   /* for pow */
 #include <fstream>
 
+using namespace std;
+
 // If true alpha channel is passed as a layer.
 static const std::string USE_ALPHA_KW = "use_alpha"; // boolean
 

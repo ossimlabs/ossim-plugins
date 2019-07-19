@@ -47,6 +47,8 @@
 #include <vector>
 #include <iostream>
 
+using namespace std;
+
 
 class ossimKeywordlist;
 class ossimXmlDocument;

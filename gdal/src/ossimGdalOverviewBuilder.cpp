@@ -22,6 +22,8 @@
 #include <ossim/imaging/ossimImageHandler.h>
 #include <ossim/imaging/ossimImageSourceSequencer.h>
 
+using namespace std;
+
 RTTI_DEF1(ossimGdalOverviewBuilder,
           "ossimGdalOverviewBuilder",
           ossimOverviewBuilderBase);

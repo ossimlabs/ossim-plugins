@@ -15,6 +15,8 @@
 #include <ossim/base/ossimNotify.h>
 #include <ossim/base/ossimString.h>
 
+using namespace std;
+
 
 namespace ossimplugins
 {

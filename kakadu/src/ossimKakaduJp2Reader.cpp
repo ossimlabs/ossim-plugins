@@ -47,6 +47,8 @@
 #include <iostream>
 #include <string>
 
+using namespace std;
+
 //---
 // Kakadu code has defines that have (kdu_uint32) which should be
 // (kdu_core::kdu_uint32)

@@ -24,6 +24,8 @@
 // Define Trace flags for use within this file:
 //***
 #include <ossim/base/ossimTrace.h>
+
+using namespace std;
 static ossimTrace traceExec  ("ossimTileMapModel:exec");
 static ossimTrace traceDebug ("ossimTileMapModel:debug");
 
@@ -271,7 +273,7 @@ namespace ossimplugins
 //  Writes a sample kwl to output stream.
 //
 //*****************************************************************************
-   void ossimTileMapModel::writeGeomTemplate(ostream& os)
+   void ossimTileMapModel::writeGeomTemplate(std::ostream& os)
    {
       if (traceExec())  ossimNotify(ossimNotifyLevel_DEBUG) << "DEBUG ossimTileMapModel::writeGeomTemplate: entering..." << std::endl;
 

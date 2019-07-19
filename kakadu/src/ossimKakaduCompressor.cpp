@@ -37,6 +37,8 @@
 #include <jp2.h>
 #include <cmath> /* ceil */
 
+using namespace std;
+
 RTTI_DEF1_INST(ossimKakaduCompressor, "ossimKakaduCompressor", ossimObject)
 
 
