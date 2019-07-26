@@ -26,6 +26,8 @@
 #include <vector>
 #include <ossim/imaging/ossimAppFixedTileCache.h>
 
+using namespace std;
+
 class ossimImageData;
 
 class OSSIM_PLUGINS_DLL ossimGdalTileSource : public ossimImageHandler

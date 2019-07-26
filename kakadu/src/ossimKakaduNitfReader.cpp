@@ -39,6 +39,8 @@
  
 #include <iostream>
 
+using namespace std;
+
 using namespace kdu_core;
 using namespace kdu_supp;
 

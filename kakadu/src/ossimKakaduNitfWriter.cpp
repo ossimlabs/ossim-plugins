@@ -39,6 +39,8 @@
 
 #include <ostream>
 
+using namespace std;
+
 static const ossimIpt DEFAULT_TILE_SIZE(1024, 1024);
 
 RTTI_DEF1(ossimKakaduNitfWriter, "ossimKakaduNitfWriter", ossimNitfWriterBase)

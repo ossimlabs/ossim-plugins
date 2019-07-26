@@ -388,7 +388,7 @@ inline bool ossimKakaduNitfReader::seek(kdu_core::kdu_long offset)
    //---
    // All seeks are relative to the start of code stream.
    //---
-   theFileStr->seekg(offset+m_startOfCodestreamOffset, ios_base::beg);
+   theFileStr->seekg(offset+m_startOfCodestreamOffset, std::ios_base::beg);
    return theFileStr->good();
 }
 

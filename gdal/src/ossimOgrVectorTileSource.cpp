@@ -133,7 +133,7 @@ bool ossimOgrVectorTileSource::open()
                         ossimNotify(ossimNotifyLevel_NOTICE)
                            << MODULE
                            << " No spatial reference given, assuming geographic"
-                           << endl;
+                           << std::endl;
                      }
                   }
                }
@@ -144,7 +144,7 @@ bool ossimOgrVectorTileSource::open()
                      ossimNotify(ossimNotifyLevel_NOTICE)
                         
                         << MODULE
-                        << " layer " << i << " is null." << endl;
+                        << " layer " << i << " is null." << std::endl;
                   }
                }
                

@@ -37,6 +37,8 @@
 #include <ossim/base/ossimUnitConversionTool.h>
 #include <ossim/base/ossimUnitTypeLut.h>
 
+using namespace std;
+
 static const double SEMI_MAJOR_AXIS_WGS84 = 6378137.0;
 static const double SEMI_MINOR_AXIS_WGS84 = 6356752.3142;
 

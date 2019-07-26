@@ -26,6 +26,8 @@
 #include <ossim/imaging/ossimImageGeometry.h>
 #include <ossim/projection/ossimProjection.h>
 
+using namespace std;
+
 class ossimProjection;
 class ossimMapProjection;
 class ossimOgrGdalLayerNode;
