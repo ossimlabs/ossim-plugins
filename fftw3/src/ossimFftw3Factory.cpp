@@ -11,6 +11,8 @@
 #include <ossim/imaging/ossimImageSourceFactoryRegistry.h>
 #include <ossim/base/ossimTrace.h>
 
+using namespace std;
+
 RTTI_DEF1(ossimFftw3Factory, "ossimFftw3Factory", ossimImageSourceFactoryBase);
 
 static ossimTrace traceDebug("ossimImageSourceFactory:debug");
