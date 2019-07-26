@@ -13,6 +13,8 @@
 
 #include <opencv2/xfeatures2d.hpp>
 
+using namespace std;
+
 namespace ATP
 {
 static const int DEFAULT_CMP_PATCH_SIZING_FACTOR = 2;
