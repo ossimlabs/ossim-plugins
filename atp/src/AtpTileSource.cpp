@@ -301,7 +301,7 @@ void AtpTileSource::computeParallax()
    }
    else
    {
-      m_paxInfo.parallaxSlope == ossim::nan();
+      m_paxInfo.parallaxSlope = ossim::nan();
       m_paxInfo.denom = ossim::nan();
    }
    //CINFO << "### dx_dH: " << m_paxInfo.dx_dH << endl; // TODO REMOVE
