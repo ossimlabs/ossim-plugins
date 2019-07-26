@@ -14,6 +14,8 @@
 #include <ossim/base/ossimKeywordlist.h>
 #include <ossim/imaging/ossimNBandToIndexFilter.h>
 
+using namespace std;
+
 class ossimXmlNode;
 
 class ossimGdalWriter : public ossimImageFileWriter

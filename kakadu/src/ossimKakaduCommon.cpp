@@ -28,6 +28,8 @@
 #include <ostream>
 #include <sstream>
 
+using namespace std;
+
 static const ossimTrace traceDebug( ossimString("ossimKakaduCommon:debug") );
 
 void ossim::getDims(const ossimIrect& rect, kdu_core::kdu_dims& dims)

@@ -28,6 +28,8 @@
 #include <cstdlib>
 #include <ctime>
 
+using namespace std;
+
 RTTI_DEF1(ossimPngWriter,
 	  "ossimPngWriter",
 	  ossimImageFileWriter)

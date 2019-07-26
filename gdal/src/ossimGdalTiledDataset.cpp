@@ -125,7 +125,7 @@ CPLErr MEMTiledRasterBand::IReadBlock( int nBlockXOff,
    {
       ossimNotify(ossimNotifyLevel_WARN)
          << "MEMTiledRasterBand::IReadBlock WARN!"
-         << "\nOnly one scanline block reads allowed" << endl;
+         << "\nOnly one scanline block reads allowed" << std::endl;
       return CE_None;
    }
 
@@ -238,7 +238,7 @@ CPLErr MEMTiledRasterBand::IReadBlock( int nBlockXOff,
          ossimNotify(ossimNotifyLevel_WARN)
             << "MEMTiledRasterBand::IReadBlock WARN!"
             << "\nUnhandled wordsize..."
-            << endl;
+            << std::endl;
 #if 0
          // shift to start of scanline
          GByte *pabyCur = (GByte*) (theDataset->theData->getBuf(nBand-1))
@@ -345,7 +345,7 @@ void MEMTiledDataset::create(ossimImageSourceSequencer* iface)
    {
       ossimNotify(ossimNotifyLevel_DEBUG)
          << "MEMTiledDataset::create DEBUG: entered..."
-         << endl;
+         << std::endl;
    }
 
    theInterface = iface;
@@ -388,7 +388,7 @@ void MEMTiledDataset::create(ossimImageSourceSequencer* iface)
             << "DEBUG:"
             << "\nnRasterXSize" << nRasterXSize
             << "\nnRasterYSize" << nRasterYSize
-            << endl;
+            << std::endl;
       }
 
       eAccess      = GA_Update;
@@ -404,7 +404,7 @@ void MEMTiledDataset::create(ossimImageSourceSequencer* iface)
          ossimNotify(ossimNotifyLevel_DEBUG)
             << "DEBUG:"
             << "\ntheData:  " << *theData.get()
-            << endl;
+            << std::endl;
       }
 
 
@@ -445,7 +445,7 @@ void MEMTiledDataset::create(ossimImageSourceSequencer* iface)
    {
       ossimNotify(ossimNotifyLevel_DEBUG)
          << "MEMTiledDataset::create DEBUG: exited..."
-         << endl;
+         << std::endl;
    }
 
 }

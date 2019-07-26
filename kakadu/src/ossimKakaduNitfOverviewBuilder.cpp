@@ -47,6 +47,8 @@
 #include <fstream>
 #include <sstream>
 
+using namespace std;
+
 static const ossimString OVERVIEW_TYPE = "ossim_kakadu_nitf_j2k";
 static const ossimString OVERVIEW_TYPE_ALIAS = "j2k";
 
