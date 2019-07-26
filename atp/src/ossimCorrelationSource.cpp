@@ -11,6 +11,8 @@
 #include <ossim/imaging/ossimImageDataFactory.h>
 #include "atp/AtpCommon.h"
 
+using namespace std;
+
 namespace ATP
 {
 static const int DEFAULT_CMP_PATCH_SIZING_FACTOR = 2;
