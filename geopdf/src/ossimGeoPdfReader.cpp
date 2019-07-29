@@ -431,7 +431,7 @@ void ossimGeoPdfReader::buildTileInfo(ossimString tileInfo)
       ossim_int32 col = layerNameVector[layerNameVector.size()-2].toInt();
       ossim_int32 row = layerNameVector[layerNameVector.size()-1].toInt();
       std::pair<ossim_int32, ossim_int32> tileRowCol;
-      tileRowCol = make_pair(row, col);
+      tileRowCol = std::make_pair(row, col);
       ossim_int32 tileIndex = tmpKeyValue[1].toInt();
 
       m_podofoTileInfo[tileIndex] = tileRowCol;
@@ -1151,7 +1151,7 @@ void ossimGeoPdfReader::setPodofoImageInfo()
                   if (isDctDecode == false)
                   {
                      std::pair<ossim_int32, ossim_int32> tileRowCol;
-                     tileRowCol = make_pair(rowCount, 0);
+                     tileRowCol = std::make_pair(rowCount, 0);
                      m_podofoTileInfo[count] = tileRowCol;
                      m_podofoImageObjs[count] = (*it);
                      m_isJpeg = false;
@@ -1232,7 +1232,7 @@ void ossimGeoPdfReader::setPodofoImageInfo()
             if (tileRow > 0)
             {
                std::pair<ossim_int32, ossim_int32> tileRowCol;
-               tileRowCol = make_pair(tileRow-1, 0);
+               tileRowCol = std::make_pair(tileRow-1, 0);
                m_podofoTileInfo[index] = tileRowCol;
             }
             else

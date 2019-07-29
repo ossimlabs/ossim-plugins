@@ -104,7 +104,7 @@ bool ossimJpeg12NitfReader::uncompressJpegBlock(ossim_uint32 x, ossim_uint32 y)
       {
          ossimNotify(ossimNotifyLevel_FATAL)
             << "ossimJpeg12NitrReader::uncompressJpegBlock scan for offsets error!"
-            << "\nReturning error..." << endl;
+            << "\nReturning error..." << std::endl;
          theErrorStatus = ossimErrorCodes::OSSIM_ERROR;
          return false;
       }
@@ -129,7 +129,7 @@ bool ossimJpeg12NitfReader::uncompressJpegBlock(ossim_uint32 x, ossim_uint32 y)
       theFileStr->clear();
       ossimNotify(ossimNotifyLevel_FATAL)
          << "ossimJpeg12NitrReader::uncompressJpegBlock Read Error!"
-         << "\nReturning error..." << endl;
+         << "\nReturning error..." << std::endl;
       return false;
    }
 
@@ -218,7 +218,7 @@ bool ossimJpeg12NitfReader::uncompressJpegBlock(ossim_uint32 x, ossim_uint32 y)
    static bool TRACED = false;
    if ( !TRACED )
    {
-      cout << "theCacheTile:\n" << *(theCacheTile.get())
+      std::cout << "theCacheTile:\n" << *(theCacheTile.get())
            << "\nSAMPLES:       " << SAMPLES
            << "\nLINES_TO_READ: " << LINES_TO_READ
            << "\nROW_STRIDE:    " << ROW_STRIDE
