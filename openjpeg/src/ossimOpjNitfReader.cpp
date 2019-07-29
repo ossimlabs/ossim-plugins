@@ -20,6 +20,7 @@
 #include <ossim/imaging/ossimTiffTileSource.h>
 #include <ossim/imaging/ossimImageDataFactory.h>
 #include <ossim/support_data/ossimNitfImageHeader.h>
+using namespace std;
 
 #ifdef OSSIM_ID_ENABLED
 static const char OSSIM_ID[] = "$Id";
