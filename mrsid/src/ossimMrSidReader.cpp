@@ -128,7 +128,7 @@ void ossimMrSidReader::getDecimationFactor(ossim_uint32 resLevel,
 }
 
 void ossimMrSidReader::getDecimationFactors(
-   vector<ossimDpt>& decimations) const
+   std::vector<ossimDpt>& decimations) const
 {
    if (theGeometry.valid())
    {
