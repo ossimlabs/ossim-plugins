@@ -34,7 +34,7 @@
 #include <ossim/support_data/ossimGmlSupportData.h>
 
 #include <sstream>
-
+using namespace std;
 //---
 // For trace debugging (to enable at runtime do:
 // your_app -T "ossimOpjCompressor:debug" your_app_args
