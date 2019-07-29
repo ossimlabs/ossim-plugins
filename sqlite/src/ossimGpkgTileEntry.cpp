@@ -169,7 +169,7 @@ std::ostream& ossimGpkgTileEntry::printValidate(std::ostream& out) const
    ossim_float64 w = m_tileMatrixSet.getWidth();
    ossim_float64 h =  m_tileMatrixSet.getHeight();
 
-   out << setiosflags(ios::fixed)
+   out << std::setiosflags(std::ios::fixed)
        << "gpkg_tile_matrix_set.width:                " << w << "\n"
        << "gpkg_tile_matrix_set.height:               " << h << "\n";
    
@@ -181,7 +181,7 @@ std::ostream& ossimGpkgTileEntry::printValidate(std::ostream& out) const
       ossim_float64 computedY =
          h / m_tileMatrix[i].m_matrix_height / m_tileMatrix[i].m_tile_height;
        
-      cout << "gpkg_tile_matrix[" << i << "].zoom_level:            "
+      std::cout << "gpkg_tile_matrix[" << i << "].zoom_level:            "
            << m_tileMatrix[i].m_zoom_level
            << "\ngpkg_tile_matrix[" << i << "].pixel_x_size:          "
            << m_tileMatrix[i].m_pixel_x_size

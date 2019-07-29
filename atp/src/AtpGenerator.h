@@ -75,7 +75,7 @@ public:
    /**
     * For engineering use. Convenience method for outputting tiepoint list to output stream.
     */
-   static void writeTiePointList(ostream& out, const AtpList& tpList);
+   static void writeTiePointList(std::ostream& out, const AtpList& tpList);
 
    ossimRefPtr<ossimImageViewProjectionTransform> getRefIVT() { return m_refIVT; }
    ossimRefPtr<ossimImageViewProjectionTransform> getCmpIVT() { return m_cmpIVT; }

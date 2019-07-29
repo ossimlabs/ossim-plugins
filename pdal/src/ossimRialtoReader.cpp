@@ -39,7 +39,7 @@ bool ossimRialtoReader::open(const ossimFilename& db_name)
    }
    catch (std::exception& e)
    {
-      ossimNotify() << e.what() << endl;
+      ossimNotify() << e.what() << std::endl;
       return false;
    }
 
@@ -56,7 +56,7 @@ void ossimRialtoReader::getFileBlock(ossim_uint32 /*offset*/,
 {
    // Rialto does not support file-based reads. Only allowed through the Db
    ossimNotify(ossimNotifyLevel_WARN) << "ossimRialtoReader::getFileBlock() WARNING: "
-         "Rialto does not support file-based reads. Returning blank point block."<<endl;
+         "Rialto does not support file-based reads. Returning blank point block."<<std::endl;
    block.clear();
 }
 
@@ -195,8 +195,8 @@ void ossimRialtoReader::establishMinMax()
 
    // TODO: REMOVE DEBUG
    {
-      cout<<"minPt: "<<*m_minRecord<<endl;
-      cout<<"maxPt: "<<*m_maxRecord<<endl;
+      cout<<"minPt: "<<*m_minRecord<<std::endl;
+      cout<<"maxPt: "<<*m_maxRecord<<std::endl;
    }
 }
 

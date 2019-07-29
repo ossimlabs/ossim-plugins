@@ -117,7 +117,7 @@ bool ossimKmlSuperOverlayReader::open()
                theImageBound.makeNan();
 
                //if the projection is default or geographic, uses the bounding of the OGR Layer
-               vector<ossimGpt> points;
+               std::vector<ossimGpt> points;
                points.push_back(ossimGpt(north, west));
                points.push_back(ossimGpt(north, east));
                points.push_back(ossimGpt(south, east));

@@ -120,7 +120,7 @@ public:
     * @brief Get array of decimations for all levels.
     * @param decimations Vector to initialize with decimations.
     */
-   virtual void getDecimationFactors(vector<ossimDpt>& decimations) const; 
+   virtual void getDecimationFactors(std::vector<ossimDpt>& decimations) const; 
 
    /**
     * @brief Returns the number of decimation levels.

@@ -24,6 +24,7 @@
 #include <ossim/imaging/ossimOverviewBuilderFactoryRegistry.h>
 #include <ossim/projection/ossimProjectionFactoryRegistry.h>
 #include <ossim/support_data/ossimInfoFactoryRegistry.h>
+#include <functional>
 
 static void setGdalDescription(ossimString& description)
 {

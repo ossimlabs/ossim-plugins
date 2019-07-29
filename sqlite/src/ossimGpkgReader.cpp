@@ -867,7 +867,7 @@ ossimRefPtr<ossimImageData> ossimGpkgReader::getTile( ossim_uint32 resLevel,
                               if (traceDebug())
                               {
                                  ossimNotify(ossimNotifyLevel_WARN)
-                                    << "Unhandled type: " << tile.getTileType() << endl;;
+                                    << "Unhandled type: " << tile.getTileType() << std::endl;;
                               }
                               result = 0;
                               break;

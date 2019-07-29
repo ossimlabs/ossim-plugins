@@ -104,7 +104,7 @@ bool ossimJpeg12NitfReader::uncompressJpegBlock(ossim_uint32 x, ossim_uint32 y)
       {
          ossimNotify(ossimNotifyLevel_FATAL)
             << "ossimJpeg12NitrReader::uncompressJpegBlock scan for offsets error!"
-            << "\nReturning error..." << endl;
+            << "\nReturning error..." << std::endl;
          theErrorStatus = ossimErrorCodes::OSSIM_ERROR;
          return false;
       }
@@ -119,7 +119,7 @@ bool ossimJpeg12NitfReader::uncompressJpegBlock(ossim_uint32 x, ossim_uint32 y)
    }
    
    // Seek to the block.
-   theFileStr->seekg(theNitfBlockOffset[blockNumber], ios::beg);
+   theFileStr->seekg(theNitfBlockOffset[blockNumber], std::ios::beg);
    
    // Read the block into memory.
    std::vector<ossim_uint8> compressedBuf(theNitfBlockSize[blockNumber]);
@@ -129,7 +129,7 @@ bool ossimJpeg12NitfReader::uncompressJpegBlock(ossim_uint32 x, ossim_uint32 y)
       theFileStr->clear();
       ossimNotify(ossimNotifyLevel_FATAL)
          << "ossimJpeg12NitrReader::uncompressJpegBlock Read Error!"
-         << "\nReturning error..." << endl;
+         << "\nReturning error..." << std::endl;
       return false;
    }
 
@@ -209,7 +209,7 @@ bool ossimJpeg12NitfReader::uncompressJpegBlock(ossim_uint32 x, ossim_uint32 y)
    // last line of the nitf.
    //---
    const ossim_uint32 LINES_TO_READ =
-      min(static_cast<ossim_uint32>(theCacheSize.y), cinfo.output_height);
+      std::min(static_cast<ossim_uint32>(theCacheSize.y), cinfo.output_height);
 
    /* JSAMPLEs per row in output buffer */
    const ossim_uint32 ROW_STRIDE = SAMPLES * cinfo.output_components;
@@ -218,7 +218,7 @@ bool ossimJpeg12NitfReader::uncompressJpegBlock(ossim_uint32 x, ossim_uint32 y)
    static bool TRACED = false;
    if ( !TRACED )
    {
-      cout << "theCacheTile:\n" << *(theCacheTile.get())
+      std::cout << "theCacheTile:\n" << *(theCacheTile.get())
            << "\nSAMPLES:       " << SAMPLES
            << "\nLINES_TO_READ: " << LINES_TO_READ
            << "\nROW_STRIDE:    " << ROW_STRIDE
@@ -313,7 +313,7 @@ bool ossimJpeg12NitfReader::loadJpeg12QuantizationTables(
          ossimNotify(ossimNotifyLevel_WARN)
             << "ossimJpeg12NitrReader::loadJpegQuantizationTables WARNING\n"
             << "\nNo quantization tables specified!"
-            << endl;
+            << std::endl;
          return false;  
       }
    }
