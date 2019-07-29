@@ -114,7 +114,7 @@ bool ossimKmlSuperOverlayWriter::writeStream()
    if (traceDebug())
    {
       ossimNotify(ossimNotifyLevel_DEBUG)
-         << MODULE << " entered..." << endl;
+         << MODULE << " entered..." << std::endl;
    }
 
    ossim_int32 bands = theInputConnection->getNumberOfOutputBands();
@@ -124,7 +124,7 @@ bool ossimKmlSuperOverlayWriter::writeStream()
          << MODULE << " Range Error:"
          << "\nInvalid number of input bands!  Must be one or three."
          << "\nInput bands = " << bands
-         << "\nReturning from method." << endl;
+         << "\nReturning from method." << std::endl;
 
       return false;
    }
