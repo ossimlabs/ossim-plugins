@@ -209,7 +209,7 @@ bool ossimJpeg12NitfReader::uncompressJpegBlock(ossim_uint32 x, ossim_uint32 y)
    // last line of the nitf.
    //---
    const ossim_uint32 LINES_TO_READ =
-      min(static_cast<ossim_uint32>(theCacheSize.y), cinfo.output_height);
+      std::min(static_cast<ossim_uint32>(theCacheSize.y), cinfo.output_height);
 
    /* JSAMPLEs per row in output buffer */
    const ossim_uint32 ROW_STRIDE = SAMPLES * cinfo.output_components;
