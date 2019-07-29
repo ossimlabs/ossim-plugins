@@ -498,7 +498,7 @@ bool ossimGpkgWriter::initializeGpkg()
                   << "Must have at least one zoom level!"
                   << "Set zoom_levels key in option keyword list."
                   << "e.g. \"zoom_levels:()4,5,6,7,8,9,10,11\""
-                  << endl;
+                  << std::endl;
             }
          }
       }
