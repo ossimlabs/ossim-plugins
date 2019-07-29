@@ -119,7 +119,7 @@ bool ossimJpeg12NitfReader::uncompressJpegBlock(ossim_uint32 x, ossim_uint32 y)
    }
    
    // Seek to the block.
-   theFileStr->seekg(theNitfBlockOffset[blockNumber], ios::beg);
+   theFileStr->seekg(theNitfBlockOffset[blockNumber], std::ios::beg);
    
    // Read the block into memory.
    std::vector<ossim_uint8> compressedBuf(theNitfBlockSize[blockNumber]);
@@ -313,7 +313,7 @@ bool ossimJpeg12NitfReader::loadJpeg12QuantizationTables(
          ossimNotify(ossimNotifyLevel_WARN)
             << "ossimJpeg12NitrReader::loadJpegQuantizationTables WARNING\n"
             << "\nNo quantization tables specified!"
-            << endl;
+            << std::endl;
          return false;  
       }
    }
