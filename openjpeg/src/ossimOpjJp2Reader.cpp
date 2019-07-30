@@ -44,6 +44,7 @@
 
 #include <openjpeg.h>
 #include <fstream>
+using namespace std;
 
 RTTI_DEF1(ossimOpjJp2Reader, "ossimOpjJp2Reader", ossimImageHandler)
 

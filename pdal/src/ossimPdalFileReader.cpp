@@ -88,7 +88,7 @@ bool ossimPdalFileReader::open(const ossimFilename& fname)
    }
    catch (std::exception& e)
    {
-      //ossimNotify() << e.what() << endl;
+      //ossimNotify() << e.what() << std::endl;
       return false;
    }
 

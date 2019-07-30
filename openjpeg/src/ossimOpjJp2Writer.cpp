@@ -202,7 +202,7 @@ bool ossimOpjJp2Writer::writeStream()
    if (traceDebug())
    {
       ossimNotify(ossimNotifyLevel_DEBUG)
-         << MODULE << " entered..." << endl;
+         << MODULE << " entered..." << std::endl;
    }
    
    bool result = false;
@@ -399,7 +399,7 @@ bool ossimOpjJp2Writer::open()
    if ( theFilename.size() )
    {
       std::ofstream* os = new std::ofstream();
-      os->open(theFilename.c_str(), ios::out | ios::binary);
+      os->open(theFilename.c_str(), std::ios::out | std::ios::binary);
       if(os->is_open())
       {
          // cout << "opened " << theFilename << endl;
