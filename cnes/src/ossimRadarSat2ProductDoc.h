@@ -19,7 +19,6 @@
 #include <list>
 #include <vector>
 #include <sstream>
-#include <vector>
 
 class ossimDpt;
 class ossimGpt;
@@ -46,10 +45,10 @@ typedef struct
    double latitudeScale;
    double longitudeScale;
    double heightScale;
-   vector<double> lineNumeratorCoefficients;
-   vector<double> lineDenominatorCoefficients;
-   vector<double> pixelNumeratorCoefficients;
-   vector<double> pixelDenominatorCoefficients;
+   std::vector<double> lineNumeratorCoefficients;
+   std::vector<double> lineDenominatorCoefficients;
+   std::vector<double> pixelNumeratorCoefficients;
+   std::vector<double> pixelDenominatorCoefficients;
    
 }RPCModel;
 
