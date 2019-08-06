@@ -38,7 +38,7 @@ public:
     *
     * Appends this writer image types to list "imageTypeList".
     *
-    * @param imageTypeList stl::vector<ossimString> list to append to.
+    * @param imageTypeList std::vector<ossimString> list to append to.
     */
    virtual void getImageTypeList(std::vector<ossimString>& imageTypeList)const;
    virtual bool hasImageType(const ossimString& imageType) const;
@@ -71,7 +71,7 @@ public:
    virtual bool loadState(const ossimKeywordlist& kwl,
                           const char* prefix=0);
 
-   static void getSupportedWriters(vector<ossimString>& writers);
+   static void getSupportedWriters(std::vector<ossimString>& writers);
    
    virtual void setProperty(ossimRefPtr<ossimProperty> property);
    virtual ossimRefPtr<ossimProperty> getProperty(const ossimString& name)const;
