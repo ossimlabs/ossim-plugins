@@ -15,6 +15,7 @@
 #include <ossimPluginProjectionFactory.h>
 #include <ossimPluginReaderFactory.h>
 
+using namespace std;
 
 namespace ossimplugins
 {

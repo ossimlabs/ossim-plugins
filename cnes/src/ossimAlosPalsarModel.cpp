@@ -27,6 +27,8 @@
 #include <ossim/base/ossimKeywordNames.h>
 #include <ossim/base/ossimTrace.h>
 
+using namespace std;
+
 
 // Static trace for debugging
 static ossimTrace traceDebug("ossimAlosPalsarModel:debug");

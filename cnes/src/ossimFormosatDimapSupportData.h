@@ -150,7 +150,7 @@ public:
    //---
    // Convenient method to print important image info:
    //---
-   void  printInfo (ostream& os) const;
+   void  printInfo (std::ostream& os) const;
 
    virtual bool saveState(ossimKeywordlist& kwl,
                           const char* prefix = 0)const;

@@ -21,6 +21,8 @@
 #include <ossim/base/ossimTrace.h>
 #include <ossim/base/ossimKeywordNames.h>
 
+using namespace std;
+
 namespace ossimplugins
 {
 

@@ -44,6 +44,8 @@ static ossimTrace traceDebug = ossimTrace("ossimPluginProjectionFactory:debug");
 #include <ossimFormosatModel.h>
 #include <ossimFormosatDimapSupportData.h>
 
+using namespace std;
+
 namespace ossimplugins
 {
 

@@ -35,6 +35,8 @@
 #include <ossim/base/ossimXmlDocument.h>
 #include <ossim/base/ossimXmlNode.h>
 
+using namespace std;
+
 // Static trace for debugging
 static ossimTrace traceDebug("ossimTerraSarProductDoc:debug");
 
