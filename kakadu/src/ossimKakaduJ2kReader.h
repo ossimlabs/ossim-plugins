@@ -128,7 +128,7 @@ public:
     * @brief Get array of decimations for all levels.
     * @param decimations Vector to initialize with decimations.
     */
-   virtual void getDecimationFactors(vector<ossimDpt>& decimations) const; 
+   virtual void getDecimationFactors(std::vector<ossimDpt>& decimations) const; 
 
    /**
     * @brief Returns the number of decimation levels.
@@ -337,7 +337,7 @@ inline bool ossimKakaduJ2kReader::seek(kdu_core::kdu_long offset)
    //---
    // All seeks are relative to the start of code stream.
    //---
-   theFileStr.seekg(offset, ios_base::beg);
+   theFileStr.seekg(offset, std::ios_base::beg);
 
    return theFileStr.good();
 }
