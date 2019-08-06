@@ -20,6 +20,8 @@
 #include <ossim/imaging/ossimImageGeometryRegistry.h>
 #include <ossim/imaging/ossimImageDataFactory.h>
 
+using namespace std;
+
 #ifdef OSSIM_ID_ENABLED
 static const char OSSIM_ID[] = "$Id";
 #endif
