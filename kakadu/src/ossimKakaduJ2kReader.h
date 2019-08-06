@@ -31,7 +31,6 @@ class ossimImageData;
 #include <kdu_compressed.h>
 // #include <kdu_region_decompressor.h>
 
-using namespace std;
 
 namespace kdu_core
 {

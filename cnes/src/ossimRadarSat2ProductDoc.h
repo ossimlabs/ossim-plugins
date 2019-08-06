@@ -29,7 +29,6 @@ class ossimXmlNode;
 class ossimString;
 
 
-using namespace std;
 
 typedef struct
 {

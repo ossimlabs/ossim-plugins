@@ -26,7 +26,6 @@
 #include <vector>
 #include <ossim/imaging/ossimAppFixedTileCache.h>
 
-using namespace std;
 
 class ossimImageData;
 
