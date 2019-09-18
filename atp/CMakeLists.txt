@@ -3,15 +3,6 @@ Message("################## Setting up ossim-atp-plugin  #######################
 
 cmake_minimum_required(VERSION 2.8)
 
-find_package( JsonCpp )
-if( JSONCPP_FOUND )
-   include_directories( ${JSONCPP_INCLUDE_DIR} )
-   set( requiredLibs ${requiredLibs} ${JSONCPP_LIBRARY} )
-   message("Found JsonCpp" )
-else( JSONCPP_FOUND )
-   message( FATAL_ERROR "Could not find required JsonCpp package!" )
-endif( JSONCPP_FOUND )
-
 message(" OPENCV_HOME = <${OPENCV_HOME}>")
 find_package(OpenCV)
 if( OPENCV_FOUND )

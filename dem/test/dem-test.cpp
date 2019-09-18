@@ -47,9 +47,9 @@
 #include <ossim/init/ossimInit.h>
 #include <ossim/projection/ossimEquDistCylProjection.h>
 #include <ossim/base/Thread.h>
-#include<ossim/projection/ossimNitfRpcModel.h>
-#include<ossim/projection/ossimQuickbirdRpcModel.h>
-#include<json/json.h>
+#include <ossim/projection/ossimNitfRpcModel.h>
+#include <ossim/projection/ossimQuickbirdRpcModel.h>
+#include <ossim/json/json.h>
 #include <dem/src/ossimDemTool.h>
 
 using namespace std;
