@@ -37,6 +37,8 @@
 
 #include <fstream>
 #include <iostream>
+
+using namespace std;
  
  
 #ifdef OSSIM_ID_ENABLED

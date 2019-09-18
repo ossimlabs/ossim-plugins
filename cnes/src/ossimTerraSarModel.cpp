@@ -33,6 +33,8 @@
 #include <iostream>
 #include <sstream>
 
+using namespace std;
+
 
 // Keyword constants:
 static const char NUMBER_SRGR_COEFFICIENTS_KW[] = "sr_gr_coeffs_count";

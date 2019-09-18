@@ -46,6 +46,8 @@
 #include <ogr_api.h>
 #include <sstream>
 
+using namespace std;
+
 RTTI_DEF2(ossimGdalOgrVectorAnnotation,
           "ossimGdalOgrVectorAnnotation",
           ossimAnnotationSource,

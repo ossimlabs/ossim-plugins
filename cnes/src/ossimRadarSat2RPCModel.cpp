@@ -35,6 +35,8 @@
 #include <otb/SensorParams.h>
 #include <otb/SarSensor.h>
 
+using namespace std;
+
 namespace ossimplugins
 {
 

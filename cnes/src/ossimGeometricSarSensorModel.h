@@ -19,7 +19,6 @@
 #include <list>
 #include <vector>
 
-using namespace std;
 
 namespace ossimplugins
 {
@@ -73,7 +72,7 @@ public:
     * @param position Position of the sensor at line line
     * @param speed Speed of the sensor at line line
     */
-  virtual bool getPlatformPositionAtLine(double line, vector<double>& position, vector<double>& speed);
+  virtual bool getPlatformPositionAtLine(double line, std::vector<double>& position, std::vector<double>& speed);
 
    /**
     * @brief This function is able to convert image coordinates into world

@@ -26,7 +26,6 @@
 #include <ossim/imaging/ossimImageGeometry.h>
 #include <ossim/projection/ossimProjection.h>
 
-using namespace std;
 
 class ossimProjection;
 class ossimMapProjection;
@@ -94,7 +93,7 @@ public:
    //OGRLayer::GetExtent() returns the MBR (minimal bounding rect) of the data in the layer. 
    //So when only do ossim-info, it is not necessary to go through each feature to calculate
    //the bounding which cause the memory allocate problem when the shape file is large.
-   void initializeBoundingRec(vector<ossimGpt> points);
+   void initializeBoundingRec(std::vector<ossimGpt> points);
 
    bool setCurrentEntry(ossim_uint32 entryIdx);
 
@@ -104,7 +103,7 @@ protected:
    ossimFilename                       theFilename;
    OGREnvelope                         theBoundingExtent;
    ossimRefPtr<ossimImageGeometry>     theImageGeometry;
-   vector<bool>                        theLayersToRenderFlagList;
+   std::vector<bool>                        theLayersToRenderFlagList;
    std::vector<ossimOgrGdalLayerNode*> theLayerTable;
    ossimRgbVector                      thePenColor;
    ossimRgbVector                      theBrushColor;
@@ -139,7 +138,7 @@ protected:
    
    void getFeatures(std::list<long>& result,
                     const ossimIrect& rect);
-   void getFeature(vector<ossimAnnotationObject*>& featureList,
+   void getFeature(std::vector<ossimAnnotationObject*>& featureList,
                    long id);
    ossimProjection* createProjFromReference(OGRSpatialReference* reference)const;
    void initializeTables();

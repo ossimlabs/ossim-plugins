@@ -25,6 +25,8 @@
 #include <ossim/projection/ossimProjection.h>
 #include <ossim/projection/ossimProjectionFactoryRegistry.h>
 
+using namespace std;
+
 // Keyword constants:
 static const char PRODUCT_XML_FILE_KW[] = "product_xml_filename";
 

@@ -28,6 +28,8 @@
 // Define Trace flags for use within this file:
 static ossimTrace traceDebug ("ossimFormosatDimapSupportData:debug");
 
+using namespace std;
+
 static const ossim_uint32  LAGRANGE_FILTER_SIZE = 8; // num samples considered
 
 ossimFormosatDimapSupportData::ossimFormosatDimapSupportData ()

@@ -26,7 +26,6 @@
 namespace ossimplugins
 {
 
-
 class PlatformPosition;
 class SensorParams;
 class RefPoint;

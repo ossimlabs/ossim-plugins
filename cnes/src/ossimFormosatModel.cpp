@@ -29,6 +29,8 @@ using namespace std;
 
 #include <ossimFormosatDimapSupportData.h>
 
+using namespace std;
+
 namespace ossimplugins
 {
 RTTI_DEF1(ossimFormosatModel, "ossimFormosatModel", ossimSensorModel);

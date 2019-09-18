@@ -31,6 +31,8 @@ static ossimTrace traceDebug("ossimErsSarModel:debug");
 #include <string>
 #include <algorithm>
 
+using namespace std;
+
 namespace ossimplugins
 {
 

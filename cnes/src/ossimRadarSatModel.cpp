@@ -38,6 +38,8 @@
 #include <RadarSat/CommonRecord/ProcessingParameters.h>
 #include <RadarSat/Leader/PlatformPositionData.h>
 
+using namespace std;
+
 namespace ossimplugins
 {
 RTTI_DEF1(ossimRadarSatModel, "ossimRadarSatModel", ossimGeometricSarSensorModel);

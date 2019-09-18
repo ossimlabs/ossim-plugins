@@ -21,6 +21,9 @@
 #include <ossim/base/ossimXmlNode.h>
 #include <otb/CivilDateTime.h>
 #include <ossim/base/ossimTrace.h>
+
+using namespace std;
+
 static ossimTrace traceDebug("ossimPluginCommon:debug");
 namespace ossimplugins
 {

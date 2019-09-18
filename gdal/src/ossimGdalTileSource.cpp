@@ -47,6 +47,8 @@
 
 #include <sstream>
 
+using namespace std;
+
 RTTI_DEF1(ossimGdalTileSource, "ossimGdalTileSource", ossimImageHandler)
 
 static ossimOgcWktTranslator wktTranslator;

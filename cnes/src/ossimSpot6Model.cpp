@@ -44,6 +44,8 @@
 #include <ossim/base/ossimXmlNode.h>
 #include <ossim/support_data/ossimSupportFilesList.h>
 
+using namespace std;
+
 
 namespace ossimplugins
 {

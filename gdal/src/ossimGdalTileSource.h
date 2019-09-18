@@ -26,7 +26,6 @@
 #include <vector>
 #include <ossim/imaging/ossimAppFixedTileCache.h>
 
-using namespace std;
 
 class ossimImageData;
 
@@ -337,7 +336,7 @@ private:
    bool                        theIsComplexFlag;
    bool                        theAlphaChannelFlag;
    bool                        m_preservePaletteIndexesFlag;
-   vector<ossim_uint32>        m_outputBandList;
+   std::vector<ossim_uint32>        m_outputBandList;
    bool                        m_isBlocked;
 
    std::vector<ossimAppFixedTileCache::ossimAppFixedCacheId> m_rlevelBlockCache;
