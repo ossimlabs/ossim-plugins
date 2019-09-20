@@ -19,8 +19,7 @@ using namespace ossim;
 namespace ATP
 {
 const char* ossimAtpTool::DESCRIPTION =
-      "Provides automatic tiepoint generation functionality. This tool uses JSON format to "
-      "communicate requests and results.";
+      "Provides automatic tiepoint generation functionality.";
 
 ossimAtpTool::ossimAtpTool()
 : m_outputStream (0),

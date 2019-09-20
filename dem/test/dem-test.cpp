@@ -49,7 +49,7 @@
 #include <ossim/base/Thread.h>
 #include <ossim/projection/ossimNitfRpcModel.h>
 #include <ossim/projection/ossimQuickbirdRpcModel.h>
-#include <ossim/json/json.h>
+#include <json/json.h>
 #include <dem/src/ossimDemTool.h>
 
 using namespace std;
