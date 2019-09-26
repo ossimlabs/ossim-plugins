@@ -18,7 +18,7 @@ extern "C"
 
    const char* getDemDescription()
    {
-      return "Dem utility plugin\n\n";
+      return "Dem utility plugin\n";
    }
 
    int getDemNumberOfClassNames()

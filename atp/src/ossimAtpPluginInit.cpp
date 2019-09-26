@@ -15,7 +15,7 @@ ossimSharedObjectInfo  atpInfo;
 
 const char* getAtpDescription()
 {
-   return "ossim-atp tool plugin\n\n";
+   return "ossim-atp tool plugin\n";
 }
 
 int getAtpNumberOfClassNames()
