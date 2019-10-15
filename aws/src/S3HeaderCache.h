@@ -34,7 +34,7 @@ namespace ossim
       typedef std::map<TimeIndex_t, Key_t > CacheTimeIndexType;
 
       S3HeaderCache();
-      virtual ~S3HeaderCache();
+      ~S3HeaderCache();
       bool getCachedFilesize(const Key_t& key, ossim_int64& filesize)const;
       void addHeader(const Key_t& key, Node_t& node);
       void setMaxCacheEntries(ossim_int64 maxEntries);

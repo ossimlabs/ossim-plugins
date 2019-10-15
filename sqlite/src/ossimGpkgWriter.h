@@ -1,20 +1,19 @@
-//----------------------------------------------------------------------------
+//---
 //
 // File: ossimGpkgWriter.h
 //
 // Author:  David Burken
 //
-// License:  LGPL
-// 
-// See LICENSE.txt file in the top level directory for more details.
+// License: MIT
 //
 // Description: OSSIM Geo Package writer.
 //
-//----------------------------------------------------------------------------
+//---
 // $Id$
 #ifndef ossimGpkgWriter_HEADER
 #define ossimGpkgWriter_HEADER 1
 
+#include "ossimSqliteConstants.h"
 #include <ossim/imaging/ossimGpkgWriterInterface.h>
 #include <ossim/imaging/ossimImageFileWriter.h>
 #include <ossim/base/ossimIpt.h>
@@ -44,7 +43,8 @@ public:
    {
       DEFAULT_JPEG_QUALITY = 75
    };
-   
+
+#if 0
    enum ossimGpkgWriterMode
    {
       OSSIM_GPGK_WRITER_MODE_UNKNOWN = 0,
@@ -53,6 +53,7 @@ public:
       OSSIM_GPGK_WRITER_MODE_PNGA    = 3,  // PNG with alpha
       OSSIM_GPGK_WRITER_MODE_MIXED   = 4   // full tiles=jpeg, partials=pnga
    };
+#endif
 
    /* default constructor */
    ossimGpkgWriter();
@@ -66,7 +67,7 @@ public:
    /** @return "ossim gpkg writer" */
    virtual ossimString getLongName()  const;
 
-   /** @return "ossimGpkgReader" */
+   /** @return "ossimGpkgWriter" */
    virtual ossimString getClassName()    const;
 
    /**
@@ -186,7 +187,7 @@ public:
     * 
     * @return Writer mode.  Default mode = jpeg.
     */
-   ossimGpkgWriterMode getWriterMode() const;
+   ossim::WriterMode getWriterMode() const;
 
    /**
     * @brief Gets the writer mode as string.
@@ -200,7 +201,7 @@ public:
     * 
     * @return Writer mode.  Default mode = jpeg.
     */
-   std::string getWriterModeString( ossimGpkgWriterMode mode ) const;
+   std::string getWriterModeString( ossim::WriterMode mode ) const;
 
    void setCompressionQuality( const std::string& quality );
 
@@ -443,6 +444,12 @@ private:
     * after a view change.
     */
    void reInitializeCombiners();
+
+   /**
+    * @brief Finds all ossimCacheTileSource objects and calls:
+    * ossimCacheTileSource::flush()
+    */
+   void flushCache();
 
    /**
     * @brief Finds all ossimRectangleCutter and calls setRectangle with a nan

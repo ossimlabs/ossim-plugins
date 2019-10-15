@@ -1,11 +1,11 @@
 //---
 //
-// File: ossimGpkgReader.cpp
+// File: ossimGpkgWriter.cpp
 //
 // Author:  David Burken
 //
 // License: MIT
-//
+// 
 // Description: OSSIM Geo Package writer.
 //
 //---
@@ -39,6 +39,7 @@
 #include <ossim/base/ossimViewInterface.h>
 #include <ossim/base/ossimVisitor.h>
 
+#include <ossim/imaging/ossimCacheTileSource.h>
 #include <ossim/imaging/ossimCodecFactoryRegistry.h>
 #include <ossim/imaging/ossimImageCombiner.h>
 #include <ossim/imaging/ossimImageData.h>
@@ -206,6 +207,13 @@ bool ossimGpkgWriter::open()
       int rc = sqlite3_open_v2( theFilename.c_str(), &m_db, flags, 0 );
       if ( rc == SQLITE_OK )
       {
+         // Optimize Database:
+         ossim_sqlite::exec(m_db, std::string("PRAGMA synchronous = OFF"));
+         ossim_sqlite::exec(m_db, std::string("PRAGMA journal_mode = OFF"));
+         ossim_sqlite::exec(m_db, std::string("PRAGMA temp_store = MEMORY"));
+         ossim_sqlite::exec(m_db, std::string("PRAGMA count_changes = OFF"));
+         ossim_sqlite::exec(m_db, std::string("PRAGMA page_size = 4096"));
+         
          status = true;
 
          if ( !append() )
@@ -1312,8 +1320,6 @@ void ossimGpkgWriter::writeTile( sqlite3_stmt* pStmt,
    {
       std::vector<ossim_uint8> codecTile; // To hold the jpeg encoded tile.
       bool encodeStatus;
-      std::string ext;
-      int mode = getWriterMode();
 
       if ( tile->getDataObjectStatus() == OSSIM_FULL )
       {
@@ -1322,8 +1328,6 @@ void ossimGpkgWriter::writeTile( sqlite3_stmt* pStmt,
             tile->computeAlphaChannel();
          }
          encodeStatus = m_fullTileCodec->encode(tile, codecTile);
-         if((mode == OSSIM_GPGK_WRITER_MODE_JPEG)||(mode == OSSIM_GPGK_WRITER_MODE_MIXED)) ext = ".jpg";
-         else ext = ".png";
       }
       else
       {
@@ -1332,9 +1336,7 @@ void ossimGpkgWriter::writeTile( sqlite3_stmt* pStmt,
             tile->computeAlphaChannel();
          }
          encodeStatus = m_partialTileCodec->encode(tile, codecTile);
-         if(mode == OSSIM_GPGK_WRITER_MODE_JPEG) ext = ".jpg";
-         else ext = ".png";
-     }
+      }
       
       if ( encodeStatus )
       {
@@ -2000,7 +2002,10 @@ void ossimGpkgWriter::setView( ossimMapProjection* proj )
          // the original AOI was already saved for our writer.
          //---
          reInitializeCutters( proj );
-         
+
+         // Need after a view change.
+         flushCache();
+
          theInputConnection->initialize();
       }
    }
@@ -2055,6 +2060,30 @@ void ossimGpkgWriter::reInitializeCutters( const ossimMapProjection* proj )
 
                // Enable the getTile...
                cutter->setEnableFlag( true );
+            }
+         }
+      }
+   }
+}
+
+void ossimGpkgWriter::flushCache()
+{
+   if ( theInputConnection.valid() )
+   {
+      ossimTypeNameVisitor visitor( ossimString("ossimCacheTileSource"),
+                                    false, // firstofTypeFlag
+                                    (ossimVisitor::VISIT_INPUTS|
+                                     ossimVisitor::VISIT_CHILDREN) );
+
+      theInputConnection->accept( visitor );
+      if ( visitor.getObjects().size() )
+      {
+         for( ossim_uint32 i = 0; i < visitor.getObjects().size(); ++i )
+         {
+            ossimCacheTileSource* cache = visitor.getObjectAs<ossimCacheTileSource>( i );
+            if (cache)
+            {
+               cache->flush();
             }
          }
       }
@@ -2596,10 +2625,10 @@ void ossimGpkgWriter::setProjectionTie( ossimMapProjection* proj ) const
    
 } // End: ossimGpkgWriter::setProjectionTie
 
-ossimGpkgWriter::ossimGpkgWriterMode ossimGpkgWriter::getWriterMode() const
+ossim::WriterMode ossimGpkgWriter::getWriterMode() const
 {
    // Default to mixed.
-   ossimGpkgWriterMode mode = OSSIM_GPGK_WRITER_MODE_MIXED;
+   ossim::WriterMode mode = ossim::MIXED;
    
    std::string value = m_kwl->findKey( WRITER_MODE_KW );
    if ( value.size() )
@@ -2609,46 +2638,46 @@ ossimGpkgWriter::ossimGpkgWriterMode ossimGpkgWriter::getWriterMode() const
       
       if ( os == "jpeg" )
       {
-         mode = OSSIM_GPGK_WRITER_MODE_JPEG;
+         mode = ossim::JPEG;
       }
       else if ( os == "png" )
       {
-         mode = OSSIM_GPGK_WRITER_MODE_PNG;
+         mode = ossim::PNG;
       }
       else if ( os == "pnga" )
       {
-         mode = OSSIM_GPGK_WRITER_MODE_PNGA;
+         mode = ossim::PNGA;
       }
    }
    return mode;
 }
 
-std::string ossimGpkgWriter::getWriterModeString( ossimGpkgWriterMode mode ) const
+std::string ossimGpkgWriter::getWriterModeString( ossim::WriterMode mode ) const
 {
    std::string result;
    switch ( mode )
    {
-      case OSSIM_GPGK_WRITER_MODE_JPEG:
+      case ossim::JPEG:
       {
          result = "jpeg";
          break;
       }
-      case OSSIM_GPGK_WRITER_MODE_MIXED:
+      case ossim::MIXED:
       {
          result = "mixed";
          break;
       }
-      case OSSIM_GPGK_WRITER_MODE_PNG:
+      case ossim::PNG:
       {
          result = "png";
          break;
       }
-      case OSSIM_GPGK_WRITER_MODE_PNGA:
+      case ossim::PNGA:
       {
          result = "pnga";
          break;
       }
-      case OSSIM_GPGK_WRITER_MODE_UNKNOWN:
+      case ossim::UNKNOWN:
       default:
       {
          result = "unknown";
@@ -2661,8 +2690,8 @@ std::string ossimGpkgWriter::getWriterModeString( ossimGpkgWriterMode mode ) con
 bool ossimGpkgWriter::requiresEightBit() const
 {
    bool result = false;
-   ossimGpkgWriterMode mode = getWriterMode();
-   if ( mode == OSSIM_GPGK_WRITER_MODE_JPEG )
+   ossim::WriterMode mode = getWriterMode();
+   if ( ( mode == ossim::JPEG ) || ( mode == ossim::MIXED ) )
    {
       result = true;
    }
@@ -2926,29 +2955,29 @@ bool ossimGpkgWriter::getFilename( ossimFilename& file ) const
 
 void ossimGpkgWriter::initializeCodec()
 {
-   ossimGpkgWriterMode mode = getWriterMode();
-   if ( mode == OSSIM_GPGK_WRITER_MODE_JPEG )
+   ossim::WriterMode mode = getWriterMode();
+   if ( mode == ossim::JPEG )
    {
       m_fullTileCodec = ossimCodecFactoryRegistry::instance()->createCodec(ossimString("jpeg"));
       m_partialTileCodec = m_fullTileCodec.get();
       m_fullTileCodecAlpha = false;
       m_partialTileCodecAlpha = false;
    }
-   else if(mode == OSSIM_GPGK_WRITER_MODE_PNG)
+   else if(mode == ossim::PNG)
    {
       m_fullTileCodec = ossimCodecFactoryRegistry::instance()->createCodec(ossimString("png"));
       m_partialTileCodec = m_fullTileCodec.get();
       m_fullTileCodecAlpha = false;
       m_partialTileCodecAlpha = false;
    }
-   else if( mode == OSSIM_GPGK_WRITER_MODE_PNGA )
+   else if( mode == ossim::PNGA )
    {
       m_fullTileCodec = ossimCodecFactoryRegistry::instance()->createCodec(ossimString("pnga"));
       m_partialTileCodec = m_fullTileCodec.get();
       m_fullTileCodecAlpha = true;
       m_partialTileCodecAlpha = true;
    }
-   else if( mode == OSSIM_GPGK_WRITER_MODE_MIXED )
+   else if( mode == ossim::MIXED )
    {
       m_fullTileCodec = ossimCodecFactoryRegistry::instance()->createCodec(ossimString("jpeg"));
       m_partialTileCodec = ossimCodecFactoryRegistry::instance()->createCodec(ossimString("pnga"));
