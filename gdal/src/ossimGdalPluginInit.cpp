@@ -24,6 +24,8 @@
 #include <ossim/imaging/ossimOverviewBuilderFactoryRegistry.h>
 #include <ossim/projection/ossimProjectionFactoryRegistry.h>
 #include <ossim/support_data/ossimInfoFactoryRegistry.h>
+#include <ossim/elevation/ossimElevationDatabaseRegistry.h>
+#include "ossimGdalElevationDatabaseFactory.h"
 #include <functional>
 
 static void setGdalDescription(ossimString& description)
@@ -151,6 +153,8 @@ extern "C"
 
      /* Register gdal info factoy... */
      ossimInfoFactoryRegistry::instance()->registerFactory(ossimGdalInfoFactory::instance());
+
+     ossimElevationDatabaseRegistry::instance()->registerFactory(ossimGdalElevationDatabaseFactory::instance(), true);
 
      setValidDrivers(kwl);
      setGdalDescription(gdalDescription);
