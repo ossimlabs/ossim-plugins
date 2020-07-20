@@ -154,7 +154,7 @@ extern "C"
      /* Register gdal info factoy... */
      ossimInfoFactoryRegistry::instance()->registerFactory(ossimGdalInfoFactory::instance());
 
-     ossimElevationDatabaseRegistry::instance()->registerFactory(ossimGdalElevationDatabaseFactory::instance(), true);
+     ossimElevationDatabaseRegistry::instance()->registerFactory(ossimGdalElevationDatabaseFactory::instance());
 
      setValidDrivers(kwl);
      setGdalDescription(gdalDescription);
