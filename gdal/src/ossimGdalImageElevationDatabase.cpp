@@ -30,7 +30,7 @@ using namespace std;
 ossimGdalImageElevationDatabase::ossimGdalImageElevationDatabase()
    :
    ossimElevationCellDatabase(),
-   poDS(NULL),
+   m_poDataSet(NULL),
    m_lastMapKey(0),
    m_lastAccessedId(0)
 {
@@ -44,11 +44,9 @@ ossimGdalImageElevationDatabase::~ossimGdalImageElevationDatabase()
 
 bool ossimGdalImageElevationDatabase::open(const ossimString& connectionString)
 {
-// std:cout << "ossimGdalImageElevationDatabase open: " << connectionString << std::endl;
-
-   // return false; // tmp drb...
-   
+// std:cout << "ossimGdalImageElevationDatabase open: " << connectionString << std::endl;   
    static const char M[] = "ossimGdalImageElevationDatabase::open";
+
    if(traceDebug())
    {
       ossimNotify(ossimNotifyLevel_DEBUG)
@@ -92,8 +90,8 @@ void ossimGdalImageElevationDatabase::close()
 double ossimGdalImageElevationDatabase::getHeightAboveMSL(const ossimGpt& gpt)
 {
 // std::cout << "ossimGdalImageElevationDatabase::getHeightAboveMSL" <<  gpt << endl;
-
    double h = ossim::nan();
+
    if(isSourceEnabled())
    {
       ossimRefPtr<ossimElevCellHandler> handler = getOrCreateCellHandler(gpt);
@@ -112,21 +110,21 @@ double ossimGdalImageElevationDatabase::getHeightAboveMSL(const ossimGpt& gpt)
 double ossimGdalImageElevationDatabase::getHeightAboveEllipsoid(const ossimGpt& gpt)
 {
    double h = getHeightAboveMSL(gpt);
+
    if(!ossim::isnan(h))
    {
       h += getOffsetFromEllipsoid(gpt);
    }
+
    return h;
 }
 
 ossimRefPtr<ossimElevCellHandler> ossimGdalImageElevationDatabase::createCell(const ossimGpt& gpt)
 {
-
    // cout << "********************" << std::endl;
    // cout << "Searching for point " << gpt << std::endl;
    // cout << searchShapefile(gpt.lond(), gpt.latd()) << std::endl;
    // cout << "********************" << std::endl;
-
 
    ossimRefPtr<ossimElevCellHandler> result = 0;
    
@@ -153,80 +151,8 @@ ossimRefPtr<ossimElevCellHandler> ossimGdalImageElevationDatabase::createCell(co
       }
    }
 
-/*
-   std::map<ossim_uint64, ossimGdalImageElevationFileEntry>::iterator i = m_entryMap.begin();
-   while ( i != m_entryMap.end() )
-   {
-      if ( (*i).second.m_loadedFlag == false )
-      {
-         // not loaded
-         ossimRefPtr<ossimImageElevationHandler> h = new ossimImageElevationHandler();
-
-         if ( (*i).second.m_rect.isLonLatNan() )
-         {
-            if ( h->open( (*i).second.m_file ) )
-            {
-               // First time opened.  Capture the rectangle. for next time.
-               (*i).second.m_rect = h->getBoundingGndRect();
-            }
-            else
-            {
-               ossimNotify(ossimNotifyLevel_WARN)
-                  << "ossimImageElevationDatabase::createCell WARN:\nCould not open: "
-                  << (*i).second.m_file << "\nRemoving file from map!" << std::endl;
-
-               // Get a copy of the iterator to delet.
-               std::map<ossim_uint64, ossimGdalImageElevationFileEntry>::iterator badIter = i;
-               
-               ++i; // Go to next image.
-
-               // Must put lock around erase.
-               m_cacheMapMutex.lock();
-               m_entryMap.erase(badIter);
-               m_cacheMapMutex.unlock();
-               
-               continue; // Skip the rest of this loop.
-            }
-         }
-
-         // Check the North up bounding rectangle for intersect.
-         if ( (*i).second.m_rect.pointWithin(gpt) )
-         {
-            if ( h->isOpen() == false )
-            {
-               h->open( (*i).second.m_file );
-            }
-
-            if ( h->isOpen() )
-            {
-               //---
-               // Check point coverage again as image may not be geographic and pointHasCoverage
-               // has a check on worldToLocal point.
-               //---
-               if (  h->pointHasCoverage(gpt) )
-               {
-                  m_lastAccessedId = (*i).first;
-                  (*i).second.m_loadedFlag = true;
-                  result = h.get();
-                  break;
-               }
-               else
-               {
-                  h = 0;
-               }
-            }
-         }
-         else
-         {
-            h = 0;
-         }
-      }
-
-      ++i;
-   }
-   */
-
    enableSource();
+
    return result;
 }
 
@@ -345,14 +271,14 @@ void ossimGdalImageElevationDatabase::getBoundingRect(ossimGrect& rect) const
    // a geographic projection and there is a rotation this will include null coverage area.
    rect.makeNan();
 
-   OGRLayer  *poLayer = poDS->GetLayer( 0 );
+   OGRLayer  *poLayer = m_poDataSet->GetLayer( 0 );
    OGREnvelope *poEnvelope = new OGREnvelope();
    OGRErr status = poLayer->GetExtent(poEnvelope);
-
 
    ossimGrect newRect(poEnvelope->MaxY, poEnvelope->MinX, poEnvelope->MinY, poEnvelope->MaxX);
 
    rect.expandToInclude(newRect);
+
    delete poEnvelope;
 }
 
@@ -370,13 +296,16 @@ bool ossimGdalImageElevationDatabase::getAccuracyInfo(ossimElevationAccuracyInfo
 bool ossimGdalImageElevationDatabase::loadState(const ossimKeywordlist& kwl, const char* prefix)
 {
    static const char M[] = "ossimImageElevationDatabase::loadState";
+
    if(traceDebug())
    {
       ossimNotify(ossimNotifyLevel_DEBUG)
          << M << " entered..." << "\nkwl:\n" << kwl << "\n";
-   }     
+   }
+
    bool result = false;
    const char* lookup = kwl.find(prefix, "type");
+
    if ( lookup )
    {
       std::string type = lookup;
@@ -397,7 +326,6 @@ bool ossimGdalImageElevationDatabase::loadState(const ossimKeywordlist& kwl, con
    }
 
    // std::cout << "ossimGdalImageElevationDatabase::loadState " << result << std::endl;
-
 
    return result;
 }
@@ -445,9 +373,12 @@ ossimGdalImageElevationDatabase::ossimGdalImageElevationFileEntry::ossimGdalImag
 std::ostream& ossimGdalImageElevationDatabase::print(ostream& out) const
 {
    ossimKeywordlist kwl;
+
    saveState(kwl);
+
    out << "\nossimImageElevationDatabase @ "<< (ossim_uint64) this << "\n"
          << kwl <<ends;
+
    return out;
 }
 
@@ -458,9 +389,9 @@ bool ossimGdalImageElevationDatabase::openShapefile()
 
    if ( m_connectionString.size() > 0 ) 
    {
-      poDS = static_cast<GDALDataset*>(GDALOpenEx( m_connectionString, GDAL_OF_VECTOR, NULL, NULL, NULL ));
+      m_poDataSet = static_cast<GDALDataset*>(GDALOpenEx( m_connectionString, GDAL_OF_VECTOR, NULL, NULL, NULL ));
 
-      if( poDS == NULL )
+      if( m_poDataSet == NULL )
       {
          std:cerr << "ERROR:  Cannot open shapefile: " << m_connectionString.c_str() << std::endl;
       }
@@ -475,16 +406,15 @@ bool ossimGdalImageElevationDatabase::openShapefile()
 
 void ossimGdalImageElevationDatabase::closeShapefile()
 {
-   GDALClose( poDS );
+   GDALClose( m_poDataSet );
 }
 
 std::string ossimGdalImageElevationDatabase::searchShapefile(double lon, double lat) const
 {
-   // OGRLayer  *poLayer = poDS->GetLayerByName( "gegd_dems" );
-   OGRLayer  *poLayer = poDS->GetLayer( 0 );
+   // OGRLayer  *poLayer = m_poDataSet->GetLayerByName( "gegd_dems" );
+   OGRLayer  *poLayer = m_poDataSet->GetLayer( 0 );
 
 //   OGRFeatureDefn *poFDefn = poLayer->GetLayerDefn();
-
 
    OGRFeature *poFeature;
    OGRPoint* ogrPoint = new OGRPoint(lon, lat);
