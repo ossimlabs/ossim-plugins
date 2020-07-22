@@ -1,6 +1,6 @@
 #include "ossimGdalElevationDatabaseFactory.h"
-//#include "ossimGdalImageElevationDatabase.h"
 #include <ossim/base/ossimKeywordNames.h>
+#include "ossimGdalImageElevationDatabase.h"
 
 ossimGdalElevationDatabaseFactory *ossimGdalElevationDatabaseFactory::m_instance = 0;
 ossimGdalElevationDatabaseFactory *ossimGdalElevationDatabaseFactory::instance()
@@ -16,10 +16,10 @@ ossimGdalElevationDatabaseFactory *ossimGdalElevationDatabaseFactory::instance()
 ossimElevationDatabase *ossimGdalElevationDatabaseFactory::createDatabase(const ossimString &typeName) const
 {
    ossimElevationDatabase* result = nullptr;
-// std::cout << "ossimGdalElevationDatabaseFactory::createDatabase -------------------------" << typeName << "\n";
-   if(typeName == "image_directory_shx")
-      
+   // std::cout << "ossimGdalElevationDatabaseFactory::createDatabase -------------------------" << typeName << "\n";
+   if(typeName == "image_directory_shx")      
    {
+      result = new ossimGdalImageElevationDatabase();
    }
 
    return result;
@@ -53,12 +53,29 @@ ossimElevationDatabase *ossimGdalElevationDatabaseFactory::open(const ossimStrin
    // need a detector that will take your directory and check for a shape idx file 
    // in that connection string location
 
+   // This method will only open individual image files for use as dems. It will not utilize the
+   // file walker to search over directories:
+   ossimFilename filename (connectionString);
+   if (filename.isFile())
+   {
+      result = new ossimGdalImageElevationDatabase;
+      if (!result->open(connectionString)) 
+      {
+         std::cerr << "ERROR: ossimGdalElevationDatabaseFactory::createDatabase failed\n";
+      }
+      else
+      {
+         std::cout << "ossimGdalElevationDatabaseFactory::createDatabase success\n";
+      }
+      
+   }   
+
    return result.release();
 }
 
 void ossimGdalElevationDatabaseFactory::getTypeNameList(std::vector<ossimString> &typeList) const
 {
-// Modify this for your new database handler
-//   typeList.push_back(STATIC_TYPE_NAME(ossimGdalImageElevationDatabase));
-typeList.push_back("image_directory_shx");
+   // Modify this for your new database handler
+   typeList.push_back(STATIC_TYPE_NAME(ossimGdalImageElevationDatabase));
+   typeList.push_back("image_directory_shx");
 }
