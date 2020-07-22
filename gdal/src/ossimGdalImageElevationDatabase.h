@@ -181,7 +181,7 @@ private:
    /** Hidden from use copy constructor */
    ossimGdalImageElevationDatabase(const ossimGdalImageElevationDatabase& copy_this);
    
-   GDALDataset *poDS;
+   GDALDataset *m_poDataSet;
 
    bool openShapefile();   
    void closeShapefile();
