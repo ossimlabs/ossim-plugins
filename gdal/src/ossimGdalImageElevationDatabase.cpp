@@ -13,6 +13,8 @@
 //----------------------------------------------------------------------------
 // $Id$
 
+#include <ossimShpElevIndex.h>
+
 #include <ossimGdalImageElevationDatabase.h>
 #include <ossim/base/ossimDpt.h>
 #include <ossim/base/ossimString.h>
@@ -20,6 +22,7 @@
 #include <ossim/elevation/ossimImageElevationHandler.h>
 #include <cmath>
 #include "ogrsf_frmts.h"
+
 
 static ossimTrace traceDebug(ossimString("ossimGdalImageElevationDatabase:debug"));
 
@@ -62,7 +65,8 @@ bool ossimGdalImageElevationDatabase::open(const ossimString& connectionString)
    {
       m_connectionString = connectionString.c_str();
 
-      if ( openShapefile() )
+//      if ( openShapefile() )
+      if ( ossimShpElevIndex::getInstance(m_connectionString) != NULL )
       {
          result = true;
       }
@@ -131,7 +135,8 @@ ossimRefPtr<ossimElevCellHandler> ossimGdalImageElevationDatabase::createCell(co
    // Need to disable elevation while loading the DEM image to prevent recursion:
    disableSource();
 
-   std:string filename = searchShapefile(gpt.lond(), gpt.latd());
+   //std:string filename = searchShapefile(gpt.lond(), gpt.latd());
+   std:string filename = ossimShpElevIndex::getInstance(m_connectionString)->searchShapefile(gpt.lond(), gpt.latd());
 
    if ( filename.size() > 1 )  
    {
@@ -257,7 +262,8 @@ bool ossimGdalImageElevationDatabase::pointHasCoverage(const ossimGpt& gpt) cons
    //---
    bool result = false;
 
-   std:string filename = searchShapefile(gpt.lond(), gpt.latd());
+   // std:string filename = searchShapefile(gpt.lond(), gpt.latd());
+   std:string filename = ossimShpElevIndex::getInstance(m_connectionString)->searchShapefile(gpt.lond(), gpt.latd());
 
    result = filename.size() > 1;
 
@@ -269,17 +275,18 @@ void ossimGdalImageElevationDatabase::getBoundingRect(ossimGrect& rect) const
 {
    // The bounding rect is the North up rectangle.  So if the underlying image projection is not
    // a geographic projection and there is a rotation this will include null coverage area.
-   rect.makeNan();
+   // rect.makeNan();
 
-   OGRLayer  *poLayer = m_poDataSet->GetLayer( 0 );
-   OGREnvelope *poEnvelope = new OGREnvelope();
-   OGRErr status = poLayer->GetExtent(poEnvelope);
+   // OGRLayer  *poLayer = m_poDataSet->GetLayer( 0 );
+   // OGREnvelope *poEnvelope = new OGREnvelope();
+   // OGRErr status = poLayer->GetExtent(poEnvelope);
 
-   ossimGrect newRect(poEnvelope->MaxY, poEnvelope->MinX, poEnvelope->MinY, poEnvelope->MaxX);
+   // ossimGrect newRect(poEnvelope->MaxY, poEnvelope->MinX, poEnvelope->MinY, poEnvelope->MaxX);
 
-   rect.expandToInclude(newRect);
+   // rect.expandToInclude(newRect);
 
-   delete poEnvelope;
+   // delete poEnvelope;
+   ossimShpElevIndex::getInstance(m_connectionString)->getBoundingRect(rect);
 }
 
 
@@ -315,7 +322,8 @@ bool ossimGdalImageElevationDatabase::loadState(const ossimKeywordlist& kwl, con
 
          if ( result )
          {
-            openShapefile();
+            //openShapefile();
+            ossimShpElevIndex::getInstance(m_connectionString);
          }
       }
    }
