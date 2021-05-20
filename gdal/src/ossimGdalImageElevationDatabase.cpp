@@ -229,12 +229,15 @@ ossimRefPtr<ossimElevCellHandler> ossimGdalImageElevationDatabase::getOrCreateCe
          // NOTE: ossimImageElevationDatabase::createCell sets m_lastAccessedId to that of
          // the entries map key.
          //---
-         m_cacheMap.insert(std::make_pair(m_lastAccessedId,
-                                          new CellInfo(m_lastAccessedId, result.get())));
+
+         m_cacheMap.insert(std::make_pair(m_lastMapKey,
+                                          new CellInfo(m_lastMapKey, result.get())));
 
          ++m_lastMapKey;
 
+
          // Check the map size and purge cells if needed.
+
          if(m_cacheMap.size() > m_maxOpenCells)
          {
             flushCacheToMinOpenCells();
