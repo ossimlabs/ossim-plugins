@@ -644,6 +644,9 @@ bool ossimKakaduNitfReader::allocate()
 
             if ( m_codestream.exists() )
             {
+               // Setting "resilient" mode fixes loadBlock errors on some data.
+               m_codestream.set_resilient(true);
+
                //---
                // We have to store things here in this non-const method because
                // NONE of the kakadu methods are const.
