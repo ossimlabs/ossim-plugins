@@ -858,79 +858,85 @@ bool ossimKakaduNitfReader::scanForJpegBlockOffsets()
 {
    bool result = false;
 
-   const ossimNitfImageHeader* hdr = getCurrentImageHeader();
-   if( hdr )
-   {  
-      // Capture the start of data.  This is start of j2k main header.
-      m_startOfCodestreamOffset = hdr->getDataLocation();
-
-      if ( checkJp2Signature() )
-      {
-         result = true;
-      }
-      else
-      {
-         //---
-         // Kakadu library finds j2k tiles.  We only find the "Start Of Codestream"(SOC)
-         // which should be at getDataLocation() but not in all cases.
-         //---
+   if ( isEntryJ2k() )
+   {
+      const ossimNitfImageHeader* hdr = getCurrentImageHeader();
+      if( hdr )
+      {  
+         // Capture the start of data.  This is start of j2k main header.
+         m_startOfCodestreamOffset = hdr->getDataLocation();
          
-         // Seek to the first block.
-         theFileStr->seekg(m_startOfCodestreamOffset, ios_base::beg);
-         if ( theFileStr->good() )
+         if ( checkJp2Signature() )
+         {
+            result = true;
+         }
+         else
          {
             //---
-            // Read the first two bytes and test for SOC (Start Of Codestream)
-            // marker.
+            // Kakadu library finds j2k tiles.  We only find the "Start Of Codestream"(SOC)
+            // which should be at getDataLocation() but not in all cases.
             //---
-            ossim_uint8 markerField[2];
-            theFileStr->read( (char*)markerField, 2);
          
-            if ( (markerField[0] == 0xff) && (markerField[1] == 0x4f) )
-            {
-               result = true;
-            }
-            else
+            // Seek to the first block.
+            theFileStr->seekg(m_startOfCodestreamOffset, ios_base::beg);
+            if ( theFileStr->good() )
             {
                //---
-               // Scan the file from the beginning for SOC.  This handles cases
-               // where the data does not fall on "hdr->getDataLocation()".
-               //
-               // Changed for multi-enty nitf where first entry is j2k, second is
-               // uncompressed. Need to test at site. 02 August 2013 (drb)
+               // Read the first two bytes and test for SOC (Start Of Codestream)
+               // marker.
                //---
-               // theFileStr->seekg(0, ios_base::beg);
-               theFileStr->seekg(m_startOfCodestreamOffset, ios_base::beg);
-               char c;
-               while ( theFileStr->get(c) )
+               ossim_uint8 markerField[2];
+               theFileStr->read( (char*)markerField, 2);
+         
+               if ( (markerField[0] == 0xff) && (markerField[1] == 0x4f) )
                {
-                  if (static_cast<ossim_uint8>(c) == 0xff)
+                  result = true;
+               }
+               else
+               {
+                  //---
+                  // Scan the file from the beginning for SOC.  This handles cases
+                  // where the data does not fall on "hdr->getDataLocation()".
+                  //
+                  // Changed for multi-enty nitf where first entry is j2k, second is
+                  // uncompressed. Need to test at site. 02 August 2013 (drb)
+                  //---
+                  // theFileStr->seekg(0, ios_base::beg);
+                  theFileStr->seekg(m_startOfCodestreamOffset, ios_base::beg);
+                  char c;
+                  while ( theFileStr->get(c) )
                   {
-                     if (  theFileStr->get(c) )
+                     if (static_cast<ossim_uint8>(c) == 0xff)
                      {
-                        if (static_cast<ossim_uint8>(c) == 0x4f)
+                        if (  theFileStr->get(c) )
                         {
-                           m_startOfCodestreamOffset = theFileStr->tellg();
-                           m_startOfCodestreamOffset -= 2;
-                           result = true;
-                           break;
+                           if (static_cast<ossim_uint8>(c) == 0x4f)
+                           {
+                              m_startOfCodestreamOffset = theFileStr->tellg();
+                              m_startOfCodestreamOffset -= 2;
+                              result = true;
+                              break;
+                           }
                         }
                      }
                   }
                }
-            }
             
-            if ( (result == true) && traceDump() )
-            {
-               dumpTiles(ossimNotify(ossimNotifyLevel_DEBUG));
-            }
+               if ( (result == true) && traceDump() )
+               {
+                  dumpTiles(ossimNotify(ossimNotifyLevel_DEBUG));
+               }
             
-         } // matches: if (theFileStr->good())
+            } // matches: if (theFileStr->good())
          
-      }  // if ( isJp2() ) ... else {
+         }  // if ( isJp2() ) ... else {
 
-   } // matches: if (hdr)
-
+      } // matches: if (hdr)
+   }
+   else
+   {
+      result = ossimNitfTileSource::scanForJpegBlockOffsets();
+   }
    return result;
    
 } // End: bool ossimKakaduNitfReader::scanForJpegBlockOffsets()
