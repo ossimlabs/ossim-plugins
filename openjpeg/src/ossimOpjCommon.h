@@ -39,7 +39,7 @@ namespace ossim
    /** @brief Callback method for info. */
    void opj_info_callback(const char* msg, void* /* client_data */);
 
-   bool opj_decode( std::ifstream* in,
+   bool opj_decode( std::istream* in,
                     const ossimIrect& rect,
                     ossim_uint32 resLevel,
                     ossim_int32 format, // OPJ_CODEC_FORMAT
