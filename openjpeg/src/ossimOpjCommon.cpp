@@ -124,7 +124,7 @@ static OPJ_BOOL ossim_opj_istream_seek(OPJ_OFF_T p_nb_bytes, void * p_user_data)
    {
       if ( usrStr->m_str )
       {
-         usrStr->m_str->seekg( p_nb_bytes, std::ios_base::cur );
+         usrStr->m_str->seekg( usrStr->m_offset + p_nb_bytes, std::ios_base::beg );
       }
    }
    return OPJ_TRUE;
@@ -140,7 +140,7 @@ static void ossim_opj_free_user_istream_data( void * p_user_data )
    usrStr = 0;
 }
 
-bool ossim::opj_decode( std::ifstream* in,
+bool ossim::opj_decode( std::istream* in,
                         const ossimIrect& rect,
                         ossim_uint32 resLevel,
                         ossim_int32 format, // OPJ_CODEC_FORMAT
@@ -175,7 +175,7 @@ bool ossim::opj_decode( std::ifstream* in,
       /* Set the length to avoid an assert */
       in->seekg(0, std::ios_base::end);
 
-      // Fix: length must be passed in for nift blocks.
+      // Fix: length must be passed in for NITF blocks.
       userStream->m_length = in->tellg();
 
       // Set back to front:
@@ -195,13 +195,11 @@ bool ossim::opj_decode( std::ifstream* in,
       opj_stream_set_skip_function(stream, ossim_opj_istream_skip);
       opj_stream_set_seek_function(stream, ossim_opj_istream_seek);
 
-      // Fix: length must be passed in for nift blocks.
-      opj_stream_set_user_data_length(stream, userStream->m_length);
-      
       opj_stream_set_user_data(stream, userStream,
                                ossim_opj_free_user_istream_data);
 
-      opj_stream_set_user_data_length(stream, userStream->m_length);
+      // Fix: length must be passed in for NITF blocks.
+      opj_stream_set_user_data_length(stream, userStream->m_length - userStream->m_offset);
 
       
       /* Set the default decoding parameters */
@@ -392,7 +390,7 @@ bool ossim::copyOpjImage( opj_image* image, ossimImageData* tile )
    
    if ( image && tile )
    {
-      if ( image->color_space == OPJ_CLRSPC_SRGB )
+      if ( image->color_space == OPJ_CLRSPC_SRGB || image->color_space == OPJ_CLRSPC_UNSPECIFIED )
       {
          const ossimScalarType SCALAR = tile->getScalarType();
          if ( SCALAR == OSSIM_UINT8 )

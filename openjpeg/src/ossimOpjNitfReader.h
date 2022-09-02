@@ -46,15 +46,13 @@ protected:
    virtual void initializeCompressedBuf();
 
    /**
-    * @brief scans the file storing in offsets in "theNitfBlockOffset" and
-    * block sizes in "theNitfBlockSize".
-    * @return true on success, false on error.  This checks for arrays being
-    * the same size as number of blocks.
+    * @brief does nothing as block offsets are scanned by openjpeg, not us
+    * @return true on success, false on error.
     */
    virtual bool scanForJpegBlockOffsets();
 
    /**
-    * @brief Uncompresses a jpeg block using the jpeg-6b library.
+    * @brief Uncompresses a jpeg block using the openjpeg library.
     * @param x sample location in image space.
     * @param y line location in image space.
     * @return true on success, false on error.
