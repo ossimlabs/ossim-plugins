@@ -36,6 +36,11 @@ protected:
    virtual bool canUncompress(const ossimNitfImageHeader* hdr) const;
 
    /**
+    * Initializes the data member "theSwapBytesFlag" from the current entry.
+    */
+   virtual void initializeSwapBytesFlag();
+
+   /**
     * Initializes the data member "theReadMode" from the current entry.
     */
    virtual void initializeReadMode();

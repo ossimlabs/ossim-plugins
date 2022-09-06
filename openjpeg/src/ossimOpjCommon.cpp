@@ -397,6 +397,12 @@ bool ossim::copyOpjImage( opj_image* image, ossimImageData* tile )
          {
             status = ossim::copyOpjSrgbImage( ossim_uint8(0), image, tile );
          }
+         else if ( SCALAR == OSSIM_UINT9 || SCALAR == OSSIM_UINT10 || SCALAR == OSSIM_UINT11
+                   || SCALAR == OSSIM_UINT12 || SCALAR == OSSIM_UINT13 || SCALAR == OSSIM_UINT14
+		   || SCALAR == OSSIM_UINT15 || SCALAR == OSSIM_UINT16)
+	 {
+            status = ossim::copyOpjSrgbImage( ossim_uint16(0), image, tile );
+         }
          else
          {
             ossimNotify(ossimNotifyLevel_WARN)
