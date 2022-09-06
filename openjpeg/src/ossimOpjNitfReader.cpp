@@ -62,6 +62,12 @@ bool ossimOpjNitfReader::canUncompress(
    return false;
 }
 
+void ossimOpjNitfReader::initializeSwapBytesFlag()
+{
+   // byte swapping is handled by openjpeg library.
+   theSwapBytesFlag = false;
+}
+
 void ossimOpjNitfReader::initializeReadMode()
 {
    // Initialize the read mode.
