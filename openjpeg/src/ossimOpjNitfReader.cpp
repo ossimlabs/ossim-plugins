@@ -13,13 +13,12 @@
 #include <openjpeg.h>
 
 #include <ossimOpjNitfReader.h>
+#include <ossimOpjCommon.h>
 #include <ossim/base/ossimCommon.h>
 #include <ossim/base/ossimException.h>
 #include <ossim/base/ossimTrace.h>
-#include <ossim/base/ossimEndian.h>
-#include <ossim/imaging/ossimTiffTileSource.h>
-#include <ossim/imaging/ossimImageDataFactory.h>
 #include <ossim/support_data/ossimNitfImageHeader.h>
+
 using namespace std;
 
 #ifdef OSSIM_ID_ENABLED
@@ -61,6 +60,12 @@ bool ossimOpjNitfReader::canUncompress(
       return true;
    }
    return false;
+}
+
+void ossimOpjNitfReader::initializeSwapBytesFlag()
+{
+   // byte swapping is handled by openjpeg library.
+   theSwapBytesFlag = false;
 }
 
 void ossimOpjNitfReader::initializeReadMode()
@@ -109,176 +114,48 @@ void ossimOpjNitfReader::initializeCompressedBuf()
 bool ossimOpjNitfReader::scanForJpegBlockOffsets()
 {
    const ossimNitfImageHeader* hdr = getCurrentImageHeader();
-   
+
    if ( !hdr || (theReadMode != READ_JPEG_BLOCK) || !theFileStr )
    {
       return false;
    }
 
-   theNitfBlockOffset.clear();
-   theNitfBlockSize.clear();
-
-   //---
-   // NOTE:
-   // SOC = 0xff4f Start of Codestream
-   // SOT = 0xff90 Start of tile
-   // SOD = 0xff93 Last marker in each tile
-   // EOC = 0xffd9 End of Codestream
-   //---
-   char c;
-
-   // Seek to the first block.
-   theFileStr->seekg(hdr->getDataLocation(), ios::beg);
-   if (theFileStr->fail())
-   {
-      return false;
-   }
-   
-   // Read the first two bytes and verify it is SOC; if not, get out.
-   theFileStr->get( c );
-   if (static_cast<ossim_uint8>(c) != 0xff)
-   {
-      return false;
-   }
-   theFileStr->get(c);
-   if (static_cast<ossim_uint8>(c) != 0x4f)
-   {
-      return false;
-   }
-
-   ossim_uint32 blockSize = 2;  // Read two bytes...
-
-   // Add the first offset.
-   // theNitfBlockOffset.push_back(hdr->getDataLocation());
-
-   // Find all the SOC markers.
-   while ( theFileStr->get(c) ) 
-   {
-      ++blockSize;
-      if (static_cast<ossim_uint8>(c) == 0xff)
-      {
-         if ( theFileStr->get(c) )
-         {
-            ++blockSize;
-
-            if (static_cast<ossim_uint8>(c) == 0x90) // At SOC marker...
-            {
-               std::streamoff pos = theFileStr->tellg();
-               theNitfBlockOffset.push_back(pos-2);
-            }
-            else if (static_cast<ossim_uint8>(c) == 0x93) // At EOC marker...
-            {
-               // Capture the size of this block.
-               theNitfBlockSize.push_back(blockSize);
-               blockSize = 0;
-            }
-         }
-      }
-   }
-
-   theFileStr->seekg(0, ios::beg);
-   theFileStr->clear();
-
-   // We should have the same amount of offsets as we do blocks...
-   ossim_uint32 total_blocks =
-      hdr->getNumberOfBlocksPerRow()*hdr->getNumberOfBlocksPerCol();
-   
-   if (theNitfBlockOffset.size() != total_blocks)
-   {
-      if (traceDebug())
-      {
-         ossimNotify(ossimNotifyLevel_WARN)
-            << "DEBUG:"
-            << "\nBlock offset count wrong!"
-            << "\nblocks:  " << total_blocks
-            << "\noffsets:  " << theNitfBlockOffset.size()
-            << std::endl;
-      }
-      
-      return false;
-   }
-   if (theNitfBlockSize.size() != total_blocks)
-   {
-      if (traceDebug())
-      {
-         ossimNotify(ossimNotifyLevel_WARN)
-            << "DEBUG:"
-            << "\nBlock size count wrong!"
-            << "\nblocks:  " << total_blocks
-            << "\nblock size array:  " << theNitfBlockSize.size()
-            << std::endl;
-      }
-
-      return false;
-   }
-
+   // openjpeg handles scanning for blocks
    return true;
 }
+
 
 bool ossimOpjNitfReader::uncompressJpegBlock(ossim_uint32 x,
                                              ossim_uint32 y)
 {
-   ossim_uint32 blockNumber = getBlockNumber(ossimIpt(x,y));
-
-   if (traceDebug())
-   {
-      ossimNotify(ossimNotifyLevel_DEBUG)
-         << "ossimNitfTileSource::uncompressJpegBlock DEBUG:"
-         << "\nblockNumber:  " << blockNumber
-         << "\noffset to block: " << theNitfBlockOffset[blockNumber]
-         << "\nblock size: " << theNitfBlockSize[blockNumber]
-         << std::endl;
-   }
-   
-   // Seek to the block.
-   theFileStr->seekg(theNitfBlockOffset[blockNumber], ios::beg);
-
-   //---
-   // Get a buffer to read the compressed block into.  If all the blocks are
-   // the same size this will be theCompressedBuf; else we will make our own.
-   //---
-   ossim_uint8* compressedBuf = &theCompressedBuf.front();
-   if (!compressedBuf)
-   {
-      compressedBuf = new ossim_uint8[theNitfBlockSize[blockNumber]];
-   }
-
-
-   // Read the block into memory.  We could store this
-   if (!theFileStr->read((char*)compressedBuf, theNitfBlockSize[blockNumber]))
-   {
-      theFileStr->clear();
-      ossimNotify(ossimNotifyLevel_FATAL)
-         << "ossimNitfTileSource::loadBlock Read Error!"
-         << "\nReturning error..." << endl;
-      theErrorStatus = ossimErrorCodes::OSSIM_ERROR;
-      delete [] compressedBuf;
-      compressedBuf = 0;
-      return false;
-   }
-
-   try
-   {
-      //theCacheTile = decoder.decodeBuffer(compressedBuf,
-      //                                    theNitfBlockSize[blockNumber]);
-   }
-   catch (const ossimException& e)
-   {
-      ossimNotify(ossimNotifyLevel_FATAL)
-         << e.what() << std::endl;
-      theErrorStatus = ossimErrorCodes::OSSIM_ERROR;
-   }
-
-   // If theCompressedBuf is null that means we allocated the compressedBuf.
-   if (theCompressedBuf.size() == 0)
-   {
-      delete [] compressedBuf;
-      compressedBuf = 0;
-   }
-   
-   if (theErrorStatus == ossimErrorCodes::OSSIM_ERROR)
+   const ossimNitfImageHeader *hdr = getCurrentImageHeader();
+   if (!hdr)
    {
       return false;
    }
+   ossim_uint32 numX = theCacheSize.x;
+   ossim_uint32 numY = theCacheSize.y;
+   ossim_uint32 blockX = x / numX;
+   ossim_uint32 blockY = y / numY;
+
+   ossimIrect rect(ossimIpt(blockX * numX, blockY * numY),
+                   ossimIpt((blockX + 1) * numX - 1, (blockY + 1) * numY - 1));
+
+   std::streamoff offset = hdr->getDataLocation();
+   theFileStr->seekg(offset, ios::beg);
+   ossim_int32 format = ossim::getCodecFormat(theFileStr.get());
+   if (format == OPJ_CODEC_UNKNOWN)
+   {
+      ossimNotify(ossimNotifyLevel_WARN)
+          << "ossimOpjNitfReader::uncompressJpegBlock WARNING!\n"
+          << "Unknown openjpeg codec\n";
+      return false;
+   }
+
+   if (ossim::opj_decode(theFileStr.get(), rect, 0, format, offset, theCacheTile.get()) == false)
+   {
+       return false;
+   }
+
    return true;
 }
