@@ -18,6 +18,12 @@ else(OSSIM_FOUND)
    message(FATAL_ERROR "Could not find ossim")
 endif(OSSIM_FOUND)
 
+find_package( GEOTIFF )
+if( GEOTIFF_FOUND )
+   include_directories( ${GEOTIFF_INCLUDE_DIR} )
+   set( requiredLibs ${requiredLibs} ${GEOTIFF_LIBRARY} )
+endif( GEOTIFF_FOUND )
+
 # OpenJPEG required:
 find_package(OpenJPEG)
 if(OPENJPEG_FOUND)
