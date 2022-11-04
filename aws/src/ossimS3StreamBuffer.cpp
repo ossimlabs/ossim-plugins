@@ -427,7 +427,8 @@ std::streamsize ossim::S3StreamBuffer::xsgetn(char_type *s, std::streamsize n)
       // get each bloc
       if (currentAbsolutePosition >= 0)
       {
-         ossim_int64 delta = m_blockInfo.getStartByte() + (egptr() - gptr()); //(m_blockInfo.getEndByte() - m_blockInfo.getCurrentByte()); //(endOffset - m_currentBlockPosition)+1;
+         // number of bytes remaining in the current block
+         ossim_int64 delta = egptr() - gptr();
 
          if (delta <= bytesNeedToRead)
          {
