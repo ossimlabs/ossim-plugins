@@ -473,7 +473,7 @@ void GDALRegister_MEMTiled()
                                    "In Memory Raster OSSIM tile bridge" );
 
         poDriver->pfnOpen   = MEMDataset::Open;
-        poDriver->pfnCreate = MEMDataset::Create;
+        poDriver->pfnCreate = (GDALDataset *(*)(const char *, int, int, int, GDALDataType, char **))MEMDataset::Create;
 
         GetGDALDriverManager()->RegisterDriver( poDriver );
     }
