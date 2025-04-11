@@ -38,35 +38,20 @@ else(OSSIM_FOUND)
    message(FATAL_ERROR "Could not find ossim")
 endif(OSSIM_FOUND)
 
-if(KAKADU_ROOT_SRC)
-   include_directories(${KAKADU_ROOT_SRC}/managed/all_includes)
-else(KAKADU_ROOT_SRC)
-   message(SEND_ERROR "Please pass in the KAKADU_ROOT_SRC and point it to the root source tree")
-   set(KAKADU_ROOT_SRC "" CACHE STRING "Specify the root location where the kakadu source tree is located")
-endif(KAKADU_ROOT_SRC)
-
-if(KAKADU_AUX_LIBRARY)
-   set(requiredLibs ${requiredLibs} ${KAKADU_AUX_LIBRARY})
-else(KAKADU_AUX_LIBRARY)
-   message(SEND_ERROR "Please pass in the KAKADU_AUX_LIBRARY and point it to the library")
-   set(KAKADU_AUX_LIBRARY "" CACHE STRING "Specify the full path to the library to link to")
-endif(KAKADU_AUX_LIBRARY)
-
-if(KAKADU_LIBRARY)
-   set(requiredLibs ${requiredLibs} ${KAKADU_LIBRARY})
-else(KAKADU_LIBRARY)
-   message(SEND_ERROR "Please pass in the KAKADU_LIBRARY and point it to the library")
-   set(KAKADU_LIBRARY "" CACHE STRING "Specify the full path to the library to link to")
-endif(KAKADU_LIBRARY)
+# Kakadu - Required: 
+find_package(Kakadu)
+if(KAKADU_FOUND)
+   include_directories( ${KAKADU_INCLUDE_DIR} )
+   set( requiredLibs ${requiredLibs} ${KAKADU_LIBRARIES} )
+else(KAKADU_FOUND)
+   message(FATAL_ERROR "Could not find required Kakadu!")
+endif(KAKADU_FOUND)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 file(GLOB OSSIMPLUGIN_SRCS *.cpp)
 file(GLOB OSSIMPLUGIN_HEADERS *.h)
 
-message( STATUS "KAKADU_ROOT_SRC    = ${KAKADU_ROOT_SRC}")
-message( STATUS "KAKADU_LIBRARY     = ${KAKADU_LIBRARY}")
-message( STATUS "KAKADU_AUX_LIBRARY = ${KAKADU_AUX_LIBRARY}")
 message( STATUS "Kakadu plugin required libs = ${requiredLibs}")
 
 #---
