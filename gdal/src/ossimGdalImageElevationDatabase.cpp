@@ -13,6 +13,9 @@
 //----------------------------------------------------------------------------
 // $Id$
 
+
+#include <cstdint> /* fix 'unint64_t' undefine in gdal cpl_conv.h. */
+
 #include <ossimShpElevIndex.h>
 
 #include <ossimGdalImageElevationDatabase.h>
@@ -21,7 +24,8 @@
 #include <ossim/base/ossimTrace.h>
 #include <ossim/elevation/ossimImageElevationHandler.h>
 #include <cmath>
-#include "ogrsf_frmts.h"
+#include <ogr_feature.h>
+#include <ogrsf_frmts.h>
 
 
 static ossimTrace traceDebug(ossimString("ossimGdalImageElevationDatabase:debug"));
