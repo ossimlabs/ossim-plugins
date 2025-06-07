@@ -1,3 +1,4 @@
+#include <cstdint> /* fix 'unint64_t' undefine in gdal cpl_conv.h. */
 #include <ossimShpElevIndex.h>
 
 
