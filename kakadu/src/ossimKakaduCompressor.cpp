@@ -37,8 +37,6 @@
 #include <jp2.h>
 #include <cmath> /* ceil */
 
-using namespace std;
-
 RTTI_DEF1_INST(ossimKakaduCompressor, "ossimKakaduCompressor", ossimObject)
 
 
@@ -1015,7 +1013,7 @@ void ossimKakaduCompressor::finish()
       {
          m_threadEnv->handle_exception(exc);
       }
-      ostringstream e;
+      std::ostringstream e;
       e << "ossimKakaduNitfReader::~ossimKakaduNitfReader\n"
         << "Caught exception from kdu_region_decompressor: " << exc << "\n";
       ossimNotify(ossimNotifyLevel_WARN) << e.str() << std::endl;
@@ -1202,7 +1200,7 @@ ossimRefPtr<ossimProperty> ossimKakaduCompressor::getProperty(
       }
          
       // constraint list
-      vector<ossimString> constraintList;
+      std::vector<ossimString> constraintList;
       constraintList.push_back(
          COMPRESSION_QUALITY[ossimKakaduCompressor::OKP_NUMERICALLY_LOSSLESS]);
       constraintList.push_back(
@@ -1409,7 +1407,7 @@ bool ossimKakaduCompressor::writeGmlBox( const ossimImageGeometry* geom,
       if ( gml->initialize( geom, rect ) )
       {
          // Write the xml to a stream.
-         ostringstream xmlStr;
+         std::ostringstream xmlStr;
          if ( gml->write( xmlStr ) )
          {
             const ossim_uint8 ASOC_BOX_ID[4] = 
@@ -1580,7 +1578,7 @@ void ossimKakaduCompressor::initializeCodingParams(kdu_core::kdu_params* cod,
       if ( traceDebug() )
       {
          ossimNotify(ossimNotifyLevel_DEBUG)
-            << "quality type: " << getQualityTypeString() << endl;
+            << "quality type: " << getQualityTypeString() << "\n";
       }
 
       //---

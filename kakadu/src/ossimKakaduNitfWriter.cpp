@@ -1,12 +1,12 @@
-//----------------------------------------------------------------------------
+//---
 //
-// License:  LGPL
+// License: MIT
 // 
 // See LICENSE.txt file in the top level directory for more details.
 //
 // Description: OSSIM Kakadu based nitf writer.
 //
-//----------------------------------------------------------------------------
+//---
 // $Id: ossimKakaduNitfWriter.cpp 22111 2013-01-12 18:44:25Z dburken $
 
 #include "ossimKakaduNitfWriter.h"
@@ -38,8 +38,6 @@
 #include <ossim/support_data/ossimNitfJ2klraTag.h>
 
 #include <ostream>
-
-using namespace std;
 
 static const ossimIpt DEFAULT_TILE_SIZE(1024, 1024);
 
@@ -162,8 +160,7 @@ bool ossimKakaduNitfWriter::writeStream()
 
    if (traceDebug())
    {
-      ossimNotify(ossimNotifyLevel_DEBUG)
-         << MODULE << " entered..." << endl;
+      ossimNotify(ossimNotifyLevel_DEBUG) << MODULE << " entered...\n";
    }
 
    if ( !theInputConnection || !m_outputStream || !theInputConnection->isMaster() )
@@ -307,7 +304,7 @@ bool ossimKakaduNitfWriter::writeStream()
          << "\noutputTilesHigh:  " << outputTilesHigh
          << "\nnumberOfTiles:    " << TILES
          << "\nimageRect: " << theInputConnection->getAreaOfInterest()
-         << std::endl;
+         << "\n";
    }
    
    // Tile loop in the line direction.
@@ -454,7 +451,7 @@ bool ossimKakaduNitfWriter::open()
    if (theFilename.size())
    {
       std::ofstream* os = new std::ofstream();
-      os->open(theFilename.c_str(), ios::out | ios::binary);
+      os->open(theFilename.c_str(), std::ios::out | std::ios::binary);
       if(os->is_open())
       {
          m_outputStream = os;
@@ -473,7 +470,7 @@ bool ossimKakaduNitfWriter::open()
       ossimNotify(ossimNotifyLevel_DEBUG)
          << "ossimKakaduNitfWriter::open()\n"
          << "File " << theFilename << (result ? " opened" : " not opened")
-         << std::endl;
+         << "\n";
     }
 
    return result;
