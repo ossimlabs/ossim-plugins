@@ -65,8 +65,17 @@ add_definitions("-DOSSIMPLUGINSMAKINGDLL")
 # This must match whatever kakadu library was compiled with.
 # Look in Kakadu_library_root/coresys/make/Makefile-xxxx.
 #---
-add_definitions("-DKDU_X86_INTRINSICS")
-add_definitions("-DKDU_NO_AVX2")
+if(${CMAKE_OSX_ARCHITECTURES} MATCHES "arm64")
+   message(STATUS "Target architecture is arm64")
+   message(STATUS "Adding compiler definition: -DKDU_NEON_INTRINSICS")
+   add_definitions("-DKDU_NEON_INTRINSICS")
+else()
+   message(STATUS "Defaulting target architecture to x86_64")
+   message(STATUS "Adding compiler definition: -DKDU_X86_INTRINSICS")
+   add_definitions("-DKDU_X86_INTRINSICS")
+    # add_definitions("-DKDU_NO_AVX2") 
+endif()
+message(STATUS "NOTE: This must match Kakadu library build.")
 
 # Adjust the install library path:
 if(OSSIM_INSTALL_PLUGINS_WITH_VERSION)
