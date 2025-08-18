@@ -59,6 +59,9 @@ static const char OSSIM_ID[] = "$Id: ossimKakaduNitfWriter.cpp 22111 2013-01-12 
 
 ossimKakaduNitfWriter::ossimKakaduNitfWriter()
    : ossimNitfWriterBase(),
+     m_fileHeader(new ossimNitfFileHeaderV2_1),
+     m_imageHeader(new ossimNitfImageHeaderV2_1),
+     m_dataExtensionSegments(0),
      m_compressor(new ossimKakaduCompressor()),
      m_outputStream(0),
      m_ownsStreamFlag(false)
@@ -85,6 +88,11 @@ ossimKakaduNitfWriter::ossimKakaduNitfWriter()
 
    // Set the output image type in the base class.
    setOutputImageType(getShortName());
+
+   // Set any site defaults.
+   initializeDefaultsFromConfigFile(
+      dynamic_cast<ossimNitfFileHeaderV2_X*>(m_fileHeader.get()),
+      dynamic_cast<ossimNitfImageHeaderV2_X*>(m_imageHeader.get()) );
 }
 
 ossimKakaduNitfWriter::~ossimKakaduNitfWriter()
@@ -207,55 +215,48 @@ bool ossimKakaduNitfWriter::writeStream()
    // Container record withing NITF file header.
    ossimNitfImageInfoRecordV2_1 imageInfoRecord;
    
-   // NITF file header.
-   ossimRefPtr<ossimNitfFileHeaderV2_1> fHdr = new ossimNitfFileHeaderV2_1();
-   
    // Note the sub header length and image length will be set later.      
-   fHdr->addImageInfoRecord(imageInfoRecord);
-   
-   fHdr->setDate(ossimDate());
-   fHdr->setTitle(ossimString("")); // ???
+   m_fileHeader->addImageInfoRecord(imageInfoRecord);
+   m_fileHeader->setDate(ossimDate());
+   m_fileHeader->setTitle(ossimString("")); // ???
    
    // Write to stream capturing the stream position for later.
-   fHdr->writeStream(*m_outputStream);
+   m_fileHeader->writeStream(*m_outputStream);
    endOfFileHdrPos = m_outputStream->tellp();
    
-   // NITF image header.
-   ossimRefPtr<ossimNitfImageHeaderV2_1> iHdr = new ossimNitfImageHeaderV2_1();
-   
    // Set the compression type:
-   iHdr->setCompression(ossimString("C8"));
+   m_imageHeader->setCompression(ossimString("C8"));
    
    // Set the Image Magnification (IMAG) field.
-   iHdr->setImageMagnification(ossimString("1.0"));
+   m_imageHeader->setImageMagnification(ossimString("1.0"));
    
    // Set the pixel type (PVTYPE) field.
-   iHdr->setPixelType(ossimNitfCommon::getNitfPixelType(SCALAR));
+   m_imageHeader->setPixelType(ossimNitfCommon::getNitfPixelType(SCALAR));
    
    // Set the actual bits per pixel (ABPP) field.
    ossim_uint32 abpp = ossim::getActualBitsPerPixel(SCALAR);
-   iHdr->setActualBitsPerPixel( abpp );
+   m_imageHeader->setActualBitsPerPixel( abpp );
    
    // Set the bits per pixel (NBPP) field.
-   iHdr->setBitsPerPixel(ossim::getBitsPerPixel(SCALAR));
+   m_imageHeader->setBitsPerPixel(ossim::getBitsPerPixel(SCALAR));
    
-   iHdr->setNumberOfBands(BANDS);
-   iHdr->setImageMode('B'); // IMODE field to blocked.
+   m_imageHeader->setNumberOfBands(BANDS);
+   m_imageHeader->setImageMode('B'); // IMODE field to blocked.
    
    if( (BANDS == 3) && (SCALAR == OSSIM_UCHAR) )
    {
-      iHdr->setRepresentation("RGB");
-      iHdr->setCategory("VIS");
+      m_imageHeader->setRepresentation("RGB");
+      m_imageHeader->setCategory("VIS");
    }
    else if(BANDS == 1)
    {
-      iHdr->setRepresentation("MONO");
-      iHdr->setCategory("MS");
+      m_imageHeader->setRepresentation("MONO");
+      m_imageHeader->setCategory("MS");
    }
    else
    {
-      iHdr->setRepresentation("MULTI");
-      iHdr->setCategory("MS");
+      m_imageHeader->setRepresentation("MULTI");
+      m_imageHeader->setCategory("MS");
    }
    
    ossimNitfImageBandV2_1 bandInfo;
@@ -268,21 +269,21 @@ bool ossimKakaduNitfWriter::writeStream()
           << band;
       
       bandInfo.setBandRepresentation(out.str().c_str());
-      iHdr->setBandInfo(band, bandInfo);
+      m_imageHeader->setBandInfo(band, bandInfo);
    }
    
    ossim_uint32 outputTilesWide = theInputConnection->getNumberOfTilesHorizontal();
    ossim_uint32 outputTilesHigh = theInputConnection->getNumberOfTilesVertical();
    
-   iHdr->setBlocksPerRow(outputTilesWide);
-   iHdr->setBlocksPerCol(outputTilesHigh);
-   iHdr->setNumberOfPixelsPerBlockRow(DEFAULT_TILE_SIZE.y);
-   iHdr->setNumberOfPixelsPerBlockCol(DEFAULT_TILE_SIZE.x);
-   iHdr->setNumberOfRows(theInputConnection->getAreaOfInterest().height());
-   iHdr->setNumberOfCols(theInputConnection->getAreaOfInterest().width());
+   m_imageHeader->setBlocksPerRow(outputTilesWide);
+   m_imageHeader->setBlocksPerCol(outputTilesHigh);
+   m_imageHeader->setNumberOfPixelsPerBlockRow(DEFAULT_TILE_SIZE.y);
+   m_imageHeader->setNumberOfPixelsPerBlockCol(DEFAULT_TILE_SIZE.x);
+   m_imageHeader->setNumberOfRows(theInputConnection->getAreaOfInterest().height());
+   m_imageHeader->setNumberOfCols(theInputConnection->getAreaOfInterest().width());
    
    // Write the geometry info to the image header.
-   writeGeometry(iHdr.get(), theInputConnection.get());
+   writeGeometry(m_imageHeader.get(), theInputConnection.get());
 
    // Add the J2KLRA TRE:
    ossimRefPtr<ossimNitfJ2klraTag> j2klraTag = new ossimNitfJ2klraTag();
@@ -290,10 +291,10 @@ bool ossimKakaduNitfWriter::writeStream()
    j2klraTag->setBandsO( BANDS );
    ossimRefPtr<ossimNitfRegisteredTag> tag = j2klraTag.get();
    ossimNitfTagInformation tagInfo( tag );
-   iHdr->addTag( tagInfo );
+   m_imageHeader->addTag( tagInfo );
    
    // Write the image header to stream capturing the stream position.
-   iHdr->writeStream(*m_outputStream);
+   m_imageHeader->writeStream(*m_outputStream);
    endOfImgHdrPos = m_outputStream->tellp();
    
    if (traceDebug())
@@ -376,11 +377,11 @@ bool ossimKakaduNitfWriter::writeStream()
    
    // Set the file length.
    std::streamoff length = endOfFilePos;
-   fHdr->setFileLength(static_cast<ossim_uint64>(length));
+   m_fileHeader->setFileLength(static_cast<ossim_uint64>(length));
    
    // Set the file header length.
    length = endOfFileHdrPos;
-   fHdr->setHeaderLength(static_cast<ossim_uint64>(length));            
+   m_fileHeader->setHeaderLength(static_cast<ossim_uint64>(length));            
    // Set the image sub header length.
    length = endOfImgHdrPos - endOfFileHdrPos;
    
@@ -390,12 +391,12 @@ bool ossimKakaduNitfWriter::writeStream()
    length = endOfFilePos - endOfImgHdrPos;
    imageInfoRecord.setImageLength(static_cast<ossim_uint64>(length));
    
-   fHdr->replaceImageInfoRecord(0, imageInfoRecord);
+   m_fileHeader->replaceImageInfoRecord(0, imageInfoRecord);
    
-   setComplexityLevel(length, fHdr.get());
+   setComplexityLevel(length, m_fileHeader.get());
    
    // Rewrite the header.
-   fHdr->writeStream(*m_outputStream);
+   m_fileHeader->writeStream(*m_outputStream);
    
    // Set the compression rate now that the image size is known.
    ossimString comrat = ossimNitfCommon::getCompressionRate(
@@ -403,10 +404,10 @@ bool ossimKakaduNitfWriter::writeStream()
       BANDS,
       SCALAR,
       static_cast<ossim_uint64>(length));
-   iHdr->setCompressionRateCode(comrat);
+   m_imageHeader->setCompressionRateCode(comrat);
    
    // Rewrite the image header.
-   iHdr->writeStream(*m_outputStream);
+   m_imageHeader->writeStream(*m_outputStream);
 
    close();
 
@@ -494,6 +495,34 @@ void ossimKakaduNitfWriter::close()
 ossimString ossimKakaduNitfWriter::getExtension() const
 {
    return ossimString("ntf");
+}
+
+void ossimKakaduNitfWriter::addRegisteredTag(ossimRefPtr<ossimNitfRegisteredTag> registeredTag,
+   bool unique, const ossim_uint32& ownerIndex, const ossimString& tagType)
+{
+   ossimNitfTagInformation tagInfo;
+   tagInfo.setTagData(registeredTag.get());
+   tagInfo.setTagType(tagType);
+
+   switch (ownerIndex)
+   {
+      case 0:
+      {
+         m_fileHeader->addTag(tagInfo, unique);
+         break;
+      }
+
+      case 1:
+      {
+         m_imageHeader->addTag(tagInfo, unique);
+         break;
+      }
+
+      default:
+      {
+         // Do nothing
+      }
+   }
 }
 
 bool ossimKakaduNitfWriter::getOutputHasInternalOverviews( void ) const
