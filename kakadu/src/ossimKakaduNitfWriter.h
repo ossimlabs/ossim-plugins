@@ -1,6 +1,6 @@
-//----------------------------------------------------------------------------
+//---
 //
-// License:  LGPL
+// License: MIT
 // 
 // See LICENSE.txt file in the top level directory for more details.
 //
@@ -8,15 +8,17 @@
 //
 // Description: OSSIM Kakadu based nitf writer.
 //
-//----------------------------------------------------------------------------
-// $Id: ossimKakaduNitfWriter.h 19904 2011-08-05 17:50:32Z dburken $
+//---
+// $Id$
 #ifndef ossimKakaduNitfWriter_HEADER
 #define ossimKakaduNitfWriter_HEADER 1
 
 #include <ossim/imaging/ossimNitfWriterBase.h>
 #include <ossim/base/ossimRefPtr.h>
 #include <ossim/base/ossimString.h>
-
+#include <ossim/support_data/ossimNitfFileHeaderV2_1.h>
+#include <ossim/support_data/ossimNitfImageHeaderV2_1.h>
+#include <ossim/support_data/ossimNitfDataExtensionSegmentV2_1.h>
 #include <iosfwd>
 #include <vector>
 
@@ -126,6 +128,19 @@ public:
     */
    virtual bool getOutputHasInternalOverviews( void ) const;
 
+   /**
+    * @brief Adds a tag.
+    *
+    * Satifies pure virtual from ossimNitfWriterBase.
+    * 
+    * @param unique true will overwrite if exist, false will add new tag.
+    * @param ownerIndex 0 = file header, 1 = image header
+    * @param tagType UDHD, UDID, XHD, IXSHD, SXSHD, or TXSHD.
+    */
+   virtual void addRegisteredTag(ossimRefPtr<ossimNitfRegisteredTag> registeredTag,
+                                 bool unique, const ossim_uint32& ownerIndex,
+                                 const ossimString& tagType);
+
 protected:
    /**
     * @brief Writes the file to disk or a stream.
@@ -135,6 +150,10 @@ protected:
 
 private:
 
+   ossimRefPtr<ossimNitfFileHeaderV2_1>  m_fileHeader;
+   ossimRefPtr<ossimNitfImageHeaderV2_1> m_imageHeader;
+   std::vector<ossimNitfDataExtensionSegmentV2_1> m_dataExtensionSegments;
+   
    ossimKakaduCompressor* m_compressor;
    std::ostream*          m_outputStream;
    bool                   m_ownsStreamFlag;
