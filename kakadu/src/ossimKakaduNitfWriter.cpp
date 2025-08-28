@@ -7,7 +7,7 @@
 // Description: OSSIM Kakadu based nitf writer.
 //
 //---
-// $Id: ossimKakaduNitfWriter.cpp 22111 2013-01-12 18:44:25Z dburken $
+// $Id$
 
 #include "ossimKakaduNitfWriter.h"
 #include "ossimKakaduCommon.h"
@@ -15,7 +15,6 @@
 #include "ossimKakaduKeywords.h"
 #include "ossimKakaduMessaging.h"
 
-#include <ossim/base/ossimBooleanProperty.h>
 #include <ossim/base/ossimDate.h>
 #include <ossim/base/ossimDpt.h>
 #include <ossim/base/ossimEndian.h>
@@ -23,6 +22,8 @@
 #include <ossim/base/ossimKeywordlist.h>
 #include <ossim/base/ossimKeywordNames.h>
 #include <ossim/base/ossimNumericProperty.h>
+#include <ossim/base/ossimProperty.h>
+#include <ossim/base/ossimStringProperty.h>
 #include <ossim/base/ossimTrace.h>
 
 #include <ossim/projection/ossimMapProjection.h>
@@ -64,7 +65,8 @@ ossimKakaduNitfWriter::ossimKakaduNitfWriter()
      m_dataExtensionSegments(0),
      m_compressor(new ossimKakaduCompressor()),
      m_outputStream(0),
-     m_ownsStreamFlag(false)
+     m_ownsStreamFlag(false),
+     m_blockSize(DEFAULT_TILE_SIZE.x, DEFAULT_TILE_SIZE.y)
 {
    if (traceDebug())
    {
@@ -132,7 +134,7 @@ bool ossimKakaduNitfWriter::writeFile()
        (getErrorStatus() == ossimErrorCodes::OSSIM_OK) )
    {
       // Set the tile size for all processes.
-      theInputConnection->setTileSize( DEFAULT_TILE_SIZE );
+      theInputConnection->setTileSize( m_blockSize );
       theInputConnection->setToStartOfSequence();
       
       //---
@@ -198,7 +200,7 @@ bool ossimKakaduNitfWriter::writeStream()
                            SCALAR,
                            BANDS,
                            theInputConnection->getAreaOfInterest(),
-                           DEFAULT_TILE_SIZE,
+                           m_blockSize,
                            TILES,
                            false);
    }
@@ -277,8 +279,8 @@ bool ossimKakaduNitfWriter::writeStream()
    
    m_imageHeader->setBlocksPerRow(outputTilesWide);
    m_imageHeader->setBlocksPerCol(outputTilesHigh);
-   m_imageHeader->setNumberOfPixelsPerBlockRow(DEFAULT_TILE_SIZE.y);
-   m_imageHeader->setNumberOfPixelsPerBlockCol(DEFAULT_TILE_SIZE.x);
+   m_imageHeader->setNumberOfPixelsPerBlockRow(m_blockSize.y);
+   m_imageHeader->setNumberOfPixelsPerBlockCol(m_blockSize.x);
    m_imageHeader->setNumberOfRows(theInputConnection->getAreaOfInterest().height());
    m_imageHeader->setNumberOfCols(theInputConnection->getAreaOfInterest().width());
    
@@ -349,6 +351,26 @@ bool ossimKakaduNitfWriter::writeStream()
          ++tileNumber;
          
       } // End of tile loop in the sample (width) direction.
+
+      //---
+      // Flush on each row.
+      // NOTE: Calling flush() before a full row was complete was causing
+      // bad blocks, only on the first row.
+      //
+      // NOTE: If only one tile, let the flush() in finish() do it. Getting
+      // white tile doing here. drb - 20190109 vs7_A_6
+      //---
+      if ( result && (TILES > 1) )
+      {
+         if ( m_compressor->flush() == false )
+         {
+            ossimNotify(ossimNotifyLevel_WARN)
+               << MODULE << " ERROR:"
+               << "Error on flush! Current tile number:  " << tileNumber
+               << std::endl;
+            result = false;
+         }
+      }
       
       if (needsAborting())
       {
@@ -357,9 +379,7 @@ bool ossimKakaduNitfWriter::writeStream()
       }
       else
       {
-         ossim_float64 tile = tileNumber;
-         ossim_float64 numTiles = TILES;
-         setPercentComplete(tile / numTiles * 100.0);
+         setPercentComplete((ossim_float64)tileNumber/(ossim_float64)TILES * 100.0);
       }
       
    } // End of tile loop in the line (height) direction.
@@ -550,22 +570,43 @@ void ossimKakaduNitfWriter::setProperty(ossimRefPtr<ossimProperty> property)
 {
    if ( property.valid() )
    {
-      if ( m_compressor->setProperty(property) == false )
+      if( property->getName() == "block_size" )
+      {
+         ossimIpt blockSize;
+         blockSize.x = property->valueToString().toInt32();
+         blockSize.y = blockSize.x;
+         setTileSize(blockSize);
+      }
+      else if ( m_compressor->setProperty(property) == false )
       {
          // Not a compressor property.
          ossimNitfWriterBase::setProperty(property);
       }
-   }
+   }   
 }
 
 ossimRefPtr<ossimProperty> ossimKakaduNitfWriter::getProperty(
    const ossimString& name)const
 {
    ossimRefPtr<ossimProperty> p = m_compressor->getProperty(name);
-
    if ( !p )
    {
-      p = ossimNitfWriterBase::getProperty(name);
+      if(name == "block_size")
+      {
+         ossimRefPtr<ossimStringProperty> stringProp =
+            new ossimStringProperty(name,
+                                    ossimString::toString(m_blockSize.x),
+                                    false); // editable flag
+         // stringProp->addConstraint(ossimString("128"));
+         stringProp->addConstraint(ossimString("256"));      
+         stringProp->addConstraint(ossimString("512"));      
+         stringProp->addConstraint(ossimString("1024"));      
+         p = stringProp.get();
+      }
+      else
+      {
+         p = ossimNitfWriterBase::getProperty(name);
+      }
    }
    
    return p;
@@ -575,8 +616,8 @@ void ossimKakaduNitfWriter::getPropertyNames(
    std::vector<ossimString>& propertyNames)const
 {
    m_compressor->getPropertyNames(propertyNames);
-
    ossimNitfWriterBase::getPropertyNames(propertyNames);
+   propertyNames.push_back("block_size");
 }
 
 bool ossimKakaduNitfWriter::setOutputStream(std::ostream& stream)
@@ -588,4 +629,22 @@ bool ossimKakaduNitfWriter::setOutputStream(std::ostream& stream)
    m_outputStream = &stream;
    m_ownsStreamFlag = false;
    return true;
+}
+
+void ossimKakaduNitfWriter::setTileSize(const ossimIpt& tileSize)
+{
+   if ( (tileSize.x == 256 || tileSize.x == 512 || tileSize.x == 1024) &&
+        (tileSize.x == tileSize.y) )
+   {
+      m_blockSize = tileSize;
+   }
+   else //  if(traceDebug())
+   {
+      ossimNotify(ossimNotifyLevel_WARN)
+         << "ossimKakaduNitfWriter::setTileSize WARNING!"
+         << "\nInvalid block size: " << tileSize
+         << "\nBlock size constrained to 256, 512 or 1024 and square."
+         << "\nSize remains: " << m_blockSize
+         << std::endl;
+   }
 }

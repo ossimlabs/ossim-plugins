@@ -141,6 +141,13 @@ public:
                                  bool unique, const ossim_uint32& ownerIndex,
                                  const ossimString& tagType);
 
+   /**
+    * Sets the nitf output block size.  Must be divisible by 16.
+    *
+    * @param tileSize Block size.
+    */
+   virtual void setTileSize(const ossimIpt& tileSize);
+
 protected:
    /**
     * @brief Writes the file to disk or a stream.
@@ -157,6 +164,7 @@ private:
    ossimKakaduCompressor* m_compressor;
    std::ostream*          m_outputStream;
    bool                   m_ownsStreamFlag;
+   ossimIpt               m_blockSize;
 
    TYPE_DATA
 };

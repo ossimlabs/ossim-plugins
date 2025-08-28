@@ -21,8 +21,6 @@
 #include <kdu_compressed.h>
 #include <kdu_elementary.h>
 #include <kdu_sample_processing.h>
-#include <kdu_stripe_compressor.h>
-
 #include <iosfwd>
 
 class ossimFilename;
@@ -100,6 +98,13 @@ public:
     * @return true on success, false on error.
     */
    virtual bool writeTile(ossimImageData& srcTile);
+
+   /**
+    * @brief Flush method. Calls kdu_core::kdu_codestream::flush(...)
+    *
+    * Satisfies pure virtual ossimKakaduCompressorInterface::flush()
+    */
+   virtual bool flush();
 
    /**
     * @brief Finish method.  Every call to "create" should be matched by a
@@ -346,13 +351,17 @@ private:
 
    void printCompressionQualityTypes( std::ostream& out ) const;
 
-   ossimKakaduCompressedTarget* m_target;
    
-   kdu_supp::jp2_family_tgt*    m_jp2FamTgt;
-   kdu_supp::jp2_target*        m_jp2Target;
-   kdu_core::kdu_codestream     m_codestream;
-   kdu_core::kdu_thread_env*    m_threadEnv;
-   kdu_core::kdu_thread_queue*  m_threadQueue;
+   /** tile to use for normalized float data. */
+   ossimRefPtr<ossimImageData> m_normTile;
+
+   kdu_core::kdu_thread_env*       m_threadEnv;
+   kdu_core::kdu_thread_queue*     m_threadQueue;
+   ossimKakaduCompressedTarget*    m_target;
+   kdu_supp::jp2_family_tgt*       m_jp2FamTgt;
+   kdu_supp::jp2_target*           m_jp2Target;
+
+   kdu_core::kdu_codestream       m_codestream;
 
    /** Num specs provided in 'flush' calls. */
    int                          m_layerSpecCount;
@@ -383,10 +392,7 @@ private:
 
    ossimKakaduCompressionQuality m_qualityType;
 
-   /** tile to use for normalized float data. */
-   ossimRefPtr<ossimImageData> m_normTile;
-
-TYPE_DATA
+// TYPE_DATA
 }; // End: class ossimKakaduCompressor
 
 #endif /* matches: #ifndef ossimKakaduCompressor_HEADER */
