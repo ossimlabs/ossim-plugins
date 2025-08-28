@@ -38,8 +38,7 @@
 #include <kdu_region_decompressor.h>
  
 #include <iostream>
-
-using namespace std;
+#include <sstream>
 
 using namespace kdu_core;
 using namespace kdu_supp;
@@ -126,7 +125,7 @@ ossimKakaduNitfReader::~ossimKakaduNitfReader()
       {
          m_threadEnv->handle_exception(exc);
       }
-      ostringstream e;
+      std::ostringstream e;
       e << "ossimKakaduNitfReader::~ossimKakaduNitfReader\n"
         << "Caught exception from kdu_region_decompressor: " << exc << "\n";
       ossimNotify(ossimNotifyLevel_WARN) << e.str() << std::endl;
@@ -384,10 +383,10 @@ bool ossimKakaduNitfReader::getOverviewTile(ossim_uint32 resLevel,
          ossim_uint32 level = resLevel - theStartingResLevel;
 
 #if 0 /* please leave for debug */
-         cout << "ovr get tile res level: " << resLevel
-              << " start level: " << theStartingResLevel
-              << "\nlevel: " << level
-              << "\nrect3: " << result->getImageRectangle() << endl;
+         std::cout << "ovr get tile res level: " << resLevel
+                   << " start level: " << theStartingResLevel
+                   << "\nlevel: " << level
+                   << "\nrect3: " << result->getImageRectangle() << std::endl;
 #endif
 
          if (level <= m_minDwtLevels)
@@ -562,7 +561,7 @@ bool ossimKakaduNitfReader::allocate()
          try
          {
             // Position to start of code stream prior to create call.
-            theFileStr->seekg(m_startOfCodestreamOffset, ios_base::beg);
+            theFileStr->seekg(m_startOfCodestreamOffset, std::ios_base::beg);
             
             //---
             // Initialize the codestream.  The class ossimKakaduNitfReader is a
@@ -631,7 +630,7 @@ bool ossimKakaduNitfReader::allocate()
                      if ( colour.exists() )
                      {
                         ossimNotify(ossimNotifyLevel_DEBUG)
-                           << "jp2 color space: " << colour.get_space() << endl;
+                           << "jp2 color space: " << colour.get_space() << std::endl;
                      }
                   }
                }
@@ -878,7 +877,7 @@ bool ossimKakaduNitfReader::scanForJpegBlockOffsets()
             //---
          
             // Seek to the first block.
-            theFileStr->seekg(m_startOfCodestreamOffset, ios_base::beg);
+            theFileStr->seekg(m_startOfCodestreamOffset, std::ios_base::beg);
             if ( theFileStr->good() )
             {
                //---
@@ -901,8 +900,8 @@ bool ossimKakaduNitfReader::scanForJpegBlockOffsets()
                   // Changed for multi-enty nitf where first entry is j2k, second is
                   // uncompressed. Need to test at site. 02 August 2013 (drb)
                   //---
-                  // theFileStr->seekg(0, ios_base::beg);
-                  theFileStr->seekg(m_startOfCodestreamOffset, ios_base::beg);
+                  // theFileStr->seekg(0, std::ios_base::beg);
+                  theFileStr->seekg(m_startOfCodestreamOffset, std::ios_base::beg);
                   char c;
                   while ( theFileStr->get(c) )
                   {
@@ -921,17 +920,18 @@ bool ossimKakaduNitfReader::scanForJpegBlockOffsets()
                      }
                   }
                }
-            
-               if ( (result == true) && traceDump() )
-               {
-                  dumpTiles(ossimNotify(ossimNotifyLevel_DEBUG));
-               }
-            
+           
             } // matches: if (theFileStr->good())
          
          }  // if ( isJp2() ) ... else {
 
       } // matches: if (hdr)
+
+      if ( (result == true) && traceDump() )
+      {
+         dumpTiles(ossimNotify(ossimNotifyLevel_DEBUG));
+      }  
+     
    }
    else
    {
@@ -990,7 +990,7 @@ bool ossimKakaduNitfReader::checkJp2Signature()
       std::streamoff startOfDataPos = hdr->getDataLocation();
 
       // Seek to the start of data.
-      theFileStr->seekg(startOfDataPos, ios_base::beg);
+      theFileStr->seekg(startOfDataPos, std::ios_base::beg);
       if ( theFileStr->good() )
       {
          const ossim_uint8 J2K_SIGNATURE_BOX[SIGNATURE_BOX_SIZE] = 
@@ -1012,7 +1012,7 @@ bool ossimKakaduNitfReader::checkJp2Signature()
       }
       
       // Seek back to the start of data.
-      theFileStr->seekg(startOfDataPos, ios_base::beg);
+      theFileStr->seekg(startOfDataPos, std::ios_base::beg);
    }
    
    return result;
@@ -1075,7 +1075,7 @@ std::ostream& ossimKakaduNitfReader::dumpTiles(std::ostream& out)
       std::streampos currentPos = theFileStr->tellg();
       
       // Seek to the first block.
-      theFileStr->seekg(m_startOfCodestreamOffset, ios_base::beg);
+      theFileStr->seekg(m_startOfCodestreamOffset, std::ios_base::beg);
       if (theFileStr->good())
       {
          out << "offset to codestream: " << m_startOfCodestreamOffset << "\n";
@@ -1107,11 +1107,12 @@ std::ostream& ossimKakaduNitfReader::dumpTiles(std::ostream& out)
                {
                   if ( theFileStr->get(c) )
                   {
-                     out << "marker: 0xff" << hex << (ossim_uint16)c << dec << endl;
+                     out << "marker: 0x" << std::ios_base::hex
+                         << (ossim_uint16)c << std::ios_base::dec << std::endl;
                      
                      if (static_cast<ossim_uint8>(c) == 0x52)
                      {
-                        out << "\nFound COD...\n\n" << endl;
+                        out << "\nFound COD...\n\n" << std::endl;
                         ossimJ2kCodRecord cod;
                         cod.parseStream( *theFileStr );
                         cod.print(out);
@@ -1119,7 +1120,7 @@ std::ostream& ossimKakaduNitfReader::dumpTiles(std::ostream& out)
                      }
                      else if (static_cast<ossim_uint8>(c) == 0x55)
                      {
-                        out << "\nFound TLM...\n\n" << endl;
+                        out << "\nFound TLM...\n\n" << std::endl;
                         ossimJ2kTlmRecord tlm;
                         tlm.parseStream( *theFileStr );
                         tlm.print(out);
@@ -1141,12 +1142,12 @@ std::ostream& ossimKakaduNitfReader::dumpTiles(std::ostream& out)
             for (ossim_uint32 i = 0; i < BLOCKS; ++i)
             {
                std::streamoff pos = theFileStr->tellg();
-               out << "sot pos: " << pos << endl;
+               out << "sot pos: " << pos << std::endl;
                ossimJ2kSotRecord sotRecord;
                sotRecord.parseStream( *theFileStr );
                pos += sotRecord.thePsot;
                sotRecord.print(out);
-               theFileStr->seekg(pos, ios_base::beg);
+               theFileStr->seekg(pos, std::ios_base::beg);
             }
          }
       }
