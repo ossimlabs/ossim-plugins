@@ -1,16 +1,14 @@
-//----------------------------------------------------------------------------
+//---
 //
-// License:  LGPL
+// License: MIT
 // 
-// See LICENSE.txt file in the top level directory for more details.
-//
 // Description:
 //
 // Class declaration for JPEG2000 (J2K) kdu_compressed_target that uses an
 // ostream for writing to the file.
 //
-//----------------------------------------------------------------------------
-// $Id: ossimKakaduCompressedTarget.h 22884 2014-09-12 13:14:35Z dburken $
+//---
+// $Id$
 
 #ifndef ossimKakaduCompressedTarget_HEADER
 #define ossimKakaduCompressedTarget_HEADER 1
@@ -60,8 +58,10 @@ public:
 private:
 
    std::ostream*  m_stream;
-   std::streamoff m_restorePosition; // For end_rewrite.
 
+   // For end_rewrite.
+   std::streampos m_startOfCodestream;
+   std::streampos m_restorePosition;
 };
 
 #endif /* #ifndef ossimKakaduCompressedTarget_HEADER */

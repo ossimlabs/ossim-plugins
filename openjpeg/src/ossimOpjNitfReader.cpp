@@ -128,34 +128,37 @@ bool ossimOpjNitfReader::scanForJpegBlockOffsets()
 bool ossimOpjNitfReader::uncompressJpegBlock(ossim_uint32 x,
                                              ossim_uint32 y)
 {
+   // std::cout << "ossimOpjNitfReader::uncompressJpegBlock(" << x << "," << y << ") entered...\n";
+   
+   bool status = true;
    const ossimNitfImageHeader *hdr = getCurrentImageHeader();
-   if (!hdr)
+   if (hdr)
    {
-      return false;
+      ossim_uint32 numX = theCacheSize.x;
+      ossim_uint32 numY = theCacheSize.y;
+      ossim_uint32 blockX = x / numX;
+      ossim_uint32 blockY = y / numY;
+      
+      ossimIrect rect(ossimIpt(blockX * numX, blockY * numY),
+                      ossimIpt((blockX + 1) * numX - 1, (blockY + 1) * numY - 1));
+      std::cout << "rect: " << rect << std::endl;
+      
+      std::streamoff offset = hdr->getDataLocation();
+      theFileStr->seekg(offset, ios::beg);
+      ossim_int32 format = ossim::getCodecFormat(theFileStr.get());
+      if (format != OPJ_CODEC_UNKNOWN)
+      {
+         status = ossim::opj_decode(theFileStr.get(), rect, 0, format, offset, theCacheTile.get());
+      }
+      else
+      {
+         ossimNotify(ossimNotifyLevel_WARN)
+            << "ossimOpjNitfReader::uncompressJpegBlock WARNING!\n"
+            << "Unknown openjpeg codec\n";
+         status = false;
+      }
    }
-   ossim_uint32 numX = theCacheSize.x;
-   ossim_uint32 numY = theCacheSize.y;
-   ossim_uint32 blockX = x / numX;
-   ossim_uint32 blockY = y / numY;
-
-   ossimIrect rect(ossimIpt(blockX * numX, blockY * numY),
-                   ossimIpt((blockX + 1) * numX - 1, (blockY + 1) * numY - 1));
-
-   std::streamoff offset = hdr->getDataLocation();
-   theFileStr->seekg(offset, ios::beg);
-   ossim_int32 format = ossim::getCodecFormat(theFileStr.get());
-   if (format == OPJ_CODEC_UNKNOWN)
-   {
-      ossimNotify(ossimNotifyLevel_WARN)
-          << "ossimOpjNitfReader::uncompressJpegBlock WARNING!\n"
-          << "Unknown openjpeg codec\n";
-      return false;
-   }
-
-   if (ossim::opj_decode(theFileStr.get(), rect, 0, format, offset, theCacheTile.get()) == false)
-   {
-       return false;
-   }
-
-   return true;
+   std::cout << "ossimOpjNitfReader::uncompressJpegBlock(" << x << "," << y << ") "
+             << "exit status = " << (status?"true\n":"false\n");;
+   return status;
 }

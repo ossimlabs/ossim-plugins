@@ -14,9 +14,11 @@
 #include "ossimKakaduCommon.h"
 #include "ossimKakaduCompressedTarget.h"
 #include "ossimKakaduKeywords.h"
+#include "ossimKakaduMembroker.h"
 
 #include <ossim/base/ossimBooleanProperty.h>
 #include <ossim/base/ossimCommon.h>
+#include <ossim/base/ossimEndian.h>
 #include <ossim/base/ossimException.h>
 #include <ossim/base/ossimIpt.h>
 #include <ossim/base/ossimKeywordlist.h>
@@ -37,7 +39,14 @@
 #include <jp2.h>
 #include <cmath> /* ceil */
 
-RTTI_DEF1_INST(ossimKakaduCompressor, "ossimKakaduCompressor", ossimObject)
+#define TRACE_TIME 0
+#if TRACE_TIME
+#  include <ossim/base/ossimStopwatch.h>
+#  include <iomanip>
+#endif
+
+
+// RTTI_DEF1_INST(ossimKakaduCompressor, "ossimKakaduCompressor", ossimObject)
 
 
 //---
@@ -61,68 +70,62 @@ static const ossimString COMPRESSION_QUALITY[] = { "unknown",
                                                    "lossy3",
                                                    "epje" };
 
+//---
+// transfer_xxx functions copied from kakaud code:
+//---
 static void transfer_bytes(
    kdu_core::kdu_line_buf &dest, kdu_core::kdu_byte *src,
-   int num_samples, int sample_gap, int src_bits, int original_bits)
+   int num_samples, int sample_gap, int src_bits, int original_bits, bool is_signed)
 {
-   if (dest.get_buf16() != 0)
-   {
+   if (dest.get_buf16() != NULL)
+   { 
       kdu_core::kdu_sample16 *dp = dest.get_buf16();
-      kdu_core::kdu_int16 off = ((kdu_core::kdu_int16)(1<<src_bits))>>1;
-      kdu_core::kdu_int16 mask = ~((kdu_core::kdu_int16)((-1)<<src_bits));
+      int upshift = 16-src_bits; assert(upshift >= 0);
       if (!dest.is_absolute())
-      {
-         int shift = KDU_FIX_POINT - src_bits; assert(shift >= 0);
-         for (; num_samples > 0; num_samples--, src+=sample_gap, dp++)
-            dp->ival = ((((kdu_core::kdu_int16) *src) & mask) - off) << shift;
-      }
-      else if (src_bits < original_bits)
-      { // Reversible processing; source buffer has too few bits
-         int shift = original_bits - src_bits;
-         for (; num_samples > 0; num_samples--, src+=sample_gap, dp++)
-            dp->ival = ((((kdu_core::kdu_int16) *src) & mask) - off) << shift;
-      }
-      else if (src_bits > original_bits)
-      { // Reversible processing; source buffer has too many bits
-         int shift = src_bits - original_bits;
-         off -= (1<<shift)>>1; // For rounded down-shifting
-         for (; num_samples > 0; num_samples--, src+=sample_gap, dp++)
-            dp->ival = ((((kdu_core::kdu_int16) *src) & mask) - off) >> shift;
+      { 
+         if (is_signed)
+            for (; num_samples > 0; num_samples--, src+=sample_gap, dp++)
+               dp->ival = ((kdu_core::kdu_int16)((*src)<<upshift)) >> (16-KDU_FIX_POINT);
+         else
+            for (; num_samples > 0; num_samples--, src+=sample_gap, dp++)
+               dp->ival = ((kdu_core::kdu_int16)(((*src) << upshift) - (1<<15))) >>
+                  (16-KDU_FIX_POINT);
       }
       else
-      { // Reversible processing, `src_bits'=`original_bits'
-         for (; num_samples > 0; num_samples--, src+=sample_gap, dp++)
-            dp->ival = (((kdu_core::kdu_int16) *src) & mask) - off;
+      { // Reversible processing
+         int downshift = 16-original_bits; assert(downshift >= 0);
+         if (is_signed)
+            for (; num_samples > 0; num_samples--, src+=sample_gap, dp++)
+               dp->ival = ((kdu_core::kdu_int16)((*src) << upshift)) >> downshift;
+         else
+            for (; num_samples > 0; num_samples--, src+=sample_gap, dp++)
+               dp->ival = ((kdu_core::kdu_int16)(((*src) << upshift) - (1<<15))) >>
+                  downshift;
       }
    }
    else
-   {
+   { 
       kdu_core::kdu_sample32 *dp = dest.get_buf32();
-      kdu_core::kdu_int32 off = ((kdu_core::kdu_int32)(1<<src_bits))>>1;
-      kdu_core::kdu_int32 mask = ~((kdu_core::kdu_int32)((-1)<<src_bits));
+      int upshift = 32-src_bits; assert(upshift >= 0);
       if (!dest.is_absolute())
-      {
-         float scale = 1.0F / (float)(1<<src_bits);
-         for (; num_samples > 0; num_samples--, src+=sample_gap, dp++)
-            dp->fval = scale * (float)((((kdu_core::kdu_int32) *src) & mask) - off);
-      }
-      else if (src_bits < original_bits)
-      { // Reversible processing; source buffer has too few bits
-         int shift = original_bits - src_bits;
-         for (; num_samples > 0; num_samples--, src+=sample_gap, dp++)
-            dp->ival = ((((kdu_core::kdu_int32) *src) & mask) - off) << shift;
-      }
-      else if (src_bits > original_bits)
-      { // Reversible processing; source buffer has too many bits
-         int shift = src_bits - original_bits;
-         off -= (1<<shift)>>1; // For rounded down-shifting
-         for (; num_samples > 0; num_samples--, src+=sample_gap, dp++)
-            dp->ival = ((((kdu_core::kdu_int32) *src) & mask) - off) >> shift;
+      { 
+         float scale = 1.0F / (((float)(1<<16)) * ((float)(1<<16)));
+         if (is_signed)
+            for (; num_samples > 0; num_samples--, src+=sample_gap, dp++)
+               dp->fval = scale * (float)(((kdu_core::kdu_int32) *src)<<upshift);
+         else
+            for (; num_samples > 0; num_samples--, src+=sample_gap, dp++)
+               dp->fval = scale*(float)((((kdu_core::kdu_int32) *src)<<upshift)-(1<<31));
       }
       else
-      { // Reversible processing, `src_bits'=`original_bits'
-         for (; num_samples > 0; num_samples--, src+=sample_gap, dp++)
-            dp->ival = (((kdu_core::kdu_int32) *src) & mask) - off;
+      { 
+         int downshift = 32-original_bits; assert(downshift >= 0);
+         if (is_signed)
+            for (; num_samples > 0; num_samples--, src+=sample_gap, dp++)
+               dp->ival = (((kdu_core::kdu_int32) *src)<<upshift) >> downshift;
+         else
+            for (; num_samples > 0; num_samples--, src+=sample_gap, dp++)
+               dp->ival = ((((kdu_core::kdu_int32) *src)<<upshift)-(1<<31)) >> downshift;
       }
    }
 }
@@ -132,63 +135,52 @@ static void transfer_words(
    int sample_gap, int src_bits, int original_bits,
    bool is_signed)
 {
-   if (dest.get_buf16() != 0)
-   {
+   if (dest.get_buf16() != NULL)
+   { 
       kdu_core::kdu_sample16 *dp = dest.get_buf16();
       int upshift = 16-src_bits; assert(upshift >= 0);
       if (!dest.is_absolute())
-      {
+      { 
          if (is_signed)
             for (; num_samples > 0; num_samples--, src+=sample_gap, dp++)
-               dp->ival = ((*src) << upshift) >> (16-KDU_FIX_POINT);
+               dp->ival = ((kdu_core::kdu_int16)((*src)<<upshift)) >> (16-KDU_FIX_POINT);
          else
             for (; num_samples > 0; num_samples--, src+=sample_gap, dp++)
-               dp->ival = (((*src) << upshift) - 0x8000) >> (16-KDU_FIX_POINT);
+               dp->ival = ((kdu_core::kdu_int16)(((*src) << upshift) - (1<<15))) >>
+                  (16-KDU_FIX_POINT);
       }
       else
-      {
-         // Reversible processing
+      { // Reversible processing
          int downshift = 16-original_bits; assert(downshift >= 0);
          if (is_signed)
-         {
             for (; num_samples > 0; num_samples--, src+=sample_gap, dp++)
-            {
-               dp->ival = ((*src) << upshift) >> downshift;
-            }
-         }
+               dp->ival = ((kdu_core::kdu_int16)((*src) << upshift)) >> downshift;
          else
-         {
             for (; num_samples > 0; num_samples--, src+=sample_gap, dp++)
-            {
-               dp->ival = (((*src) << upshift) - 0x8000) >> downshift;
-            }
-         }
+               dp->ival = ((kdu_core::kdu_int16)(((*src) << upshift) - (1<<15))) >>
+                  downshift;
       }
    }
    else
-   {
+   { 
       kdu_core::kdu_sample32 *dp = dest.get_buf32();
       int upshift = 32-src_bits; assert(upshift >= 0);
-
       if (!dest.is_absolute())
-      {
+      { 
          float scale = 1.0F / (((float)(1<<16)) * ((float)(1<<16)));
          if (is_signed)
             for (; num_samples > 0; num_samples--, src+=sample_gap, dp++)
                dp->fval = scale * (float)(((kdu_core::kdu_int32) *src)<<upshift);
          else
             for (; num_samples > 0; num_samples--, src+=sample_gap, dp++)
-               dp->fval = scale * (float)((((kdu_core::kdu_int32) *src)<<upshift)-(1<<31));
+               dp->fval = scale*(float)((((kdu_core::kdu_int32) *src)<<upshift)-(1<<31));
       }
       else
-      {
+      { 
          int downshift = 32-original_bits; assert(downshift >= 0);
-         
          if (is_signed)
             for (; num_samples > 0; num_samples--, src+=sample_gap, dp++)
-            {
                dp->ival = (((kdu_core::kdu_int32) *src)<<upshift) >> downshift;
-            }
          else
             for (; num_samples > 0; num_samples--, src+=sample_gap, dp++)
                dp->ival = ((((kdu_core::kdu_int32) *src)<<upshift)-(1<<31)) >> downshift;
@@ -255,17 +247,18 @@ void transfer_dwords(kdu_core::kdu_line_buf &dest, kdu_core::kdu_int32 *src,
    }
 }
 
-
-
 ossimKakaduCompressor::ossimKakaduCompressor()
    :
    ossimObject(),
+   m_normTile(0),
+   // m_membroker(0),
+   // m_allocator(0),
+   m_threadEnv(0),
+   m_threadQueue(0),
    m_target(0),
    m_jp2FamTgt(0),
    m_jp2Target(0),
    m_codestream(),
-   m_threadEnv(0),
-   m_threadQueue(0),
    m_layerSpecCount(0),
    m_layerByteSizes(0),
    m_imageRect(),
@@ -274,8 +267,7 @@ ossimKakaduCompressor::ossimKakaduCompressor()
    m_levels(0),
    m_threads(1),
    m_options(),
-   m_qualityType(ossimKakaduCompressor::OKP_NUMERICALLY_LOSSLESS),
-   m_normTile(0)
+   m_qualityType(ossimKakaduCompressor::OKP_NUMERICALLY_LOSSLESS)
 {
 }
 
@@ -310,33 +302,34 @@ void ossimKakaduCompressor::create(ossim::ostream* os,
    }
    
 #if 0 /* Please leave for debug. (drb) */
-   cout << "levels:      " << m_levels
-        << "\nreversible:  " << m_reversible
-        << "\nthreads:     " << m_threads
-        << "\nscalar:    " << scalar
-        << "\nbands:     " << bands
-        << "\nimageRect: " << imageRect
-        << "\ntileSize:  " << tileSize
-        << "\njp2:       " << jp2
-        << endl;
+   std::cout << "levels:        " << m_levels
+             << "\nreversible:  " << m_reversible
+             << "\nthreads:     " << m_threads
+             << "\nscalar:      " << scalar
+             << "\nbands:       " << bands
+             << "\nimageRect:   " << imageRect
+             << "\ntileSize:    " << tileSize
+             << "\ntiles:       " << tilesToWrite
+             << "\njp2:         " << jp2
+             << std::endl;
 #endif
 
-   // In case we were reused.
-   finish();
-
+   // Check the stream:
    if ( !os )
    {
       std::string errMsg = MODULE;
       errMsg += " ERROR: Null stream passed to method!";
       throw ossimException(errMsg);
    }
-   
    if ( !os->good() )
    {
       std::string errMsg = MODULE;
       errMsg += " ERROR: Stream state has error!";
       throw ossimException(errMsg);
    }
+
+   // In case we were reused.
+   // finish();
    
    if ( ossim::getActualBitsPerPixel(scalar) > 31 )
    {
@@ -356,11 +349,49 @@ void ossimKakaduCompressor::create(ossim::ostream* os,
                                       static_cast<ossim_uint32>(tileSize.y));
       m_normTile->initialize();
    }
+
+   // Memeroy broker:
+   // if ( m_membroker == 0 )
+   // {
+   //    m_membroker = new kdu_core::kdu_membroker(); // No limit.
+   // }
+
+   // m_allocator = new kdu_core::kdu_sample_allocator();
+   // m_allocator->configure( ossimKakaduMembroker::instance()->getMembroker(),
+   //                         KDU_SAMPLE_ALLOCATOR_DEF_FRAG_BITS );
+
+   // Threads:
+   m_threadEnv = new kdu_core::kdu_thread_env();
+   m_threadEnv->create();
+   if ( m_threads == 1 )
+   {
+      // Look in prefs for threads:
+      const char* lookup = ossimPreferences::instance()->findPreference("kakadu_threads");
+      if ( lookup )
+      {
+         m_threads = ossimString::toUInt32(lookup);
+      }
+   }
+   if ( m_threads > 1 )
+   {
+      for (int nt=1; nt < m_threads; ++nt)
+      {
+         if ( !m_threadEnv->add_thread() )
+         {
+            if (traceDebug())
+            {
+               ossimNotify(ossimNotifyLevel_WARN)
+                  << "Unable to create thread!\n";
+            }
+         }
+      }
+   }
+   m_threadQueue = m_threadEnv->add_queue(0, 0, "tile-compressor-root");
    
    // Store for tile clip.
    m_imageRect = imageRect;
    
-   m_target =  new ossimKakaduCompressedTarget();
+   m_target = new ossimKakaduCompressedTarget();
    m_target->setStream(os);
    
    if (jp2)
@@ -370,9 +401,9 @@ void ossimKakaduCompressor::create(ossim::ostream* os,
       // the target and do not delete on close or destroy.
       //---
       m_jp2FamTgt = new kdu_supp::jp2_family_tgt();
-      m_jp2FamTgt->open(m_target);
+      m_jp2FamTgt->open(m_target, ossimKakaduMembroker::instance()->getMembroker());
       m_jp2Target = new kdu_supp::jp2_target();
-      m_jp2Target->open(m_jp2FamTgt);
+      m_jp2Target->open(m_jp2FamTgt, ossimKakaduMembroker::instance()->getMembroker());
    }
 
    if (m_alpha)
@@ -417,35 +448,6 @@ void ossimKakaduCompressor::create(ossim::ostream* os,
            static_cast<ossim_int32>(ossim::getActualBitsPerPixel(scalar)) );
    
    siz.finalize_all();
-
-   // Set up threads:
-   m_threadEnv = new kdu_core::kdu_thread_env();
-   m_threadEnv->create();
-   if ( m_threads == 1 )
-   {
-      // Look in prefs for threads:
-      const char* lookup = ossimPreferences::instance()->findPreference("kakadu_threads");
-      if ( lookup )
-      {
-         m_threads = ossimString::toUInt32(lookup);
-      }
-   }
-   if ( m_threads > 1 )
-   {
-      for (int nt=1; nt < m_threads; ++nt)
-      {
-         if ( !m_threadEnv->add_thread() )
-         {
-            if (traceDebug())
-            {
-               ossimNotify(ossimNotifyLevel_WARN)
-                  << "Unable to create thread!\n";
-            }
-         }
-      }
-   }
-   
-   m_threadQueue = m_threadEnv->add_queue(0, 0, "tile-compressor-root");
    
    kdu_supp::jp2_dimensions dims;
    
@@ -503,11 +505,13 @@ void ossimKakaduCompressor::create(ossim::ostream* os,
          }
       }
       
-      m_codestream.create(&siz, m_jp2Target, 0, 0, 0, m_threadEnv);
+      m_codestream.create(&siz, m_jp2Target, 0, 0, 0, m_threadEnv,
+                          ossimKakaduMembroker::instance()->getMembroker());
    }
    else // Not a jp2
    {
-      m_codestream.create(&siz, m_target, 0, 0, 0, m_threadEnv);
+      m_codestream.create(&siz, m_target, 0, 0, 0, m_threadEnv,
+                          ossimKakaduMembroker::instance()->getMembroker());
    }
    
    // Requests the insertion of TLM (tile-part-length) marker.
@@ -521,7 +525,6 @@ void ossimKakaduCompressor::create(ossim::ostream* os,
    {
       initializeCodingParams(cod, imageRect);
    }
-
    
    // Set options if any.
    std::vector<ossimString>::const_iterator optionIter = m_options.begin();
@@ -533,22 +536,13 @@ void ossimKakaduCompressor::create(ossim::ostream* os,
    
    // Finalize preparation for compression
    m_codestream.access_siz()->finalize_all();
+
+   // m_codestream.configure_simultaneous_processing_fragments(1024, 5, 4);
    
    if (jp2)
    {
-      // Call `write_header' to write the JP2 header.
+      // Write the JP2 header.
       m_jp2Target->write_header();
-      m_jp2Target->close();
-      
-      // Write out the geotiff_box:
-      // writeGeotffBox(m_jp2Target);
-      
-      //---
-      // Optionally write additional boxes, opening them using the base
-      // object's
-      // `jp2_output_box::open_next' function, writing their contents (or
-      // sub-boxes) and closing them using `jp2_output_box::close'.
-      //---
    }
 
    if ( traceDebug() )
@@ -560,7 +554,6 @@ void ossimKakaduCompressor::create(ossim::ostream* os,
 void ossimKakaduCompressor::openJp2Codestream()
 {
    if (m_jp2Target)
-
    {
       //---
       // Call `open_codestream' prior to any call to
@@ -573,6 +566,12 @@ void ossimKakaduCompressor::openJp2Codestream()
 bool ossimKakaduCompressor::writeTile(ossimImageData& srcTile)
 {
    bool result = true;
+
+#if TRACE_TIME /* Please leave for debug. drb */
+   static ossim_uint32 tindex = 0;
+   ossimStopwatch sw;
+   sw.start();
+#endif
 
    if (srcTile.getDataObjectStatus() != OSSIM_NULL)
    {
@@ -591,19 +590,425 @@ bool ossimKakaduCompressor::writeTile(ossimImageData& srcTile)
       // Lines to copy:
       const ossim_int32 LINES =
          ossim::min(TILE_LINES, m_imageRect.lr().y-srcTile.getOrigin().y+1);
+
+      // Get the tile index.
+      kdu_core::kdu_coords tileIndex;
+      tileIndex.x = (srcTile.getOrigin().x - m_imageRect.ul().x) / TILE_SAMPS;
+      tileIndex.y = (srcTile.getOrigin().y - m_imageRect.ul().y) / TILE_LINES;
+
+      kdu_core::kdu_tile tile = m_codestream.open_tile(tileIndex, m_threadEnv);
+      if ( tile.exists() )
+      {
+         kdu_core::kdu_dims tile_dims;
+         m_codestream.get_tile_dims(tileIndex, 0, tile_dims);
+
+         // Bands:
+         const ossim_int32 BANDS =
+            static_cast<ossim_int32>(m_alpha?srcTile.getNumberOfBands()+1:
+                                     srcTile.getNumberOfBands());
+         tile.set_components_of_interest(BANDS);
+
+         // Scalar:
+         const ossimScalarType SCALAR = srcTile.getScalarType();
+         
+         // Signed:
+         const bool SIGNED = ossim::isSigned(SCALAR);
+
+         //---
+         // Flags:
+         // KDU_MULTI_XFORM_PRECISE
+         // KDU_MULTI_XFORM_FAST
+         // KDU_MULTI_XFORM_DBUF
+         // KDU_MULTI_XFORM_MT_DWT
+         //---
+         ossim_int32 flags = KDU_MULTI_XFORM_MT_DWT;         
+
+         ossim_int32 buffer_rows =
+            (srcTile.getHeight() > 64) ? 64 : (ossim_int32)srcTile.getHeight();
+
+         kdu_core::kdu_push_pull_params params;
+         
+         kdu_core::kdu_multi_analysis engine;
+         engine.create( m_codestream, tile, m_threadEnv, m_threadQueue, flags,
+                        NULL, buffer_rows, NULL, &params,
+                        ossimKakaduMembroker::instance()->getMembroker());
+
+         // Precision:
+         ossim_int32 src_bits = ossim::getActualBitsPerPixel(SCALAR);
+
+         std::vector<kdu_core::kdu_line_buf*> lineBuf(BANDS);
+         std::vector<ossim_int32> original_bits(BANDS);
+
+         // Initialize tile-components 
+         kdu_core::kdu_tile_comp tc;
+         kdu_core::kdu_resolution res;
+         bool reversible;
+         bool use_shorts;
+
+         ossim_int32 band;
+         for (band = 0; band < BANDS; ++band)
+         {
+            original_bits[band] = m_codestream.get_bit_depth(band,true);
+
+            tc = tile.access_component(band);
+            res = tc.access_resolution();
+            if ( ossim::getActualBitsPerPixel(SCALAR) > 31 )
+            {
+               // Data is not reversible.
+               reversible = false;
+               use_shorts = false;
+            }
+            else
+            {
+               reversible = tc.get_reversible();
+               use_shorts = (tc.get_bit_depth(true) <= 16);
+            }
+            
+            res.get_dims(tile_dims);
+
+            lineBuf[band] = NULL;
+         }
+         
+         switch (SCALAR)
+         {
+            case OSSIM_UINT8:
+            {
+               std::vector<kdu_core::kdu_byte*> srcBuf(BANDS);
+               for (band = 0; band < BANDS; ++band)
+               {
+                  void* p = const_cast<void*>(srcTile.getBuf(band));
+                  srcBuf[band] = static_cast<kdu_core::kdu_byte*>(p);
+               }
+               if (m_alpha)
+               {
+                  // Ugly casting...
+                  const void* cp =
+                     static_cast<const void*>(srcTile.getAlphaBuf());
+                  void* p = const_cast<void*>(cp);
+                  srcBuf[BANDS-1] = static_cast<kdu_core::kdu_byte*>(p);
+               }
+               for (ossim_int32 line = 0; line < LINES; ++line)
+               {
+                  for (band = 0; band < BANDS; ++band)
+                  {
+                     lineBuf[band] = engine.exchange_line(band, NULL, m_threadEnv);
+                     
+                     transfer_bytes(*lineBuf[band],
+                                    srcBuf[band],
+                                    SAMPS,
+                                    1,
+                                    src_bits,
+                                    original_bits[band],
+                                    SIGNED);
+                     
+                     // Increment the line buffers.
+                     srcBuf[band] = srcBuf[band]+TILE_SAMPS;
+                     engine.exchange_line(band, lineBuf[band], m_threadEnv);
+                     lineBuf[band] = NULL;
+                  }
+               }
+               break;
+            }
+            case OSSIM_UINT9:
+            case OSSIM_UINT10:
+            case OSSIM_UINT11:
+            case OSSIM_UINT12:
+            case OSSIM_UINT13:
+            case OSSIM_UINT14:                  
+            case OSSIM_UINT15:
+            case OSSIM_UINT16:
+            {
+               if (!m_alpha)
+               {
+                  std::vector<kdu_core::kdu_int16*> srcBuf(BANDS);
+                  for (band = 0; band < BANDS; ++band)
+                  {
+                     void* p = const_cast<void*>(srcTile.getBuf(band));
+                     srcBuf[band] = static_cast<kdu_core::kdu_int16*>(p);
+                  }
+                  
+                  for (ossim_int32 line = 0; line < LINES; ++line)
+                  {
+                     for (band = 0; band < BANDS; ++band)
+                     {
+                        lineBuf[band] = engine.exchange_line(band, NULL, m_threadEnv);
+
+                        transfer_words(*lineBuf[band],
+                                       srcBuf[band],
+                                       SAMPS,
+                                       1,
+                                       src_bits,
+                                       original_bits[band],
+                                       SIGNED);
+
+                        // Increment the line buffers.
+                        srcBuf[band] = srcBuf[band]+TILE_SAMPS;
+                        engine.exchange_line(band, lineBuf[band], m_threadEnv);
+                        lineBuf[band] = NULL;
+                     }
+                  }
+               }
+               else // Need to write an alpha channel.
+               {
+                  //---
+                  // Alpha currently stored a eight bit so we must move 255 to
+                  // 2047 (11 bit) or 255 to 65535 for 16 bit.
+                  //---
+                  const ossim_float64 SCALAR_MAX = ossim::defaultMax( SCALAR );
+                  ossim_float64 d = SCALAR_MAX / 255.0;
+
+                  ossim_int32 dataBands = BANDS-1;
+                  std::vector<kdu_core::kdu_int16*> srcBuf(dataBands);
+                  for (band = 0; band < dataBands; ++band)
+                  {
+                     void* p = const_cast<void*>(srcTile.getBuf(band));
+                     srcBuf[band] = static_cast<kdu_core::kdu_int16*>(p);
+                  }
+                  
+                  const ossim_uint8* alphaPtr = srcTile.getAlphaBuf();;
+                  std::vector<kdu_core::kdu_int16> alphaLine(SAMPS);
+                  
+                  for (ossim_int32 line = 0; line < LINES; ++line)
+                  {
+                     for (band = 0; band < dataBands; ++band)
+                     {
+                        lineBuf[band] = engine.exchange_line(band, NULL, m_threadEnv);
+                        
+                        transfer_words(*lineBuf[band],
+                                       srcBuf[band],
+                                       SAMPS,
+                                       1,
+                                       src_bits,
+                                       original_bits[band],
+                                       SIGNED);
+
+                        // Increment the line buffers.
+                        srcBuf[band] = srcBuf[band]+TILE_SAMPS;
+                        engine.exchange_line(band, lineBuf[band], m_threadEnv);
+                        lineBuf[band] = NULL;
+                     }
+                     
+                     // Transfer alpha channel:
+                     for (ossim_int32 samp = 0; samp < SAMPS; ++samp)
+                     {
+                        alphaLine[samp] = static_cast<kdu_core::kdu_int16>(alphaPtr[samp]*d);
+                     }
+                     
+                     lineBuf[band] = engine.exchange_line(band, NULL, m_threadEnv);
+
+                     transfer_words(*lineBuf[band],
+                                    &alphaLine.front(),
+                                    SAMPS,
+                                    1,
+                                    src_bits,
+                                    original_bits[band],
+                                    SIGNED);
+                     
+                     engine.exchange_line(band, lineBuf[band], m_threadEnv);
+                     lineBuf[band] = NULL;
+                     
+                     alphaPtr = alphaPtr+TILE_SAMPS;
+                  }
+               } // End of alpha section.
+               break;
+            }
+            case OSSIM_SINT16:
+            {
+               std::vector<ossim_sint16*> srcBuf(BANDS);
+               for (band = 0; band < BANDS; ++band)
+               {
+                  void* p = const_cast<void*>(srcTile.getBuf(band));
+                  srcBuf[band] = static_cast<ossim_sint16*>(p);
+               }
+
+               for (ossim_int32 line = 0; line < LINES; ++line)
+               {
+                  for (band = 0; band < BANDS; ++band)
+                  {
+                     lineBuf[band] = engine.exchange_line(band, NULL, m_threadEnv);
+
+                     transfer_words(*lineBuf[band],
+                                    srcBuf[band],
+                                    SAMPS,
+                                    1,
+                                    src_bits,
+                                    original_bits[band],
+                                    SIGNED);
+                     
+                     // Increment the line buffers.
+                     srcBuf[band] = srcBuf[band]+TILE_SAMPS;
+                     engine.exchange_line(band, lineBuf[band], m_threadEnv);
+                     lineBuf[band] = NULL;
+                  }
+               }
+               break;
+            }
+
+            //---
+            // ??? This should probably take the same path as OSSIM_SINT32 data.
+            // Need test case.
+            //---
+            case OSSIM_UINT32:
+            {
+               std::vector<kdu_core::kdu_int32*> srcBuf(BANDS);
+               for (band = 0; band < BANDS; ++band)
+               {
+                  void* p = const_cast<void*>(srcTile.getBuf(band));
+                  srcBuf[band] = static_cast<kdu_core::kdu_int32*>(p);
+               }
+               
+               for (ossim_int32 line = 0; line < LINES; ++line)
+               {
+                  for (band = 0; band < BANDS; ++band)
+                  {
+                     lineBuf[band] = engine.exchange_line(band, NULL, m_threadEnv);
+
+                     transfer_dwords(*lineBuf[band],
+                                     srcBuf[band],
+                                     SAMPS,
+                                     1,
+                                     src_bits,
+                                     original_bits[band],
+                                     SIGNED);
+
+                     // Increment the line buffers.
+                     srcBuf[band] = srcBuf[band]+TILE_SAMPS;
+                     engine.exchange_line(band, lineBuf[band], m_threadEnv);
+                     lineBuf[band] = NULL;
+                  }
+               }
+               break;  
+            }
+
+            case OSSIM_SINT32:
+            case OSSIM_FLOAT32:
+            {
+               //---
+               // Kakadu wants float data normalized between -0.5 and 0.5:
+               // 1) Normalize between 0.0 and 1.0 using ossim code.
+               // 2) Copy applying -0.5 offset.
+               //---
+               srcTile.copyTileToNormalizedBuffer(m_normTile->getFloatBuf());
+               
+               std::vector<ossim_float32*> srcBuf(BANDS);
+               for (band = 0; band < BANDS; ++band)
+               {
+                  srcBuf[band] = m_normTile->getFloatBuf(band);
+               }
+
+               for (ossim_int32 line = 0; line < LINES; ++line)
+               {
+                  for (band = 0; band < BANDS; ++band)
+                  {
+                     lineBuf[band] = engine.exchange_line(band, NULL, m_threadEnv);
+
+                     kdu_core::kdu_sample32* dp = lineBuf[band]->get_buf32();
+                     for (ossim_int32 samp = 0; samp < SAMPS; ++samp)
+                     {
+                        dp[samp].fval = srcBuf[band][samp] - 0.5; // -.5 for kakadu.
+                     }
+
+                     // Increment the line buffers.
+                     srcBuf[band] = srcBuf[band]+TILE_SAMPS;
+                     engine.exchange_line(band, lineBuf[band], m_threadEnv);
+                     lineBuf[band] = NULL;
+                  }
+               }
+               break;
+            }
+            default:
+            {
+               ossimNotify(ossimNotifyLevel_WARN)
+                  << __FILE__ << " " << __LINE__ << " Unhandle scalar!\n";
+               result = false;
+               break;
+            }
+            
+         }  // End:  switch(scalar)
+
+         if (m_threadEnv)
+         {
+            //---
+            // Snip from kdu_threads.h:
+            // If `descendants_only' is true, the function waits for all queues
+            // descended from `root_queue' to identify themselves as "finished"
+            // via the `kdu_thread_queue::all_done' function.
+            //---
+            m_threadEnv->join(m_threadQueue,
+                              true); // descendants_only flag
+         }
+
+         tile.close(m_threadEnv, true);
+         
+         if ( engine.exists() )
+         {
+            engine.destroy();
+         }
+
+      } // if (tile.exists())
+      else
+      {
+         result = false;
+      }
+   }
+   else // srcTile has null status...
+   {
+      result = false;
+   }
+
+#if TRACE_TIME
+   sw.stop();
+   ossimNotify(ossimNotifyLevel_NOTICE)
+      << "tile[" << tindex++ << "] time: "
+      << std::setiosflags(std::ios::fixed) << std::setprecision(5)
+      << sw.count() << "\n";
+#endif
+
+   return result;
+   
+} // End: ossimKakaduCompressor::writeTile
+
+
+#if 0 /* Old code using kdu_analysis. */
+bool ossimKakaduCompressor::writeTile(ossimImageData& srcTile)
+{
+   bool result = true;
+
+#if TRACE_TIME /* Please leave for debug. drb */
+   static ossim_uint32 tindex = 0;
+   ossimStopwatch sw;
+   sw.start();
+#endif
+
+   if (srcTile.getDataObjectStatus() != OSSIM_NULL)
+   {
+      // tile samples:
+      const ossim_int32 TILE_SAMPS =
+         static_cast<ossim_int32>(srcTile.getWidth());
+
+      // Samples to copy clipping to image width:
+      const ossim_int32 SAMPS =
+         ossim::min(TILE_SAMPS, m_imageRect.lr().x-srcTile.getOrigin().x+1);
+      
+      // tile lines:
+      const ossim_int32 TILE_LINES =
+         static_cast<ossim_int32>(srcTile.getHeight());
+
+      // Lines to copy clipping to image height:
+      const ossim_int32 LINES =
+         ossim::min(TILE_LINES, m_imageRect.lr().y-srcTile.getOrigin().y+1);
       
       // Get the tile index.
       kdu_core::kdu_coords tileIndex;
       tileIndex.x = (srcTile.getOrigin().x - m_imageRect.ul().x) / TILE_SAMPS;
       tileIndex.y = (srcTile.getOrigin().y - m_imageRect.ul().y) / TILE_LINES;
 
-      kdu_core::kdu_tile tile = m_codestream.open_tile(tileIndex);
-
-      kdu_core::kdu_dims tile_dims;
-      m_codestream.get_tile_dims(tileIndex, 0, tile_dims);
-
+      kdu_core::kdu_tile tile = m_codestream.open_tile(tileIndex, m_threadEnv);
       if ( tile.exists() )
-      {  
+      {
+         kdu_core::kdu_dims tile_dims;
+         m_codestream.get_tile_dims(tileIndex, 0, tile_dims);
+
          // Bands:
          const ossim_int32 BANDS =
             static_cast<ossim_int32>(m_alpha?srcTile.getNumberOfBands()+1:
@@ -615,6 +1020,9 @@ bool ossimKakaduCompressor::writeTile(ossimImageData& srcTile)
          
          // Signed:
          const bool SIGNED = ossim::isSigned(SCALAR);
+
+         // Uncompressed bytes in a tile:
+         // const ossim_uint64 BYTES = srcTile.getSizeInBytes();
          
          // Set up common things to both scalars.
          std::vector<kdu_core::kdu_push_ifc> engine(BANDS);
@@ -630,7 +1038,9 @@ bool ossimKakaduCompressor::writeTile(ossimImageData& srcTile)
          kdu_core::kdu_resolution res;
          bool reversible;
          bool use_shorts;
-         kdu_core::kdu_sample_allocator allocator;
+         kdu_core::kdu_push_pull_params params;
+         // kdu_core::kdu_sample_allocator allocator;
+         // allocator.configure( m_membroker );
 
          ossim_int32 band;
          for (band = 0; band < BANDS; ++band)
@@ -654,14 +1064,16 @@ bool ossimKakaduCompressor::writeTile(ossimImageData& srcTile)
             res.get_dims(tile_dims);
 
             engine[band] = kdu_core::kdu_analysis(res,
-                                        &allocator,
-                                        use_shorts,
-                                        1.0F,
-                                        0,
-                                        m_threadEnv,
-                                        m_threadQueue);
+                                                  m_allocator,
+                                                  params,          
+                                                  use_shorts,
+                                                  1.0F,
+                                                  0,
+                                                  0,
+                                                  m_threadEnv,
+                                                  m_threadQueue);
 
-            lineBuf[band].pre_create(&allocator,
+            lineBuf[band].pre_create(m_allocator,
                                      SAMPS,
                                      reversible, // tmp drb
                                      use_shorts,
@@ -670,10 +1082,11 @@ bool ossimKakaduCompressor::writeTile(ossimImageData& srcTile)
          }
          
          // Complete sample buffer allocation
-         allocator.finalize( m_codestream );
+         m_allocator->finalize( m_codestream );
 
          for (band = 0; band < BANDS; ++band)
          {
+            engine[band].start( m_threadEnv );
             lineBuf[band].create();
          }
 
@@ -704,7 +1117,8 @@ bool ossimKakaduCompressor::writeTile(ossimImageData& srcTile)
                                     SAMPS,
                                     1,
                                     src_bits,
-                                    original_bits[band]);
+                                    original_bits[band],
+                                    SIGNED);
                      
                      engine[band].push(lineBuf[band], m_threadEnv);
 
@@ -714,6 +1128,8 @@ bool ossimKakaduCompressor::writeTile(ossimImageData& srcTile)
                }
                break;
             }
+            case OSSIM_UINT9:
+            case OSSIM_UINT10:
             case OSSIM_UINT11:
             case OSSIM_UINT12:
             case OSSIM_UINT13:
@@ -917,8 +1333,6 @@ bool ossimKakaduCompressor::writeTile(ossimImageData& srcTile)
 
          if (m_threadEnv)
          {
-            // m_threadEnv->synchronize(m_threadQueue);
-
             //---
             // Snip from kdu_threads.h:
             // If `descendants_only' is true, the function waits for all queues
@@ -928,24 +1342,18 @@ bool ossimKakaduCompressor::writeTile(ossimImageData& srcTile)
             m_threadEnv->join(m_threadQueue,
                               true); // descendants_only flag
          }
-         
+      
          for (band = 0; band < BANDS; ++band)
          {
             engine[band].destroy();
             lineBuf[band].destroy();
          }
-         tile.close();
-         allocator.restart();
 
-         // Done with tile flush it...
-         m_codestream.flush( &(m_layerByteSizes.front()),  // layerbytes,
-                             m_layerSpecCount,        // num_layer_specs
-                             0, // layer_thresholds
-                             true, // trim_to_rate
-                             true, // record_in_comseg
-                             0.0, // tolerence,
-                             m_threadEnv); // env
-         
+         tile.close(m_threadEnv, true);
+ 
+         m_allocator->restart();
+         // allocator.release();
+
       } // if (tile.exists())
       else
       {
@@ -957,54 +1365,119 @@ bool ossimKakaduCompressor::writeTile(ossimImageData& srcTile)
       result = false;
    }
 
+#if TRACE_TIME
+   sw.stop();
+   ossimNotify(ossimNotifyLevel_NOTICE)
+      << "tile[" << tindex++ << "] time: "
+      << std::setiosflags(std::ios::fixed) << std::setprecision(5)
+      << sw.count() << "\n";
+#endif
+
    return result;
    
 } // End: ossimKakaduCompressor::writeTile
+#endif /* Old code using kdu_analysis. */
+
+bool ossimKakaduCompressor::flush()
+{
+   bool result = false;
+
+#if TRACE_TIME /* Please leave for debug. drb */
+   ossimStopwatch sw;
+   sw.start();
+#endif
+
+   if ( m_codestream.exists() )
+   {
+      result = true; // m_codestream.ready_for_flush( m_threadEnv );
+      if ( result )
+      {
+         m_codestream.flush( m_layerByteSizes.data(),  // layerbytes,
+                             m_layerSpecCount,        // num_layer_specs
+                             NULL, // layer_thresholds
+                             true, // trim_to_rate
+                             true, // record_in_comseg
+                             0.0, // tolerence,
+                             m_threadEnv,   // env
+                             KDU_FLUSH_USES_THRESHOLDS_AND_SIZES);
+         // KDU_FLUSH_THRESHOLDS_ARE_HINTS );
+         // KDU_FLUSH_USES_THRESHOLDS_AND_SIZES );
+                             
+      }
+   }
+
+#if TRACE_TIME /* Please leave for debug. drb */
+   sw.stop();
+   ossimNotify(ossimNotifyLevel_NOTICE)
+       << "ossimKakaduCompressor::flush() time: "
+       << std::setiosflags(std::ios::fixed) << std::setprecision(5)
+       << sw.count() << "\n";
+#endif
+   
+   return result;
+}
 
 void ossimKakaduCompressor::finish()
 {
+#if TRACE_TIME /* Please leave for debug. drb */
+   ossimNotify(ossimNotifyLevel_NOTICE) << "ossimKakaduCompressor::finish() entered...\n";
+   ossimStopwatch sw;
+   sw.start();
+#endif
+
    // Kakadu kdu_thread_entity::terminate throws exceptions...
    try
    {
-      // Cleanup processing environment
       if ( m_threadEnv )
       {
-         m_threadEnv->join(NULL,true); // Wait until all internal processing is complete.
+         // Wait until all internal processing is complete.
+         m_threadEnv->join(m_threadQueue, true);
+         flush();
          m_threadEnv->terminate(m_threadQueue, true);      
          m_threadEnv->cs_terminate(m_codestream);   // Terminates background codestream processing.
+      }
+      else
+      {
+         flush();
+      }
 
-         // kdu_codestream::destroy causing "double free or corruption" exception.
-         // m_codestream.destroy();
+       m_layerByteSizes.clear();
 
-         m_threadEnv->destroy();
-         delete m_threadEnv;
-         m_threadEnv = 0;
-      }
-      
-      m_normTile = 0;
-      
-      if (m_threadQueue)
-      {
-         m_threadQueue = 0;
-      }
-      
-      if (m_jp2FamTgt)
-      {
-         delete m_jp2FamTgt;
-         m_jp2FamTgt = 0;
-      }
-      
-      if (m_jp2Target)
-      {
-         delete m_jp2Target;
-         m_jp2Target = 0;
-      }
-      
-      if (m_target)
-      {
-         delete m_target;
-         m_target = 0;
-      }
+       if ( m_codestream.exists() )
+       {
+          m_codestream.destroy();
+       }
+
+       if ( m_jp2Target )
+       {
+          m_jp2Target->close();
+          delete m_jp2Target;
+          m_jp2Target = 0;
+       }
+
+       if ( m_jp2FamTgt )
+       {
+          m_jp2FamTgt->close();
+          delete m_jp2FamTgt;
+          m_jp2FamTgt = 0;
+       }
+
+       if ( m_target )
+       {
+          m_target->close();
+          delete m_target;
+          m_target = 0;
+       }
+
+       if ( m_threadEnv )
+       {
+          m_threadEnv->destroy();
+          delete m_threadEnv;
+          m_threadEnv = 0;
+          m_threadQueue = 0;
+       }
+
+       m_normTile = 0;
    }
    catch ( kdu_core::kdu_exception exc )
    {
@@ -1014,8 +1487,8 @@ void ossimKakaduCompressor::finish()
          m_threadEnv->handle_exception(exc);
       }
       std::ostringstream e;
-      e << "ossimKakaduNitfReader::~ossimKakaduNitfReader\n"
-        << "Caught exception from kdu_region_decompressor: " << exc << "\n";
+      e << "ossimKakaduCompressor::finish() ERROR:\n"
+        << "Caught exception: " << exc << "\n";
       ossimNotify(ossimNotifyLevel_WARN) << e.str() << std::endl;
    }
    catch ( std::bad_alloc& )
@@ -1024,19 +1497,28 @@ void ossimKakaduCompressor::finish()
       {
          m_threadEnv->handle_exception(KDU_MEMORY_EXCEPTION);
       }
-      std::string e =
-         "Caught exception from kdu_region_decompressor: std::bad_alloc";
-      ossimNotify(ossimNotifyLevel_WARN) << e << std::endl;
+      std::ostringstream e;
+      e << "ossimKakaduCompressor::finish() ERROR:\n"
+        << "Caught exception from : std::bad_alloc";
+      ossimNotify(ossimNotifyLevel_WARN) << e.str() << std::endl;
    }
    catch( ... )
    {
-      std::string e =
-         "Caught unhandled exception from kdu_region_decompressor";
-      ossimNotify(ossimNotifyLevel_WARN) << e << std::endl;
+      std::ostringstream e;
+      e << "ossimKakaduCompressor::finish() ERROR:\n"
+        << "Caught unknown exception:\n";
+      ossimNotify(ossimNotifyLevel_WARN) << e.str() << std::endl;
    }
    
-   m_layerByteSizes.clear();
-}
+#if TRACE_TIME /* Please leave for debug. drb */
+   sw.stop();
+   ossimNotify(ossimNotifyLevel_NOTICE)
+      << "ossimKakaduCompressor::finish() time: "
+      << std::setiosflags(std::ios::fixed) << std::setprecision(5)
+      << sw.count() << "\n";
+#endif
+
+} // End: ossimKakaduCompressor::finish()
 
 void ossimKakaduCompressor::setQualityType(ossimKakaduCompressionQuality type)
 {
@@ -1242,6 +1724,7 @@ ossimRefPtr<ossimProperty> ossimKakaduCompressor::getProperty(
 void ossimKakaduCompressor::getPropertyNames(
    std::vector<ossimString>& propertyNames)const
 {
+   propertyNames.push_back(ADD_ALPHA_CHANNEL_KW);
    propertyNames.push_back(ossimKeywordNames::COMPRESSION_QUALITY_KW);
    propertyNames.push_back(LEVELS_KW);
    propertyNames.push_back(REVERSIBLE_KW);
@@ -1386,7 +1869,7 @@ bool ossimKakaduCompressor::writeGeotiffBox(const ossimImageGeometry* geom,
             m_jp2Target->open_next( UUID_TYPE );
             m_jp2Target->write(
                static_cast<kdu_core::kdu_byte*>(&buf.front()), static_cast<int>(buf.size()));
-            m_jp2Target->close();
+            m_jp2Target->close_box();
             result = true;
          }
       }
@@ -1425,7 +1908,7 @@ bool ossimKakaduCompressor::writeGmlBox( const ossimImageGeometry* geom,
                0x78, 0x6D, 0x6C, 0x20
             };
             
-            ossim_uint32 xmlDataSize = xmlStr.str().size();
+            ossim_uint32 xmlDataSize = (ossim_uint32)xmlStr.str().size();
             
             // Set the 1st asoc box size and type
             ossim_uint32 boxSize = xmlDataSize + 17 + 8 + 8 + 8 + 8 + 8 + 8;
@@ -1488,7 +1971,7 @@ bool ossimKakaduCompressor::writeGmlBox( const ossimImageGeometry* geom,
             m_jp2Target->write((const kdu_core::kdu_byte*)xmlStr.str().data(),
                                xmlDataSize); // xml data
 
-            m_jp2Target->close();
+            m_jp2Target->close_box();
             result = true;
          }
       }
@@ -1578,7 +2061,7 @@ void ossimKakaduCompressor::initializeCodingParams(kdu_core::kdu_params* cod,
       if ( traceDebug() )
       {
          ossimNotify(ossimNotifyLevel_DEBUG)
-            << "quality type: " << getQualityTypeString() << "\n";
+            << "quality type: " << getQualityTypeString() << std::endl;
       }
 
       //---
@@ -1642,7 +2125,7 @@ void ossimKakaduCompressor::initializeCodingParams(kdu_core::kdu_params* cod,
             // Indicate that the final quality layer should include all
             // compressed bits.
             //---
-            m_layerByteSizes[19] = KDU_LONG_MAX;
+            m_layerByteSizes[19] = 0; // KDU_LONG_MAX;
 
             break;
          }
