@@ -407,6 +407,7 @@ bool ossimGdalWriter::writeFile()
          GDALDataType gdalType = getGdalDataType(theInputConnection->
                                                  getOutputScalarType());
          ossim_uint32 bandCount = theInputConnection->getNumberOfOutputBands();
+         
 				 
          theDataset = GDALCreate( theDriver ,
                                   theFilename.c_str(),
