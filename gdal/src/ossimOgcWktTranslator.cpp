@@ -19,6 +19,7 @@
 
 #include <cstdio>
 #include <gdal.h>
+#include <cpl_conv.h>
 #include <geovalues.h>
 
 #include "ossimOgcWktTranslator.h"
@@ -539,7 +540,7 @@ ossimString ossimOgcWktTranslator::fromOssimKwl(const ossimKeywordlist &kwl,
    if(exportString)
    {
       wktString = exportString;
-      OGRFree(exportString);
+      CPLFree(exportString);
    }
 
    return wktString;
@@ -1080,4 +1081,3 @@ ossimString ossimOgcWktTranslator::ossimToWktProjection(const ossimString& datum
    }
    return result;
 }
-

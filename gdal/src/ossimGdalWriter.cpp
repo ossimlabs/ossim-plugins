@@ -30,6 +30,7 @@
 #include <ossim/projection/ossimProjectionFactoryRegistry.h>
 #include <ossim/vpfutil/set.h>
 #include <cmath>
+#include <cstdio>
 #include <iterator>
 #include <sstream>
 using namespace std;
@@ -288,8 +289,16 @@ void ossimGdalWriter::checkColorLut()
                ossimImageChain* imageChain = PTR_CAST(ossimImageChain, imageChains[j].get());
                if (imageChain)
                {
-                  ossimConnectableObject::ConnectableObjectList imageHandlers =
-                     imageChain->findAllObjectsOfType(STATIC_TYPE_INFO(ossimImageHandler), false);
+                  ossimConnectableObject::ConnectableObjectList imageHandlers;
+                  const ossimImageChain::ConnectableObjectList& chainChildren = imageChain->imageChainList();
+                  for (ossim_uint32 childIdx = 0; childIdx < chainChildren.size(); ++childIdx)
+                  {
+                     const ossimRefPtr<ossimConnectableObject>& child = chainChildren[childIdx];
+                     if (child.valid() && child->canCastTo(STATIC_TYPE_INFO(ossimImageHandler)))
+                     {
+                        imageHandlers.push_back(child);
+                     }
+                  }
 
                   for (ossim_uint32 h= 0; h < imageHandlers.size(); h++)
                   {
@@ -495,10 +504,10 @@ bool ossimGdalWriter::writeFile()
                      if ( maxPix > 0.0 && minPix < maxPix )
                      {
                         char szValue[128];
-                        sprintf( szValue, "%.14g", minPix );
+                        std::snprintf( szValue, sizeof(szValue), "%.14g", minPix );
                         GDALSetMetadataItem( aBand, "STATISTICS_MINIMUM", szValue, 0 );
 
-                        sprintf( szValue, "%.14g", maxPix );
+                        std::snprintf( szValue, sizeof(szValue), "%.14g", maxPix );
                         GDALSetMetadataItem( aBand, "STATISTICS_MAXIMUM", szValue, 0 );
                      }
                   }
@@ -530,7 +539,7 @@ bool ossimGdalWriter::writeFile()
 
                   if(aBand)
                   {
-                     GDALRasterIO( aBand,
+                     const CPLErr ioStatus = GDALRasterIO( aBand,
                         GF_Write,
                         offset.x,
                         offset.y,
@@ -542,6 +551,13 @@ bool ossimGdalWriter::writeFile()
                         gdalType,
                         0,
                         0);
+                     if (ioStatus != CE_None)
+                     {
+                        ossimNotify(ossimNotifyLevel_WARN)
+                           << "ossimGdalWriter: GDALRasterIO write failed for band "
+                           << (band + 1) << " (error code: " << ioStatus << ")" << std::endl;
+                        break;
+                     }
                   }
 
                   ++tileNumber;

@@ -16,6 +16,7 @@
 #include <ossim/base/ossimKeywordlist.h>
 
 #include <ogr_api.h>
+#include <gdal.h>
 
 #include <fstream>
 #include <iostream>
@@ -95,7 +96,7 @@ ossimOgrInfo::~ossimOgrInfo()
 {
   if (m_ogrDatasource != NULL)
   {
-    OGRDataSource::DestroyDataSource(m_ogrDatasource);
+    GDALClose(reinterpret_cast<GDALDatasetH>(m_ogrDatasource));
     m_ogrDatasource = 0;
   }
 }
@@ -104,7 +105,7 @@ bool ossimOgrInfo::open(const ossimFilename& file)
 {
    if ( m_ogrDatasource )
    {
-      OGRDataSource::DestroyDataSource(m_ogrDatasource);
+      GDALClose(reinterpret_cast<GDALDatasetH>(m_ogrDatasource));
       m_ogrDatasource = 0;
    }
 
@@ -123,7 +124,7 @@ bool ossimOgrInfo::open(const ossimFilename& file)
 
       if ( !m_ogrDriver ) 
       {
-         OGRDataSource::DestroyDataSource( m_ogrDatasource );
+         GDALClose(reinterpret_cast<GDALDatasetH>(m_ogrDatasource));
          m_ogrDatasource = 0;
       }
    }

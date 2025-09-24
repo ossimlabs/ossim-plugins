@@ -27,6 +27,7 @@
 #include <ossim/projection/ossimEquDistCylProjection.h>
 
 #include <ogr_api.h>
+#include <cpl_conv.h>
 
 RTTI_DEF1(ossimOgrVectorTileSource,
           "ossimOgrVectorTileSource",
@@ -150,7 +151,15 @@ bool ossimOgrVectorTileSource::open()
                
                if (layer)
                {
-                  layer->GetExtent(&theBoundingExtent, true);
+                  const OGRErr extentStatus = layer->GetExtent(&theBoundingExtent, true);
+                  if (extentStatus != OGRERR_NONE)
+                  {
+                     ossimNotify(ossimNotifyLevel_WARN)
+                        << MODULE
+                        << " failed to fetch layer extent for layer " << i
+                        << " (error code: " << extentStatus << ")" << std::endl;
+                     continue;
+                  }
                   
                   ossimRefPtr<ossimProjection> proj = createProjFromReference(layer->GetSpatialRef());
                   ossimRefPtr<ossimImageGeometry> imageGeometry = 0;
@@ -477,7 +486,7 @@ ossimProjection* ossimOgrVectorTileSource::createProjFromReference(OGRSpatialRef
       ossimNotify(ossimNotifyLevel_DEBUG) << "wktString === " << wktString << std::endl;
       ossimNotify(ossimNotifyLevel_DEBUG) << "KWL === " << kwl << std::endl;
    }
-   OGRFree(wktString);
+   CPLFree(wktString);
    if(traceDebug())
    {
       ossimNotify(ossimNotifyLevel_DEBUG) << "ossimOgrVectorTileSource::createProjFromReference:   returning........" << std::endl;

@@ -45,6 +45,7 @@
 #include <ossim/support_data/ossimFgdcXmlDoc.h>
 #include <ogr_api.h>
 #include <sstream>
+#include <cpl_conv.h>
 
 using namespace std;
 
@@ -425,8 +426,14 @@ bool ossimGdalOgrVectorAnnotation::open(const ossimFilename& file)
                
                if(i == 0)
                {
-                  layer->GetExtent(&theBoundingExtent, true);
-                  if(mapProj)
+                  const OGRErr extentStatus = layer->GetExtent(&theBoundingExtent, true);
+                  if(extentStatus != OGRERR_NONE)
+                  {
+                     ossimNotify(ossimNotifyLevel_WARN)
+                        << "ossimGdalOgrVectorAnnotation: failed to fetch layer extent (error code: "
+                        << extentStatus << ")" << std::endl;
+                  }
+                  else if(mapProj)
                   {
                      if (layer->GetSpatialRef())
                      {
@@ -467,8 +474,14 @@ bool ossimGdalOgrVectorAnnotation::open(const ossimFilename& file)
                else
                {
                   OGREnvelope extent;
-                  layer->GetExtent(&extent, true);
-                  if(mapProj)
+                  const OGRErr extentStatus = layer->GetExtent(&extent, true);
+                  if(extentStatus != OGRERR_NONE)
+                  {
+                     ossimNotify(ossimNotifyLevel_WARN)
+                        << "ossimGdalOgrVectorAnnotation: failed to fetch extent for layer index "
+                        << i << " (error code: " << extentStatus << ")" << std::endl;
+                  }
+                  else if(mapProj)
                   {
                      ossimDrect rect(extent.MinX,
                                      extent.MaxY,
@@ -1312,8 +1325,15 @@ void ossimGdalOgrVectorAnnotation::initializeTables()
             ossimMapProjection* mapProj = PTR_CAST(ossimMapProjection, proj.get());
             
             layer->ResetReading();
-            layer->GetExtent(&extent, true);
+            const OGRErr extentStatus = layer->GetExtent(&extent, true);
             layer->ResetReading();
+            if(extentStatus != OGRERR_NONE)
+            {
+               ossimNotify(ossimNotifyLevel_WARN)
+                  << "ossimGdalOgrVectorAnnotation: failed to fetch extent while loading features (error code: "
+                  << extentStatus << ")" << std::endl;
+               continue;
+            }
 
             OGRFeature* feature = NULL;
             if(mapProj)
@@ -1586,7 +1606,7 @@ ossimProjection* ossimGdalOgrVectorAnnotation::createProjFromReference(OGRSpatia
       ossimNotify(ossimNotifyLevel_DEBUG) << "wktString === " << wktString << std::endl;
       ossimNotify(ossimNotifyLevel_DEBUG) << "KWL === " << kwl << std::endl;
    }
-   OGRFree(wktString);
+   CPLFree(wktString);
    if(traceDebug())
    {
       ossimNotify(ossimNotifyLevel_DEBUG) << "ossimGdalOgrVectorAnnotation::createProjFromReference:   returning........" << std::endl;
