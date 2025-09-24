@@ -120,7 +120,7 @@ int ossimCurlHttpRequest::curlWriteResponseHeader(void *buffer, size_t size, siz
 
 ossim_int64 ossimCurlHttpRequest::getContentLength()const
 {
-   double contentLength=-1;
+   curl_off_t contentLength = -1;
    curl_easy_reset(m_curl);
    clearLastError();
    ossimString urlString = getUrl().toString();
@@ -163,7 +163,7 @@ ossim_int64 ossimCurlHttpRequest::getContentLength()const
    if(result)
    {
       response->convertHeaderStreamToKeywordlist();
-      rc = curl_easy_getinfo(m_curl, CURLINFO_CONTENT_LENGTH_DOWNLOAD, &contentLength);
+      rc = curl_easy_getinfo(m_curl, CURLINFO_CONTENT_LENGTH_DOWNLOAD_T, &contentLength);
    //if(rc>=1) contentLength = -1;
    // response->convertHeaderStreamToKeywordlist();
    //std::cout << response->headerKwl() << "\n";
@@ -174,7 +174,7 @@ ossim_int64 ossimCurlHttpRequest::getContentLength()const
       //std::cout << curl_easy_strerror((CURLcode)rc) << std::endl;
    }
 
-   return static_cast<ossim_int64> (contentLength);
+   return static_cast<ossim_int64>(contentLength);
 }
 
 void ossimCurlHttpRequest::setDefaultSSL(CURL* curl)const
