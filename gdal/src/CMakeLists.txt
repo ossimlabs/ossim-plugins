@@ -16,7 +16,19 @@ find_package(SHP)
 find_package(CURL)
 find_package(EXPAT)
 find_library(SQLITE_LIBRARY NAMES sqlite sqlite3)
-find_library(PROJ4_LIBRARY NAMES proj proj4)
+# PROJ: try default search; add MacPorts path if present
+if (APPLE AND EXISTS "/opt/local/lib/proj9/lib")
+  find_library(PROJ4_LIBRARY NAMES proj proj4
+               PATHS 
+                 /opt/local/lib/proj9/lib
+                 /opt/local/lib 
+                 /usr/local/lib 
+                 /usr/lib 
+                 /usr/lib64 
+                 /usr/lib/x86_64-linux-gnu)
+else()
+  find_library(PROJ4_LIBRARY NAMES proj proj4)
+endif()
 
 # OSSIM - Required: 
 find_package(ossim)
@@ -89,4 +101,3 @@ OSSIM_LINK_LIBRARY(${LIB_NAME}
                    HEADERS "${OSSIMPLUGIN_HEADERS}"
 		   SOURCE_FILES "${OSSIMPLUGIN_SRCS}"
                    INSTALL_LIB)
-
