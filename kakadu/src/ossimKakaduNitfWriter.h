@@ -24,6 +24,7 @@
 
 class ossimKakaduCompressor;
 class ossimKeywordlist;
+class ossimNitfDesInformation;
 
 class ossimKakaduNitfWriter : public ossimNitfWriterBase
 {
@@ -140,6 +141,25 @@ public:
    virtual void addRegisteredTag(ossimRefPtr<ossimNitfRegisteredTag> registeredTag,
                                  bool unique, const ossim_uint32& ownerIndex,
                                  const ossimString& tagType);
+
+   /**
+    * @brief Adds a Data Extension Segment(DES) to nitf file header.
+    *
+    * @notes:
+    *
+    * The ossimNitfDesInformation contains the segment security metadata
+    * and a ref pointer to a ossimNitfRegisteredDes record.
+    *
+    * The ossimNitfRegisteredDes contains the DES sub header and a DES
+    * data (User-Defined Data) section.
+    *
+    * This ultimately adds to the ossimNitfFileHeader::theDesList which of type
+    * std::vector<ossimNitfDesInformation> which is written out after
+    * the image segment to the nitf file.
+    *
+    * @param des
+    */
+   virtual void addDesInfo(const ossimNitfDesInformation& des);
 
    /**
     * Sets the nitf output block size.  Must be divisible by 16.

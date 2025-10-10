@@ -31,6 +31,7 @@
 #include <ossim/imaging/ossimImageData.h>
 #include <ossim/imaging/ossimImageSource.h>
 
+#include <ossim/support_data/ossimNitfDesInformation.h>
 #include <ossim/support_data/ossimNitfCommon.h>
 #include <ossim/support_data/ossimNitfFileHeader.h>
 #include <ossim/support_data/ossimNitfFileHeaderV2_1.h>
@@ -39,6 +40,7 @@
 #include <ossim/support_data/ossimNitfJ2klraTag.h>
 
 #include <ostream>
+#include <vector>
 
 static const ossimIpt DEFAULT_TILE_SIZE(1024, 1024);
 
@@ -212,6 +214,7 @@ bool ossimKakaduNitfWriter::writeStream()
 
    std::streampos endOfFileHdrPos;
    std::streampos endOfImgHdrPos;
+   std::streampos endOfImgPos;
    std::streampos endOfFilePos;
    
    // Container record withing NITF file header.
@@ -385,6 +388,21 @@ bool ossimKakaduNitfWriter::writeStream()
    } // End of tile loop in the line (height) direction.
          
    m_compressor->finish();
+
+   endOfImgPos = m_outputStream->tellp();
+   
+   if (m_fileHeader->getDesInfoList().size())
+   {
+      //---
+      // Write out the Data Extension Segments(DES):
+      // getDesInfoList() is a std::vector<ossimNitfDesInformation>&
+      //---
+      auto& v = m_fileHeader->getDesInfoList();
+      for ( auto&& i : v )
+      {
+         i.writeStream(*m_outputStream);
+      }
+   }
    
    // Get the file length.
    endOfFilePos = m_outputStream->tellp();
@@ -402,13 +420,13 @@ bool ossimKakaduNitfWriter::writeStream()
    // Set the file header length.
    length = endOfFileHdrPos;
    m_fileHeader->setHeaderLength(static_cast<ossim_uint64>(length));            
+
    // Set the image sub header length.
    length = endOfImgHdrPos - endOfFileHdrPos;
-   
    imageInfoRecord.setSubheaderLength(static_cast<ossim_uint64>(length));
    
    // Set the image length.
-   length = endOfFilePos - endOfImgHdrPos;
+   length = endOfImgPos - endOfImgHdrPos;
    imageInfoRecord.setImageLength(static_cast<ossim_uint64>(length));
    
    m_fileHeader->replaceImageInfoRecord(0, imageInfoRecord);
@@ -543,6 +561,11 @@ void ossimKakaduNitfWriter::addRegisteredTag(ossimRefPtr<ossimNitfRegisteredTag>
          // Do nothing
       }
    }
+}
+
+void ossimKakaduNitfWriter::addDesInfo(const ossimNitfDesInformation& des)
+{
+   m_fileHeader->addDes(des);
 }
 
 bool ossimKakaduNitfWriter::getOutputHasInternalOverviews( void ) const
