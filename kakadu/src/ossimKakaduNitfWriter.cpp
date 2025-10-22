@@ -87,8 +87,13 @@ ossimKakaduNitfWriter::ossimKakaduNitfWriter()
    // Since the internal nitf tags are not very accurate, write an external
    // geometry out as default behavior.  Users can disable this via the
    // property interface or keyword list.
+   //
+   // Update: External geom shut off.
+   // You can use --writer-prop "create_external_geometry=1" to enable via command
+   // line apps, e.g. ossim-chipper
+   // drb 22 Oct. 2025
    //---
-   setWriteExternalGeometryFlag(true);
+   // setWriteExternalGeometryFlag(true);
 
    // Set the output image type in the base class.
    setOutputImageType(getShortName());
