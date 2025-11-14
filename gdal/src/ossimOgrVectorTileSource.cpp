@@ -125,7 +125,7 @@ bool ossimOgrVectorTileSource::open()
                OGRLayer* layer = theDataSource->GetLayer(i);
                if(layer)
                {
-                  OGRSpatialReference* spatialReference = layer->GetSpatialRef();
+                  const OGRSpatialReference* spatialReference = layer->GetSpatialRef();
                   
                   if(!spatialReference)
                   {
@@ -462,7 +462,7 @@ void ossimOgrVectorTileSource::getEntryList(std::vector<ossim_uint32>& entryList
    }
 }
 
-ossimProjection* ossimOgrVectorTileSource::createProjFromReference(OGRSpatialReference* reference)const
+ossimProjection* ossimOgrVectorTileSource::createProjFromReference(const OGRSpatialReference* reference)const
 {
    if(traceDebug())
    {

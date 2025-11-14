@@ -358,7 +358,7 @@ bool ossimGdalOgrVectorAnnotation::open(const ossimFilename& file)
             
             if(layer)
             {
-               OGRSpatialReference* spatialReference = layer->GetSpatialRef();
+               const OGRSpatialReference* spatialReference = layer->GetSpatialRef();
                theLayersToRenderFlagList[i] = true;
                m_layerNames.push_back(ossimString(layer->GetLayerDefn()->GetName()));
                
@@ -1574,7 +1574,7 @@ void ossimGdalOgrVectorAnnotation::getFeature(vector<ossimAnnotationObject*>& fe
    }
 }
 
-ossimProjection* ossimGdalOgrVectorAnnotation::createProjFromReference(OGRSpatialReference* reference)const
+ossimProjection* ossimGdalOgrVectorAnnotation::createProjFromReference(const OGRSpatialReference* reference)const
 {
    if(traceDebug())
    {

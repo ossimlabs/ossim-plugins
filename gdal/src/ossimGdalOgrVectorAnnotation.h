@@ -140,7 +140,7 @@ protected:
                     const ossimIrect& rect);
    void getFeature(std::vector<ossimAnnotationObject*>& featureList,
                    long id);
-   ossimProjection* createProjFromReference(OGRSpatialReference* reference)const;
+   ossimProjection* createProjFromReference(const OGRSpatialReference* reference)const;
    void initializeTables();
    void deleteTables();
    void updateAnnotationSettings();
