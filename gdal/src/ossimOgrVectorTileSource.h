@@ -177,7 +177,7 @@ public:
     */
    virtual void getEntryList(std::vector<ossim_uint32>& entryList) const;
 
-   ossimProjection* createProjFromReference(OGRSpatialReference* reference) const;
+   ossimProjection* createProjFromReference(const OGRSpatialReference* reference) const;
 
    ossimMapProjection* createDefaultProj();
 
