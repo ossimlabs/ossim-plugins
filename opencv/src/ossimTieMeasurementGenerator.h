@@ -15,7 +15,8 @@
 #include <ossim/base/ossimString.h>
 #include <ossim/base/ossimTieMeasurementGeneratorInterface.h>
 #include "ossimIvtGeomXform.h"
-#include <opencv/cv.h>
+// #include <opencv/cv.h>
+#include <opencv2/opencv.hpp>
 #include <opencv2/features2d/features2d.hpp>
 #include <ctime>
 #include <vector>
@@ -33,7 +34,7 @@ public:
 
    // Constructor/initializer
    ossimTieMeasurementGenerator();
-   bool init(std::ostream& report = cout);
+   bool init(std::ostream& report = std::cout);
 
    virtual bool setImageList(std::vector<ossimImageSource*> src);
 

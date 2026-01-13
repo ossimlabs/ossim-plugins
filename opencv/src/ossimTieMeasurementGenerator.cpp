@@ -22,7 +22,8 @@
 
 #include "ossimIvtGeomXformVisitor.h"
 
-#include <opencv/highgui.h>
+// #include <opencv/highgui.h>
+// #include <opencv2/highgui_c.h> Not sure if this is needed. drb
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/flann/flann.hpp>
@@ -187,10 +188,10 @@ bool ossimTieMeasurementGenerator::run()
             << "DEBUG: ...ossimTieMeasurementGenerator::run" << std::endl;
          ossimNotify(ossimNotifyLevel_DEBUG)<<" m_patchRefA: "<<m_patchRefA<<" size: "<<m_patchSizeA<<std::endl; 
          ossimNotify(ossimNotifyLevel_DEBUG)<<" m_patchRefB: "<<m_patchRefB<<" size: "<<m_patchSizeB<<std::endl; 
-         ossimNotify(ossimNotifyLevel_DEBUG)<<" rectA = "<<rectA<<endl;
-         ossimNotify(ossimNotifyLevel_DEBUG)<<" rectB = "<<rectB<<endl;
-         ossimNotify(ossimNotifyLevel_DEBUG)<<" m_src A ossimScalarType = "<<m_src[m_spIndexA]->getOutputScalarType()<<endl;
-         ossimNotify(ossimNotifyLevel_DEBUG)<<" m_src B ossimScalarType = "<<m_src[m_spIndexB]->getOutputScalarType()<<endl;
+         ossimNotify(ossimNotifyLevel_DEBUG)<<" rectA = "<<rectA<<std::endl;
+         ossimNotify(ossimNotifyLevel_DEBUG)<<" rectB = "<<rectB<<std::endl;
+         ossimNotify(ossimNotifyLevel_DEBUG)<<" m_src A ossimScalarType = "<<m_src[m_spIndexA]->getOutputScalarType()<<std::endl;
+         ossimNotify(ossimNotifyLevel_DEBUG)<<" m_src B ossimScalarType = "<<m_src[m_spIndexB]->getOutputScalarType()<<std::endl;
       }
 
       // Get the patches
@@ -217,8 +218,8 @@ bool ossimTieMeasurementGenerator::run()
       else
       {
          // Detector
-         vector<cv::KeyPoint> keypointsA;
-         vector<cv::KeyPoint> keypointsB;
+         std::vector<cv::KeyPoint> keypointsA;
+         std::vector<cv::KeyPoint> keypointsB;
          m_detector->detect(m_imgA, keypointsA);
          m_detector->detect(m_imgB, keypointsB);
          
@@ -715,7 +716,8 @@ void ossimTieMeasurementGenerator::showCvResultsWindow(
    cv::namedWindow(m_cvWindowName.string());
    cv::Mat imgMatch;
    cv::drawMatches(m_imgA, keypointsA, m_imgB, keypointsB, goodMatches, imgMatch,
-       cv::Scalar::all(-1), cv::Scalar::all(-1), vector<char>(), cv::DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);      
+                   cv::Scalar::all(-1), cv::Scalar::all(-1), std::vector<char>(),
+                   cv::DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);      
 
    // Scale down the results window if necessary using a somewhat arbitrary factor for now
    double rRatio = m_maxCvWindowDim / std::max(m_patchSizeA.y, m_patchSizeB.y);
