@@ -1,11 +1,6 @@
+cmake_minimum_required(VERSION 3.5)
 project(ossim-plugins)
 MESSAGE("**********************Setting up ossimplugins********************")
-
-if(NOT APPLE)
-  cmake_minimum_required(VERSION 2.6)
-else(NOT APPLE)
-  cmake_minimum_required(VERSION 2.8)
-endif(NOT APPLE)
 
 include(OssimVersion)
 include(OssimCommonVariables)
