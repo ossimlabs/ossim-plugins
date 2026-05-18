@@ -185,7 +185,7 @@ bool ossimGdalTileSource::open()
       }
       
       // Check for sub data sets...
-      char** papszMetadata = GDALGetMetadata( theDataset, "SUBDATASETS" );
+      CSLConstList papszMetadata = GDALGetMetadata( theDataset, "SUBDATASETS" );
       if( CSLCount(papszMetadata) > 0 )
       {
          theSubDatasets.clear();
@@ -323,7 +323,7 @@ bool ossimGdalTileSource::open()
 
    // Establish raster-pixel alignment type:
    thePixelType = OSSIM_PIXEL_IS_POINT; //default
-   char** papszMetadata = GDALGetMetadata( bBand, NULL );
+   CSLConstList papszMetadata = GDALGetMetadata( bBand, NULL );
    if (CSLCount(papszMetadata) > 0)
    {
       for(int i = 0; papszMetadata[i] != NULL; i++ )

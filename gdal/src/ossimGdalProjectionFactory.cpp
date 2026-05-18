@@ -71,7 +71,7 @@ ossimProjection* ossimGdalProjectionFactory::createProjection(const ossimFilenam
       }
       if(entryIdx != 0)
       {
-         char** papszMetadata = GDALGetMetadata( h, "SUBDATASETS" );
+         CSLConstList papszMetadata = GDALGetMetadata( h, "SUBDATASETS" );
 
          //---
          // ??? (drb) Should this be:
@@ -231,7 +231,7 @@ ossimProjection* ossimGdalProjectionFactory::createProjection(const ossimFilenam
             // Conventionally, HFA stores the pixel alignment type for each band. Here assume all
             // bands are the same. Consider only the first band:
             GDALRasterBandH bBand = GDALGetRasterBand( h, 1 );
-            char** papszMetadata = GDALGetMetadata( bBand, NULL );
+            CSLConstList papszMetadata = GDALGetMetadata( bBand, NULL );
             if (CSLCount(papszMetadata) > 0)
             {
                for(int i = 0; papszMetadata[i] != NULL; i++ )

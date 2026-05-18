@@ -79,7 +79,7 @@ bool ossimHdfInfo::open(const ossimFilename& file)
        GDALDatasetH dataset = GDALOpen(theFile.c_str(), GA_ReadOnly);
        if (dataset != 0)
        {
-          char** papszMetadata = GDALGetMetadata(dataset, NULL);
+          CSLConstList papszMetadata = GDALGetMetadata(dataset, NULL);
           if( CSLCount(papszMetadata) > 0 )
           {
              for(ossim_uint32 metaIndex = 0; papszMetadata[metaIndex] != 0; ++metaIndex)
@@ -163,7 +163,7 @@ std::ostream& ossimHdfInfo::print(std::ostream& out) const
                }
                out << prefixStr << nameStr << subDatasetName << "\n";
 
-               char** papszMetadata = GDALGetMetadata(dataset, NULL);
+               CSLConstList papszMetadata = GDALGetMetadata(dataset, NULL);
                if( CSLCount(papszMetadata) > 0 )
                {
                   for(ossim_uint32 metaIndex = 0; papszMetadata[metaIndex] != 0; ++metaIndex)
