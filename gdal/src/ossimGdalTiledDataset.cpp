@@ -474,8 +474,12 @@ void GDALRegister_MEMTiled()
 
         poDriver->pfnOpen   = MEMDataset::Open;
 
-         // Wrapper function to cast MEMDataset::Create to match GDALDataset's function pointer
+         // Wrapper function to cast MEMDataset::Create to match GDALDataset's function pointer.
+#if GDAL_VERSION_NUM >= 3130000
+         poDriver->pfnCreate = [](const char *pszName, int nXSize, int nYSize, int nBands, GDALDataType eType, CSLConstList papszOptions) -> GDALDataset * {
+#else
          poDriver->pfnCreate = [](const char *pszName, int nXSize, int nYSize, int nBands, GDALDataType eType, char **papszOptions) -> GDALDataset * {
+#endif
             return MEMDataset::Create(pszName, nXSize, nYSize, nBands, eType, papszOptions);
          }; 
 
