@@ -71,6 +71,24 @@ static const ossimString COMPRESSION_QUALITY[] = { "unknown",
                                                    "epje" };
 
 //---
+// Applies the JPEG2000 DC level shift for unsigned samples: computes
+// (value << upshift) - 2^31 without signed overflow.
+//
+// Doing that subtraction in signed arithmetic overflows for every non-negative
+// operand. It is undefined behaviour, and at -O3 the optimizer used it to turn
+// the arithmetic right shift that follows into a logical one, so each sample
+// was encoded as v + 2^15 instead of v - 2^15. Decoders then applied their own
+// level shift and clipped, producing an all-white image.
+//---
+static inline kdu_core::kdu_int32 ossimKakaduDcLevelShift(
+   kdu_core::kdu_int32 value, int upshift)
+{
+   const kdu_core::kdu_uint32 shifted =
+      static_cast<kdu_core::kdu_uint32>(value) << upshift;
+   return static_cast<kdu_core::kdu_int32>(shifted - 0x80000000u);
+}
+
+//---
 // transfer_xxx functions copied from kakaud code:
 //---
 static void transfer_bytes(
@@ -115,7 +133,8 @@ static void transfer_bytes(
                dp->fval = scale * (float)(((kdu_core::kdu_int32) *src)<<upshift);
          else
             for (; num_samples > 0; num_samples--, src+=sample_gap, dp++)
-               dp->fval = scale*(float)((((kdu_core::kdu_int32) *src)<<upshift)-(1<<31));
+               dp->fval = scale*(float)ossimKakaduDcLevelShift(
+                  (kdu_core::kdu_int32) *src, upshift);
       }
       else
       { 
@@ -125,7 +144,8 @@ static void transfer_bytes(
                dp->ival = (((kdu_core::kdu_int32) *src)<<upshift) >> downshift;
          else
             for (; num_samples > 0; num_samples--, src+=sample_gap, dp++)
-               dp->ival = ((((kdu_core::kdu_int32) *src)<<upshift)-(1<<31)) >> downshift;
+               dp->ival = ossimKakaduDcLevelShift(
+                  (kdu_core::kdu_int32) *src, upshift) >> downshift;
       }
    }
 }
@@ -173,7 +193,8 @@ static void transfer_words(
                dp->fval = scale * (float)(((kdu_core::kdu_int32) *src)<<upshift);
          else
             for (; num_samples > 0; num_samples--, src+=sample_gap, dp++)
-               dp->fval = scale*(float)((((kdu_core::kdu_int32) *src)<<upshift)-(1<<31));
+               dp->fval = scale*(float)ossimKakaduDcLevelShift(
+                  (kdu_core::kdu_int32) *src, upshift);
       }
       else
       { 
@@ -183,7 +204,8 @@ static void transfer_words(
                dp->ival = (((kdu_core::kdu_int32) *src)<<upshift) >> downshift;
          else
             for (; num_samples > 0; num_samples--, src+=sample_gap, dp++)
-               dp->ival = ((((kdu_core::kdu_int32) *src)<<upshift)-(1<<31)) >> downshift;
+               dp->ival = ossimKakaduDcLevelShift(
+                  (kdu_core::kdu_int32) *src, upshift) >> downshift;
       }
    }
 }
@@ -205,7 +227,7 @@ void transfer_dwords(kdu_core::kdu_line_buf &dest, kdu_core::kdu_int32 *src,
          else
             for (; num_samples > 0; num_samples--, src+=sample_gap, dp++)
                dp->ival = (kdu_core::kdu_int16)
-                  ((((*src) << upshift)-0x80000000) >> (32-KDU_FIX_POINT));
+                  (ossimKakaduDcLevelShift(*src, upshift) >> (32-KDU_FIX_POINT));
       }
       else
       { // Reversible processing
@@ -217,7 +239,7 @@ void transfer_dwords(kdu_core::kdu_line_buf &dest, kdu_core::kdu_int32 *src,
          else
             for (; num_samples > 0; num_samples--, src+=sample_gap, dp++)
                dp->ival = (kdu_core::kdu_int16)
-                  ((((*src) << upshift) - 0x80000000) >> downshift);
+                  (ossimKakaduDcLevelShift(*src, upshift) >> downshift);
       }
    }
    else
@@ -232,7 +254,7 @@ void transfer_dwords(kdu_core::kdu_line_buf &dest, kdu_core::kdu_int32 *src,
                dp->fval = scale * (float)((*src)<<upshift);
          else
             for (; num_samples > 0; num_samples--, src+=sample_gap, dp++)
-               dp->fval = scale * (float)(((*src)<<upshift)-(1<<31));
+               dp->fval = scale * (float)ossimKakaduDcLevelShift(*src, upshift);
       }
       else
       {
@@ -242,7 +264,7 @@ void transfer_dwords(kdu_core::kdu_line_buf &dest, kdu_core::kdu_int32 *src,
                dp->ival = ((*src)<<upshift) >> downshift;
          else
             for (; num_samples > 0; num_samples--, src+=sample_gap, dp++)
-               dp->ival = (((*src)<<upshift)-(1<<31)) >> downshift;
+               dp->ival = ossimKakaduDcLevelShift(*src, upshift) >> downshift;
       }
    }
 }
