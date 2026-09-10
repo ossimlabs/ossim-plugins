@@ -26,5 +26,14 @@ add_executable(ossim-kakadu-shift-test ossim-kakadu-shift-test.cpp)
 set_target_properties(ossim-kakadu-shift-test
    PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
+#---
+# enable_testing() must be called in this scope for add_test() to do anything.
+# Nothing in the super-build calls it at top level -- ossim-maxar-plugin's
+# test/CMakeLists.txt calls it itself for the same reason. Without this,
+# add_test() below is silently a no-op: the binary builds into bin/ but no
+# CTestTestfile.cmake is generated and ctest never sees the test.
+#---
+enable_testing()
+
 add_test(NAME ossim-kakadu-shift-test
          COMMAND ossim-kakadu-shift-test)
