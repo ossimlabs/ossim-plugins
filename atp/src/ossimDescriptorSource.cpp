@@ -11,7 +11,22 @@
 #include "AtpGenerator.h"
 #include <ossim/imaging/ossimImageDataFactory.h>
 
-#include <opencv2/xfeatures2d.hpp>
+// xfeatures2d ships only with opencv_contrib. Use it when present; otherwise fall
+// back to the main-module cv::SIFT, which OpenCV moved out of contrib in 4.4.
+#if defined(__has_include)
+#  if __has_include(<opencv2/xfeatures2d.hpp>)
+#    include <opencv2/xfeatures2d.hpp>
+#    define ATP_HAVE_XFEATURES2D 1
+#  endif
+#endif
+
+#if (CV_VERSION_MAJOR > 4) || (CV_VERSION_MAJOR == 4 && CV_VERSION_MINOR >= 4)
+#  define ATP_SIFT cv::SIFT
+#elif defined(ATP_HAVE_XFEATURES2D)
+#  define ATP_SIFT cv::xfeatures2d::SIFT
+#else
+#  error "SIFT unavailable: need OpenCV >= 4.4 or opencv_contrib"
+#endif
 
 using namespace std;
 
@@ -143,9 +158,18 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
    else if(descriptorType == "ORB")
       detector = cv::ORB::create();
    else if(descriptorType == "SURF")
+   {
+#ifdef ATP_HAVE_XFEATURES2D
       detector = cv::xfeatures2d::SURF::create();
+#else
+      CWARN << MODULE << " WARNING: SURF requires opencv_contrib built with the "
+               "nonfree modules (port install opencv4 +contrib +nonfree). "
+               "Using SIFT instead.\n";
+      detector = ATP_SIFT::create();
+#endif
+   }
    else if(descriptorType == "SIFT")
-      detector = cv::xfeatures2d::SIFT::create();
+      detector = ATP_SIFT::create();
    else
    {
       CWARN << MODULE << " WARNING: No such descriptor as " << descriptorType << "\n";
