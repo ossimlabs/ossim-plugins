@@ -176,6 +176,16 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
       return m_tile;
    }
 
+   // Every branch above either assigns a detector or returns, but create() can
+   // still hand back an empty Ptr for a type the OpenCV build does not carry.
+   // Without this, the dereference below is a null deref.
+   if (detector.empty())
+   {
+      CWARN << MODULE << " WARNING: Descriptor " << descriptorType
+            << " is not available in this OpenCV build\n";
+      return m_tile;
+   }
+
 #if 1
    detector->detectAndCompute(queryImg, cv::noArray(), kpA, desA);
    detector->detectAndCompute(trainImg, cv::noArray(), kpB, desB);
@@ -280,7 +290,7 @@ ossimRefPtr<ossimImageData> ossimDescriptorSource::getTile(const ossimIrect& til
       matcher->knnMatch(desA, desB, matches, k);
    }
 
-   float minDistance = INT_MAX;
+   float minDistance = static_cast<float>(INT_MAX);
    float maxDistance = 0;
 
    // Find the highest distance to compute the relative confidence of each match
