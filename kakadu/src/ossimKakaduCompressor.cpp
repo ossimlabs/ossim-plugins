@@ -15,6 +15,7 @@
 #include "ossimKakaduCompressedTarget.h"
 #include "ossimKakaduKeywords.h"
 #include "ossimKakaduMembroker.h"
+#include "ossimKakaduShift.h"
 
 #include <ossim/base/ossimBooleanProperty.h>
 #include <ossim/base/ossimCommon.h>
@@ -69,24 +70,6 @@ static const ossimString COMPRESSION_QUALITY[] = { "unknown",
                                                    "lossy2",
                                                    "lossy3",
                                                    "epje" };
-
-//---
-// Applies the JPEG2000 DC level shift for unsigned samples: computes
-// (value << upshift) - 2^31 without signed overflow.
-//
-// Doing that subtraction in signed arithmetic overflows for every non-negative
-// operand. It is undefined behaviour, and at -O3 the optimizer used it to turn
-// the arithmetic right shift that follows into a logical one, so each sample
-// was encoded as v + 2^15 instead of v - 2^15. Decoders then applied their own
-// level shift and clipped, producing an all-white image.
-//---
-static inline kdu_core::kdu_int32 ossimKakaduDcLevelShift(
-   kdu_core::kdu_int32 value, int upshift)
-{
-   const kdu_core::kdu_uint32 shifted =
-      static_cast<kdu_core::kdu_uint32>(value) << upshift;
-   return static_cast<kdu_core::kdu_int32>(shifted - 0x80000000u);
-}
 
 //---
 // transfer_xxx functions copied from kakaud code:
@@ -163,10 +146,11 @@ static void transfer_words(
       { 
          if (is_signed)
             for (; num_samples > 0; num_samples--, src+=sample_gap, dp++)
-               dp->ival = ((kdu_core::kdu_int16)((*src)<<upshift)) >> (16-KDU_FIX_POINT);
+               dp->ival = ((kdu_core::kdu_int16)ossimKakaduSignedUpshift(*src, upshift)) >>
+                  (16-KDU_FIX_POINT);
          else
             for (; num_samples > 0; num_samples--, src+=sample_gap, dp++)
-               dp->ival = ((kdu_core::kdu_int16)(((*src) << upshift) - (1<<15))) >>
+               dp->ival = ((kdu_core::kdu_int16)(ossimKakaduSignedUpshift(*src, upshift) - (1<<15))) >>
                   (16-KDU_FIX_POINT);
       }
       else
@@ -174,10 +158,10 @@ static void transfer_words(
          int downshift = 16-original_bits; assert(downshift >= 0);
          if (is_signed)
             for (; num_samples > 0; num_samples--, src+=sample_gap, dp++)
-               dp->ival = ((kdu_core::kdu_int16)((*src) << upshift)) >> downshift;
+               dp->ival = ((kdu_core::kdu_int16)ossimKakaduSignedUpshift(*src, upshift)) >> downshift;
          else
             for (; num_samples > 0; num_samples--, src+=sample_gap, dp++)
-               dp->ival = ((kdu_core::kdu_int16)(((*src) << upshift) - (1<<15))) >>
+               dp->ival = ((kdu_core::kdu_int16)(ossimKakaduSignedUpshift(*src, upshift) - (1<<15))) >>
                   downshift;
       }
    }
@@ -190,7 +174,7 @@ static void transfer_words(
          float scale = 1.0F / (((float)(1<<16)) * ((float)(1<<16)));
          if (is_signed)
             for (; num_samples > 0; num_samples--, src+=sample_gap, dp++)
-               dp->fval = scale * (float)(((kdu_core::kdu_int32) *src)<<upshift);
+               dp->fval = scale * (float)ossimKakaduSignedUpshift(*src, upshift);
          else
             for (; num_samples > 0; num_samples--, src+=sample_gap, dp++)
                dp->fval = scale*(float)ossimKakaduDcLevelShift(
@@ -201,7 +185,7 @@ static void transfer_words(
          int downshift = 32-original_bits; assert(downshift >= 0);
          if (is_signed)
             for (; num_samples > 0; num_samples--, src+=sample_gap, dp++)
-               dp->ival = (((kdu_core::kdu_int32) *src)<<upshift) >> downshift;
+               dp->ival = ossimKakaduSignedUpshift(*src, upshift) >> downshift;
          else
             for (; num_samples > 0; num_samples--, src+=sample_gap, dp++)
                dp->ival = ossimKakaduDcLevelShift(
@@ -223,7 +207,7 @@ void transfer_dwords(kdu_core::kdu_line_buf &dest, kdu_core::kdu_int32 *src,
           if (is_signed)
             for (; num_samples > 0; num_samples--, src+=sample_gap, dp++)
                dp->ival = (kdu_core::kdu_int16)
-                  (((*src) << upshift) >> (32-KDU_FIX_POINT));
+                  (ossimKakaduSignedUpshift(*src, upshift) >> (32-KDU_FIX_POINT));
          else
             for (; num_samples > 0; num_samples--, src+=sample_gap, dp++)
                dp->ival = (kdu_core::kdu_int16)
@@ -235,7 +219,7 @@ void transfer_dwords(kdu_core::kdu_line_buf &dest, kdu_core::kdu_int32 *src,
          if (is_signed)
             for (; num_samples > 0; num_samples--, src+=sample_gap, dp++)
                dp->ival = (kdu_core::kdu_int16)
-                  (((*src) << upshift) >> downshift);
+                  (ossimKakaduSignedUpshift(*src, upshift) >> downshift);
          else
             for (; num_samples > 0; num_samples--, src+=sample_gap, dp++)
                dp->ival = (kdu_core::kdu_int16)
@@ -251,7 +235,7 @@ void transfer_dwords(kdu_core::kdu_line_buf &dest, kdu_core::kdu_int32 *src,
          float scale = 1.0F / (((float)(1<<16)) * ((float)(1<<16)));
          if (is_signed)
             for (; num_samples > 0; num_samples--, src+=sample_gap, dp++)
-               dp->fval = scale * (float)((*src)<<upshift);
+               dp->fval = scale * (float)ossimKakaduSignedUpshift(*src, upshift);
          else
             for (; num_samples > 0; num_samples--, src+=sample_gap, dp++)
                dp->fval = scale * (float)ossimKakaduDcLevelShift(*src, upshift);
@@ -261,7 +245,7 @@ void transfer_dwords(kdu_core::kdu_line_buf &dest, kdu_core::kdu_int32 *src,
          int downshift = 32-original_bits; assert(downshift >= 0);
          if (is_signed)
             for (; num_samples > 0; num_samples--, src+=sample_gap, dp++)
-               dp->ival = ((*src)<<upshift) >> downshift;
+               dp->ival = ossimKakaduSignedUpshift(*src, upshift) >> downshift;
          else
             for (; num_samples > 0; num_samples--, src+=sample_gap, dp++)
                dp->ival = ossimKakaduDcLevelShift(*src, upshift) >> downshift;
