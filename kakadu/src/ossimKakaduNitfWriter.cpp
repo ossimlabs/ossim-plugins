@@ -237,7 +237,6 @@ bool ossimKakaduNitfWriter::writeStream()
    // can still reach the output.
    //---
    addFileHeaderProperties( m_fileHeader.get() );
-   addImageHeaderProperties( m_imageHeader.get() );
    
    // Write to stream capturing the stream position for later.
    m_fileHeader->writeStream(*m_outputStream);
@@ -313,6 +312,14 @@ bool ossimKakaduNitfWriter::writeStream()
    m_imageHeader->addTag( tagInfo );
    
    // Write the image header to stream capturing the stream position.
+   //---
+   // Caller properties are an OVERRIDE, so they are applied here -- after
+   // the defaults above and immediately before serialisation -- not
+   // earlier.  A writer cannot know the spectral nature of a single band
+   // and defaults ICAT accordingly; an explicit ICAT from the caller has
+   // to win over that guess.
+   //---
+   addImageHeaderProperties( m_imageHeader.get() );
    m_imageHeader->writeStream(*m_outputStream);
    endOfImgHdrPos = m_outputStream->tellp();
    
