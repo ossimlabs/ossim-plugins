@@ -400,13 +400,11 @@ bool ossimKakaduNitfOverviewBuilder::execute()
                ossimNitfImageBandV2_1 bandInfo;
                for(ossim_uint32 band = 0; band < BANDS; ++band)
                {
-                  std::ostringstream out;
-                  
-                  out << std::setfill('0')
-                      << std::setw(2)
-                      << band;
-                  
-                  bandInfo.setBandRepresentation(out.str().c_str());
+                  // A legal default, never the band index; a caller overrides per band
+                  // with an IREPBANDnnn image header property.
+                  bandInfo.setBandRepresentation(
+                     ossimNitfImageHeaderV2_X::defaultBandRepresentation(
+                        iHdr->getRepresentation(), band));
                   iHdr->setBandInfo(band, bandInfo);
                }
                
