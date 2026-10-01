@@ -283,7 +283,7 @@ bool ossimKakaduNitfWriter::writeStream()
       // A legal default, never the band index; a caller overrides per band
       // with an IREPBANDnnn image header property.
       bandInfo.setBandRepresentation(
-         ossimNitfImageHeaderV2_X::defaultBandRepresentation(
+         ossim::nitf::defaultBandRepresentation(
             m_imageHeader->getRepresentation(), band));
       m_imageHeader->setBandInfo(band, bandInfo);
    }
