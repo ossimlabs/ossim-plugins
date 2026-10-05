@@ -450,7 +450,15 @@ bool ossimKakaduNitfWriter::writeStream()
    
    m_fileHeader->replaceImageInfoRecord(0, imageInfoRecord);
    
-   setComplexityLevel(length, m_fileHeader.get());
+   //---
+   // CLEVEL needs the FILE length and the image size.  This used to pass
+   // 'length', which at this point is the image data length, so the level was
+   // chosen from the wrong size and never from the image's rows and columns.
+   //---
+   setComplexityLevel(endOfFilePos,
+                      m_fileHeader.get(),
+                      theInputConnection->getAreaOfInterest().width(),
+                      theInputConnection->getAreaOfInterest().height());
    
    // Rewrite the header.
    m_fileHeader->writeStream(*m_outputStream);
